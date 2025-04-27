@@ -1,6 +1,5 @@
 import json
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -12,12 +11,13 @@ from sam2.build_sam import build_sam2_video_predictor
 from sam2.sam2_video_predictor import SAM2VideoPredictor
 from sam2.utils.misc import load_video_frames_from_jpg_images
 
+from final_challenge.alan import FrameData
 from final_challenge.alan.rosbag import get_images
 from final_challenge.alan.sam2_video_predictor_example import (
     get_mask,
     show_points,
 )
-from final_challenge.alan.utils import cast_unchecked_, zip
+from final_challenge.alan.utils import cast_unchecked_
 
 
 def build_predictor():
@@ -123,27 +123,6 @@ def main(predictor: SAM2VideoPredictor | None = None):
 
             fig.canvas.draw()
             fig.canvas.flush_events()
-
-
-@dataclass
-class FrameData:
-    in_img: Image.Image
-    time: float
-
-    out_left: np.ndarray
-    out_right: np.ndarray
-
-    viz_img: Image.Image
-
-    @staticmethod
-    def load(data_dir: Path, idx: int):
-        return FrameData(
-            in_img=Image.open(data_dir / f"in_{idx}.png"),
-            time=json.loads((data_dir / f"in_{idx}_meta.json").read_bytes())["time"],
-            out_left=np.load(data_dir / f"out_{idx}_obj0.npy"),
-            out_right=np.load(data_dir / f"out_{idx}_obj1.npy"),
-            viz_img=Image.open(data_dir / f"out_{idx}_viz.png"),
-        )
 
 
 def example_plot():

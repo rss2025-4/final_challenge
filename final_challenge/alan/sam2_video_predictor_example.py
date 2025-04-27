@@ -1,12 +1,9 @@
 # functions from
 # https://github.com/facebookresearch/sam2/blob/main/notebooks/video_predictor_example.ipynb
 # some modified
-import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
-from PIL import Image
 
 
 def show_mask(mask, ax, obj_id=None, random_color=False):

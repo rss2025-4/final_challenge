@@ -1,0 +1,36 @@
+name: docs
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_DIR: ./src/final_challenge
+  BETTER_EXCEPTIONS: 1
+  FORCE_COLOR: 1
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: sebagarc/racecar2
+      options: --privileged --user root
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+
+      - name: generate docs
+        uses: ./.github/actions/run_venv
+        with:
+          commands: |
+            cd docs
+            make html
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.PROJECT_DIR }}/docs/build/html
