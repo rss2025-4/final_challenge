@@ -67,6 +67,7 @@ runs:
     #----------------------------------------------
     # install your root project, if required
     #----------------------------------------------
-    # - name: Install project
-    #   run: poetry install --no-interaction --all-extras
-    #   working-directory: ${{ inputs.PROJECT_DIR }}
+    - name: Install project
+      run: poetry install --no-interaction
+      working-directory: ${{ inputs.PROJECT_DIR }}
+      shell: bash
