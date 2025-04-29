@@ -1,6 +1,10 @@
+from __future__ import annotations
+
+import itertools
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable
 
 import numpy as np
 from PIL import Image
@@ -51,3 +55,39 @@ class FrameData:
             out_right=np.load(data_dir / f"out_{idx}_obj1.npy"),
             viz_img=Image.open(data_dir / f"out_{idx}_viz.png"),
         )
+
+    @staticmethod
+    def count(data_dir: Path) -> int:
+        i = 0
+        while (data_dir / f"in_{i}.png").exists():
+            i += 1
+        return i
+
+    @property
+    def size(self) -> tuple[int, int]:
+        return self.in_img.size
+
+    @property
+    def width(self) -> int:
+        return self.size[0]
+
+    @property
+    def height(self) -> int:
+        return self.size[1]
+
+    @property
+    def out_left_bool(self) -> np.ndarray:
+        return self.out_left > 0
+
+    @property
+    def out_right_bool(self) -> np.ndarray:
+        return self.out_right > 0
+
+    @staticmethod
+    def load_all(data_dir: Path) -> Iterable[FrameData]:
+        assert data_dir.exists()
+        for i in itertools.count():
+            if (data_dir / f"in_{i}.png").exists():
+                yield FrameData.load(data_dir, i)
+            else:
+                return

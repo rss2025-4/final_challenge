@@ -19,37 +19,49 @@ priority = "explicit"
 [tool.poetry.dependencies]
 python = ">=3.10, <3.11"
 
-ipython = "^8"
 better-exceptions = "^0.3.3"
+ipython = "^8"
 
-opencv-python = "^4.11.0.86"
 matplotlib = "^3.10.1"
+numpy = "==1.*"
+opencv-python = "^4.11.0.86"
 rosbags = "^0.10.9"
+scikit-learn = "^1.6.1"
+scipy = "^1.15.2"
 
 torch = [
   { version = "^2.7.0", markers = "extra != 'gpu'", source = "pytorch-cpu" },
-  { version = "^2.7.0", markers = "extra == 'gpu'", source = "pypi" },
+  { version = "^2.7.0", markers = "extra == 'gpu'", source = "PyPI" },
 ]
 
-# torch = { version = "^2.7.0", source = "torch-cpu" }
-sam-2 = { git = "https://github.com/facebookresearch/sam2.git", markers = "extra == 'gpu'" }
-# sam-2 = { git = "https://github.com/zdata-inc/sam2_realtime.git" }
+sam-2 = { git = "https://github.com/facebookresearch/sam2.git", optional = true }
+jax = { version = "^0.6.0", optional = true }
+equinox = { version = "^0.12.1", optional = true }
 
-[project.optional-dependencies]
-gpu = []
+# libracecar = { path = "/home/dockeruser/racecar_ws/src/libracecar/", develop = true, optional = true }
+libracecar = { git = "https://github.com/rss2025-4/libracecar.git", optional = true }
+
+[tool.poetry.extras]
+gpu = [
+  #
+  "equinox",
+  "jax",
+  "libracecar",
+  "sam-2",
+]
 
 [tool.poetry.group.dev.dependencies]
+autoflake = "^2.3.1"
+basedpyright = "^1.29.1"
 black = "^25.1.0"
 isort = "^6.0.1"
-basedpyright = "^1.29.1"
-autoflake = "^2.3.1"
 
 [tool.poetry.group.docs]
 optional = true
 [tool.poetry.group.docs.dependencies]
+rstfmt = "^0.0.14"
 sphinx = "^8"
 sphinx-rtd-theme = "^3.0.2"
-rstfmt = "^0.0.14"
 sphinxcontrib-restbuilder = "^0.3"
 
 [tool.black]
@@ -57,6 +69,10 @@ line-length = 100
 
 [tool.isort]
 profile = "black"
+known_first_party = [
+  #
+  "libracecar",
+]
 
 [tool.pyright]
 exclude = ["**/result*"]
