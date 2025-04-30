@@ -103,13 +103,19 @@ class color_counter(eqx.Module):
 
 
 def get_color_filter() -> Array:
-    data_dir = Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_given_labeled")
+    data_dirs = [
+        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_given_labeled"),
+        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part1"),
+        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part2"),
+        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part3"),
+    ]
 
     counter = color_counter.new()
 
-    for frame in tqdm.tqdm(FrameData.load_all(data_dir)):
-        counter = counter.push_image(jnp.array(frame.in_img), jnp.array(frame.out_left_bool))
-        counter = counter.push_image(jnp.array(frame.in_img), jnp.array(frame.out_right_bool))
+    for data_dir in data_dirs:
+        for frame in tqdm.tqdm(FrameData.load_all(data_dir)):
+            counter = counter.push_image(jnp.array(frame.in_img), jnp.array(frame.out_left_bool))
+            counter = counter.push_image(jnp.array(frame.in_img), jnp.array(frame.out_right_bool))
 
     return counter.get_ratios()
 
@@ -132,6 +138,16 @@ def update_mask(memory: tuple[np.ndarray, np.ndarray], filter: np.ndarray, thres
     mask = (mask * filter) > threshold
     r = 0.1
     return ((prev_mask * r + moving_avg * (1 - r)), mask), mask
+
+
+def mask_to_line(mask: np.ndarray):
+    # return (top_pt, bot_pt)
+    xs, ys = np.where(mask)
+    coefficients = np.polyfit(xs, ys, 1)
+    slope = float(coefficients[0])
+    intercept = float(coefficients[1])
+    other = intercept + slope * len(mask)
+    return intercept, other
 
 
 # def get_history_filter(color_filter: Array, threshold=5e-5):
@@ -157,8 +173,39 @@ def update_mask(memory: tuple[np.ndarray, np.ndarray], filter: np.ndarray, thres
 #         prev = cur
 
 
+def score_one(color_mask: Array, topy: Array, boty: Array):
+    def inner(x: Array):
+        y_val = topy + (x / len(color_mask)) * (boty - topy)
+        return color_mask.at[x, y_val.astype(np.int32)].get(mode="fill", fill_value=False)
+
+    return jnp.sum(jax.vmap(inner)(jnp.arange(len(color_mask))))
+
+
+@jit
+def fit_line_to_color(color_mask: Array, topy: Array, boty: Array):
+    h = color_mask.shape[0]
+    color_mask = color_mask * (jnp.maximum(jnp.arange(h) / h - 0.3, 0.0) / 0.7).reshape(h, 1)
+
+    def inner(top_cand: Array):
+        def inner2(bot_cand: Array):
+            return score_one(color_mask, top_cand, bot_cand)
+
+        bot_cands = jnp.linspace(boty - 100, boty + 100, 50)
+        bot_scores = jax.vmap(inner2)(bot_cands)
+        am = jnp.argmax(bot_scores)
+        return bot_cands[am], bot_scores[am]
+
+    top_cands = jnp.linspace(topy - 100, topy + 100, 50)
+    bot_cands, scores = jax.vmap(inner)(top_cands)
+    am = jnp.argmax(scores)
+    return top_cands[am], bot_cands[am]
+
+
 def f2(color_filter: Array):
     data_dir = Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_given_labeled")
+    # data_dir = Path(
+    #     "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part3"
+    # )
 
     plt.ion()
     fig = plt.figure()
@@ -172,7 +219,23 @@ def f2(color_filter: Array):
 
     first = next(it)
 
+    print("first.width", first.width)
+
     viz_img = ax1.imshow(np.array(first.viz_img))
+    ax1.set_ylim((first.height, 0))
+
+    y1, y2 = mask_to_line(first.out_left_bool)
+    line = ax1.plot([y1, y2], [0, first.height], marker="o")[0]
+
+    # fig.add_artist(lines.Line2D([0, 1], [0.47, 0.47], linewidth=3))
+    # return
+
+    # ax2.plot()
+
+    # print(mask_to_line(first.out_right_bool))
+    # assert False
+
+    # mask_to_line
 
     memory_ = first.out_right_bool.astype(np.float32)
     memory = (memory_, memory_)
@@ -186,13 +249,19 @@ def f2(color_filter: Array):
     #     fig.canvas.flush_events()
     #     time.sleep(0.1)
 
-    for cur in itertools.islice(it, 0, None, 4):
-        # for cur in it:
-
+    for cur in it:
         color_mask = color_counter.apply_filter(color_filter, cur.in_img)
+
+        y12, y22 = fit_line_to_color(jnp.array(color_mask), jnp.array(y1), jnp.array(y2))
+        y1 = float(y12)
+        y2 = float(y22)
+
         memory, mask = update_mask(memory, color_mask)
         cax.set_data(mask * 5 + color_mask)
         # mask = mask > 1.0e-5
+
+        # y1, y2 = mask_to_line(cur.out_right_bool)
+        line.set_data(([y1, y2], [0, first.height]))
 
         # cax.set_data(mask.astype(np.int32) * 5 + color_mask)
         viz_img.set_data(np.array(cur.viz_img))
@@ -200,4 +269,4 @@ def f2(color_filter: Array):
         fig.canvas.draw()
         fig.canvas.flush_events()
 
-        # time.sleep(0.02)
+        time.sleep(0.1)

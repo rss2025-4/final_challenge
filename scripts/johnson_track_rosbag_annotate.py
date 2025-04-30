@@ -1,5 +1,6 @@
 import json
 import time
+from itertools import islice
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -20,6 +21,34 @@ from final_challenge.alan.sam2_video_predictor_example import (
 from final_challenge.alan.utils import cast_unchecked_
 
 
+def viz_data():
+    bagpath = Path("/home/alan/6.4200/rosbags_4_29/bag2")
+
+    it = iter(get_images(bagpath))
+
+    it = islice(it, 1300, 1500)
+
+    first = next(it)
+
+    plt.ion()
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plot = ax.imshow(first.image)
+
+    prev_stamp = first.time
+
+    for i, msg in enumerate(it):
+        start_t = time.time()
+        plot.set_data(cast_unchecked_(msg.image))
+
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+        print("offset", i, (msg.time - prev_stamp))
+        time.sleep(max(0, (msg.time - prev_stamp) - (time.time() - start_t)))
+        prev_stamp = msg.time
+
+
 def build_predictor():
     # https://github.com/facebookresearch/sam2?tab=readme-ov-file#download-checkpoints
     checkpoint = "/home/alan/6.4200/sam2/checkpoints/sam2.1_hiera_large.pt"
@@ -37,14 +66,21 @@ def build_predictor():
 
 
 def main(predictor: SAM2VideoPredictor | None = None):
-    bagpath = Path("/home/alan/6.4200/johnson_track_rosbag/rosbag2_2025_04_09-22_01_22")
-    out_dir = Path(__file__).parent.parent / "data" / "johnson_track_rosbag_given_labeled"
+    bagpath = Path("/home/alan/6.4200/rosbags_4_29/bag2")
+    out_dir = Path(__file__).parent.parent / "data" / "johnson_track_rosbag_4_29_labeled/part3"
+    # out_dir = Path(__file__).parent.parent / "data" / "johnson_track_rosbag_4_29_labeled_test"
     out_dir.mkdir(parents=True, exist_ok=False)
+    # out_dir.mkdir(parents=True, exist_ok=True)
 
     if predictor is None:
         predictor = build_predictor()
 
-    messages = list(get_images(bagpath))
+    # it = islice(it, 1300, 1500)
+    messages = list(
+        # islice(get_images(bagpath), 1300, 1301),
+        islice(get_images(bagpath), 1300, 1500),
+        # islice(get_images(bagpath), 105, 106),
+    )
     # messages = messages[:300]
     # messages = messages[:10]
     # messages = messages[::2]
@@ -73,15 +109,16 @@ def main(predictor: SAM2VideoPredictor | None = None):
         ann_frame_idx = 0
 
         prompts = [
-            np.array([[99, 266, 1]]),
-            np.array([[487, 231, 1]]),
+            np.array([[167, 212, 1]]),
+            np.array([[505, 225, 1]]),
+            # np.array([[516, 231, 1]]),
         ]
 
         for obj_id, prompt in enumerate(prompts):
             points = prompt[:, :2].astype(np.float32)
             labels = prompt[:, 2].astype(np.int32)
 
-            _ = show_points
+            # _ = show_points
             # show_points(points, labels, ax)
 
             _, out_obj_ids, out_mask_logits = predictor.add_new_points_or_box(
@@ -126,7 +163,9 @@ def main(predictor: SAM2VideoPredictor | None = None):
 
 
 def example_plot():
-    data_dir = Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_given_labeled")
+    data_dir = Path(
+        "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part2"
+    )
 
     plt.ion()
     fig = plt.figure()
