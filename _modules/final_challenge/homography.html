@@ -76,10 +76,8 @@
 
 <span class="sd">a &quot;uv&quot; coordinate is of images:</span>
 
-<span class="sd">The top left pixel is the origin, v axis increases to right, and u axis</span>
+<span class="sd">The top left pixel is the origin, u axis increases to right, and v axis</span>
 <span class="sd">increases down.</span>
-
-<span class="sd">THIS HAVE U, V AXIS FLIPPED COMPARED TO THE @ADELENE ONE</span>
 
 <span class="sd">&quot;xy&quot; is of the ground, in meters</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -99,10 +97,10 @@
 
 <span class="c1">######################################################</span>
 <span class="n">PTS_IMAGE_PLANE</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">[</span><span class="mf">200.0</span><span class="p">,</span> <span class="mf">639.0</span><span class="p">],</span>
-    <span class="p">[</span><span class="mf">177.0</span><span class="p">,</span> <span class="mf">336.0</span><span class="p">],</span>
-    <span class="p">[</span><span class="mf">176.0</span><span class="p">,</span> <span class="mf">515.0</span><span class="p">],</span>
-    <span class="p">[</span><span class="mf">199.0</span><span class="p">,</span> <span class="mf">88.0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">639.0</span><span class="p">,</span> <span class="mf">200.0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">336.0</span><span class="p">,</span> <span class="mf">177.0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">515.0</span><span class="p">,</span> <span class="mf">176.0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">88.0</span><span class="p">,</span> <span class="mf">199.0</span><span class="p">],</span>
 <span class="p">]</span>
 
 <span class="c1">######################################################</span>
@@ -121,8 +119,10 @@
 <span class="n">METERS_PER_INCH</span> <span class="o">=</span> <span class="mf">0.0254</span>
 
 
+<div class="viewcode-block" id="get_homography_matrix">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.get_homography_matrix">[docs]</a>
 <span class="nd">@functools</span><span class="o">.</span><span class="n">cache</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_get_homography_matrix</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_homography_matrix</span><span class="p">():</span>
     <span class="n">np_pts_ground</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">PTS_GROUND_PLANE</span><span class="p">)</span>
     <span class="n">np_pts_ground</span> <span class="o">=</span> <span class="n">np_pts_ground</span> <span class="o">*</span> <span class="n">METERS_PER_INCH</span>
     <span class="n">np_pts_ground</span> <span class="o">=</span> <span class="n">np_pts_ground</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span>
@@ -133,7 +133,8 @@
 
     <span class="n">ans</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findHomography</span><span class="p">(</span><span class="n">np_pts_image</span><span class="p">,</span> <span class="n">np_pts_ground</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;err </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span></div>
+
 
 
 <span class="c1">#: A parameter annotated with `Point` can take one of</span>
@@ -189,20 +190,20 @@
 <span class="n">W</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">640</span>
 <span class="n">H</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">360</span>
 
-<span class="c1"># v == 0 line</span>
-<span class="n">_image_left</span><span class="p">:</span> <span class="n">Line</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
-<span class="c1"># v == 640 line</span>
-<span class="n">_image_right</span><span class="p">:</span> <span class="n">Line</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="n">W</span><span class="p">)</span>
 <span class="c1"># u == 0 line</span>
-<span class="n">_image_top</span><span class="p">:</span> <span class="n">Line</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
-<span class="c1"># u == 360 line</span>
-<span class="n">_image_bottom</span><span class="p">:</span> <span class="n">Line</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">H</span><span class="p">)</span>
+<span class="n">_image_left</span><span class="p">:</span> <span class="n">Line</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+<span class="c1"># u == 640 line</span>
+<span class="n">_image_right</span><span class="p">:</span> <span class="n">Line</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">W</span><span class="p">)</span>
+<span class="c1"># v == 0 line</span>
+<span class="n">_image_top</span><span class="p">:</span> <span class="n">Line</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+<span class="c1"># v == 360 line</span>
+<span class="n">_image_bottom</span><span class="p">:</span> <span class="n">Line</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="n">H</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="xy_to_uv_point">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.xy_to_uv_point">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">xy_to_uv_point</span><span class="p">(</span><span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Point</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">_get_homography_matrix</span><span class="p">()</span> <span class="o">@</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">point</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">get_homography_matrix</span><span class="p">()</span> <span class="o">@</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">point</span><span class="p">))</span></div>
 
 
 
@@ -214,7 +215,7 @@
     <span class="c1"># &lt;M @ uv, line&gt; == 0</span>
     <span class="c1"># &lt;=&gt;</span>
     <span class="c1"># &lt;uv, M^T @ line&gt; == 0</span>
-    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">_get_homography_matrix</span><span class="p">()</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">line</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">get_homography_matrix</span><span class="p">()</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">line</span><span class="p">))</span></div>
 
 
 
@@ -226,7 +227,7 @@
     <span class="c1"># &lt;M^-1 @ uv, line&gt; == 0</span>
     <span class="c1"># &lt;=&gt;</span>
     <span class="c1"># &lt;uv, M^-1^T @ line&gt; == 0</span>
-    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">_get_homography_matrix</span><span class="p">())</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">line</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">get_homography_matrix</span><span class="p">())</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">line</span><span class="p">))</span></div>
 
 
 
@@ -293,13 +294,13 @@
         <span class="n">p1</span> <span class="o">=</span> <span class="n">point_coord</span><span class="p">(</span><span class="n">line_intersect</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)))</span>  <span class="c1"># y == 0</span>
         <span class="n">p2</span> <span class="o">=</span> <span class="n">point_coord</span><span class="p">(</span><span class="n">line_intersect</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)))</span>  <span class="c1"># y == 1</span>
 
-    <span class="k">return</span> <span class="p">(</span><span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="p">(</span><span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="c1"># return (p1[1], p1[0]), (p2[1], p2[0])</span>
+    <span class="k">return</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span>
 
 
 <div class="viewcode-block" id="plot_line">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.plot_line">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_line</span><span class="p">(</span><span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AxLine</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;this flips x and y when plotting&quot;&quot;&quot;</span>
     <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">_get_2_points</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ax</span><span class="o">.</span><span class="n">axline</span><span class="p">(</span><span class="n">xy1</span><span class="o">=</span><span class="n">p1</span><span class="p">,</span> <span class="n">xy2</span><span class="o">=</span><span class="n">p2</span><span class="p">)</span></div>
 
@@ -308,7 +309,6 @@
 <div class="viewcode-block" id="update_plot_line">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.update_plot_line">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">update_plot_line</span><span class="p">(</span><span class="n">plot</span><span class="p">:</span> <span class="n">AxLine</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="n">Line</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;this flips x and y when plotting&quot;&quot;&quot;</span>
     <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">_get_2_points</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
     <span class="n">plot</span><span class="o">.</span><span class="n">set_xy1</span><span class="p">(</span><span class="n">p1</span><span class="p">)</span>
     <span class="n">plot</span><span class="o">.</span><span class="n">set_xy2</span><span class="p">(</span><span class="n">p2</span><span class="p">)</span></div>
@@ -318,8 +318,8 @@
 <div class="viewcode-block" id="setup_plot">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.setup_plot">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">setup_plot</span><span class="p">(</span><span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">):</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s2">&quot;equal&quot;</span><span class="p">)</span>
 
     <span class="n">plot_line</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">uv_to_xy_line</span><span class="p">(</span><span class="n">_image_left</span><span class="p">))</span>
