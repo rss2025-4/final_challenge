@@ -1,0 +1,130 @@
+from __future__ import annotations
+
+import itertools
+import time
+from pathlib import Path
+
+import equinox as eqx
+import jax
+import matplotlib.pyplot as plt
+import numpy as np
+import tqdm
+from jax import Array, lax
+from jax import numpy as jnp
+from jax.typing import ArrayLike
+from PIL import Image
+from scipy.ndimage import uniform_filter
+
+from final_challenge.alan import FrameData
+from final_challenge.alan.utils import cast
+from final_challenge.homography import (
+    ImagPlot,
+    Line,
+    LinePlot,
+    LinePlotXY,
+    homography_line,
+    homography_point,
+    line_from_slope_intersect,
+    matrix_rot,
+    matrix_xy_to_uv,
+    setup_xy_plot,
+    shift_line,
+    uv_to_xy_line,
+    xy_to_uv_line,
+)
+from libracecar.utils import jit, pformat_repr, tree_at_, tree_select
+
+
+class color_counter(eqx.Module):
+    full: Array
+    lines: Array
+
+    @staticmethod
+    def new():
+        blank = jnp.zeros((128, 128, 128), dtype=jnp.int32)
+        return color_counter(blank, blank)
+
+    @staticmethod
+    def _push_one(count: Array, xs: Array, counts: ArrayLike):
+        return count.at[xs[:, 0], xs[:, 1], xs[:, 2]].add(counts)
+
+    @jit
+    def push_image(self, img: Array, mask: Array):
+        h, w, _ = img.shape
+
+        assert img.dtype == jnp.uint8
+        img = (img // 2)[:, :, :3]
+        h_ = int(h * 0.3)
+        img = img[h_:]
+        mask = mask[h_:]
+        h = img.shape[0]
+
+        self = tree_at_(
+            lambda me: me.full,
+            self,
+            replace_fn=lambda x: self._push_one(x, img.reshape(h * w, 3), 1),
+        )
+        self = tree_at_(
+            lambda me: me.lines,
+            self,
+            replace_fn=lambda x: self._push_one(x, img.reshape(h * w, 3), mask.reshape(h * w)),
+        )
+
+        return self
+
+    @jit
+    def get_ratios(self) -> Array:
+        lines = self.lines + 1e-10
+        full = self.full + 1
+
+        lines /= jnp.sum(lines)
+        full /= jnp.sum(full)
+
+        log_ratios = jnp.log(lines / full)
+        avg_log_ratios = jnp.sum(lines * log_ratios)
+
+        # return avg_log_ratios
+
+        return log_ratios > avg_log_ratios
+
+    @staticmethod
+    @jit
+    def _apply_filter(color_filter: Array, img: Array) -> Array:
+
+        def _one(color: Array):
+            color = (color // 2)[:3]
+            return color_filter[color[0], color[1], color[2]]
+
+        return jax.vmap(jax.vmap(_one))(jnp.array(img))
+
+    @staticmethod
+    def apply_filter(color_filter: Array, img: Image.Image) -> np.ndarray:
+        return np.array(color_counter._apply_filter(color_filter, jnp.array(img)))
+
+
+color_filter_path = Path(__file__).parent / "color_filter.npy"
+
+
+def compute_color_filter():
+    data_dirs = [
+        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_given_labeled"),
+        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part1"),
+        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part2"),
+        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part3"),
+    ]
+
+    counter = color_counter.new()
+
+    for data_dir in data_dirs:
+        for frame in tqdm.tqdm(FrameData.load_all(data_dir)):
+            counter = counter.push_image(jnp.array(frame.in_img), jnp.array(frame.out_left_bool))
+            counter = counter.push_image(jnp.array(frame.in_img), jnp.array(frame.out_right_bool))
+
+    ans = np.array(counter.get_ratios())
+    np.save(color_filter_path, ans)
+
+
+def load_color_filter():
+    ans = np.load(color_filter_path)
+    assert isinstance(ans, np.ndarray)
+    return ans

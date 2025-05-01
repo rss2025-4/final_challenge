@@ -65,3 +65,7 @@ def zip(*args):
 
 def unreachable(x: Never) -> Never:
     raise RuntimeError("unreachable", x)
+
+
+def check(a: str, b: str):
+    assert a == b, f"not equal: {a} and {b}"
