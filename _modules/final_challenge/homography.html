@@ -86,7 +86,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -96,7 +96,18 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Never</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.alan.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">unreachable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.alan.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast_unchecked_</span><span class="p">,</span> <span class="n">unreachable</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
+
+    <span class="n">Arr</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+<span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
+    <span class="n">jnp</span> <span class="o">=</span> <span class="n">np</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+        <span class="n">Arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -127,7 +138,7 @@
 <div class="viewcode-block" id="matrix_uv_to_xy">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.matrix_uv_to_xy">[docs]</a>
 <span class="nd">@functools</span><span class="o">.</span><span class="n">cache</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">matrix_uv_to_xy</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">matrix_uv_to_xy</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="n">np_pts_ground</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">PTS_GROUND_PLANE</span><span class="p">)</span>
     <span class="n">np_pts_ground</span> <span class="o">=</span> <span class="n">np_pts_ground</span> <span class="o">*</span> <span class="n">METERS_PER_INCH</span>
     <span class="n">np_pts_ground</span> <span class="o">=</span> <span class="n">np_pts_ground</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span>
@@ -145,7 +156,7 @@
 <div class="viewcode-block" id="matrix_xy_to_uv">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.matrix_xy_to_uv">[docs]</a>
 <span class="nd">@functools</span><span class="o">.</span><span class="n">cache</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">matrix_xy_to_uv</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">matrix_xy_to_uv</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">matrix_uv_to_xy</span><span class="p">())</span></div>
 
 
@@ -159,30 +170,30 @@
 <span class="c1">#:</span>
 <span class="c1">#: functions returning Point mostly returns in project coordinates.</span>
 <span class="c1">#: use :func:`point_coord` to convert to euclidean</span>
-<span class="n">Point</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+<span class="n">Point</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
 
 <span class="c1">#: (a, b, c), represents the line ax + by + c = 0</span>
 <span class="c1">#:</span>
 <span class="c1">#: can be python or numpy.</span>
 <span class="c1">#:</span>
 <span class="c1">#: construct a Line with  :func:`line_from_slope_intersect`, :func:`line_through_points`</span>
-<span class="n">Line</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+<span class="n">Line</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_ck_line</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ck_line</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;validate a line&quot;&quot;&quot;</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">3</span><span class="p">,)</span>
     <span class="k">return</span> <span class="n">x</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_ck_point</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ck_point</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;validate a point&quot;&quot;&quot;</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,):</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">1.0</span><span class="p">])</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">1.0</span><span class="p">])</span>
     <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">3</span><span class="p">,)</span>
     <span class="k">return</span> <span class="n">x</span>
 
@@ -213,22 +224,29 @@
 <span class="n">_image_bottom</span><span class="p">:</span> <span class="n">Line</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="n">H</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="homography_point">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.homography_point">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">homography_point</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">Arr</span><span class="p">,</span> <span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Point</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">matrix</span> <span class="o">@</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">point</span><span class="p">))</span></div>
+
+
+
 <div class="viewcode-block" id="xy_to_uv_point">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.xy_to_uv_point">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">xy_to_uv_point</span><span class="p">(</span><span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Point</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">matrix_uv_to_xy</span><span class="p">()</span> <span class="o">@</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">point</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="n">homography_point</span><span class="p">(</span><span class="n">matrix_uv_to_xy</span><span class="p">(),</span> <span class="n">point</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="homography_line">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.homography_line">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">homography_line</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Line</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">homography_line</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">Arr</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Line</span><span class="p">:</span>
     <span class="c1"># &lt;prev, line&gt; == 0</span>
     <span class="c1"># &lt;=&gt;</span>
     <span class="c1"># &lt;M^-1 @ ans, line&gt; == 0</span>
     <span class="c1"># &lt;=&gt;</span>
     <span class="c1"># &lt;uv, M^T^-1 @ line&gt; == 0</span>
-    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">@</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">line</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">@</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">line</span><span class="p">))</span></div>
 
 
 
@@ -249,14 +267,14 @@
 <div class="viewcode-block" id="line_intersect">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.line_intersect">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">line_intersect</span><span class="p">(</span><span class="n">l1</span><span class="p">:</span> <span class="n">Line</span><span class="p">,</span> <span class="n">l2</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Point</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">_ck_line</span><span class="p">(</span><span class="n">l1</span><span class="p">),</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">l2</span><span class="p">)))</span></div>
+    <span class="k">return</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">_ck_line</span><span class="p">(</span><span class="n">l1</span><span class="p">),</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">l2</span><span class="p">)))</span></div>
 
 
 
 <div class="viewcode-block" id="line_through_points">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.line_through_points">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">line_through_points</span><span class="p">(</span><span class="n">l1</span><span class="p">:</span> <span class="n">Point</span><span class="p">,</span> <span class="n">l2</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Line</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">_ck_point</span><span class="p">(</span><span class="n">l1</span><span class="p">),</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">l2</span><span class="p">)))</span></div>
+    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">_ck_point</span><span class="p">(</span><span class="n">l1</span><span class="p">),</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">l2</span><span class="p">)))</span></div>
 
 
 
@@ -268,17 +286,61 @@
 
 
 
+<div class="viewcode-block" id="matrix_rot">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.matrix_rot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">matrix_rot</span><span class="p">(</span><span class="n">ang_rad</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
+    <span class="c1"># UNTESTED!!</span>
+    <span class="n">sin</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">ang_rad</span><span class="p">)</span>
+    <span class="n">cos</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">ang_rad</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">[</span><span class="n">cos</span><span class="p">,</span> <span class="o">-</span><span class="n">sin</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="matrix_trans">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.matrix_trans">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">matrix_trans</span><span class="p">(</span><span class="n">dx</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">dy</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
+    <span class="c1"># UNTESTED!!</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">dx</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">dy</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="shift_line">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.shift_line">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">shift_line</span><span class="p">(</span><span class="n">l</span><span class="p">:</span> <span class="n">Line</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Line</span><span class="p">:</span>
+    <span class="c1"># UNTESTED!!</span>
+    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">_ck_line</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">l</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span> <span class="o">*</span> <span class="n">d</span><span class="p">]))</span></div>
+
+
+
 <div class="viewcode-block" id="angle_bisector">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.angle_bisector">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">angle_bisector</span><span class="p">(</span><span class="n">l1</span><span class="p">:</span> <span class="n">Line</span><span class="p">,</span> <span class="n">l2</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Line</span><span class="p">:</span>
+    <span class="c1"># UNTESTED!!</span>
     <span class="n">l1</span> <span class="o">=</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">l1</span><span class="p">)</span>
     <span class="n">l2</span> <span class="o">=</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">l2</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">l1</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">l2</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">l2</span> <span class="o">=</span> <span class="o">-</span><span class="n">l2</span>
+    <span class="n">l2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">l1</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">l2</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="c1"># flip if true</span>
+        <span class="o">-</span><span class="n">l2</span><span class="p">,</span>
+        <span class="n">l2</span><span class="p">,</span>
+    <span class="p">)</span>
 
-    <span class="n">r1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">l1</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
-    <span class="n">r2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">l2</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">r1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">l1</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">r2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">l2</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
 
     <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">l1</span> <span class="o">*</span> <span class="n">r2</span> <span class="o">+</span> <span class="n">l2</span> <span class="o">*</span> <span class="n">r1</span><span class="p">)</span></div>
 
@@ -316,7 +378,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_2_points</span><span class="p">(</span><span class="n">l</span><span class="p">:</span> <span class="n">Line</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;get two distinct points on a line&quot;&quot;&quot;</span>
     <span class="n">l</span> <span class="o">=</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
-    <span class="n">l</span> <span class="o">=</span> <span class="n">l</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="n">l</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mf">1e-3</span><span class="p">:</span>
         <span class="c1"># approx y=* line</span>
@@ -388,9 +450,33 @@
 
 
 
+<div class="viewcode-block" id="ImagPlot">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.ImagPlot">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ImagPlot</span><span class="p">:</span>
+<div class="viewcode-block" id="ImagPlot.__init__">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.ImagPlot.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AxesImage</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="ImagPlot.set_imag">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.ImagPlot.set_imag">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_imag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">image_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">image_</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">image_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">image_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">image_</span><span class="p">)</span></div>
+</div>
+
+
+
 <div class="viewcode-block" id="ImagPlotXY">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.ImagPlotXY">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ImagPlotXY</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ImagPlotXY</span><span class="p">(</span><span class="n">ImagPlot</span><span class="p">):</span>
 <div class="viewcode-block" id="ImagPlotXY.__init__">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.ImagPlotXY.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">):</span>
@@ -400,16 +486,13 @@
 
 <div class="viewcode-block" id="ImagPlotXY.set_uv_imag">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.ImagPlotXY.set_uv_imag">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_uv_imag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_uv_imag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
         <span class="n">image_</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">warpPerspective</span><span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">image</span><span class="p">),</span>
-            <span class="n">matrix_xy_to_xyplot</span><span class="p">()</span> <span class="o">@</span> <span class="n">matrix_uv_to_xy</span><span class="p">(),</span>
+            <span class="n">cast_unchecked_</span><span class="p">(</span><span class="n">matrix_xy_to_xyplot</span><span class="p">()</span> <span class="o">@</span> <span class="n">matrix_uv_to_xy</span><span class="p">()),</span>
             <span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">image_</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">image_</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_imag</span><span class="p">(</span><span class="n">image_</span><span class="p">)</span></div>
 </div>
 
 
