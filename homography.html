@@ -1,0 +1,220 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>things homography &mdash; final_challenge2025  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="internal stuff" href="internal.html" />
+    <link rel="prev" title="final_challenge2025 documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            final_challenge2025
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">final_challenge2025 documentation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">things homography</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.Point"><code class="docutils literal notranslate"><span class="pre">Point</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.Line"><code class="docutils literal notranslate"><span class="pre">Line</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.point_coord"><code class="docutils literal notranslate"><span class="pre">point_coord()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.xy_to_uv_point"><code class="docutils literal notranslate"><span class="pre">xy_to_uv_point()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.xy_to_uv_line"><code class="docutils literal notranslate"><span class="pre">xy_to_uv_line()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.uv_to_xy_line"><code class="docutils literal notranslate"><span class="pre">uv_to_xy_line()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.line_intersect"><code class="docutils literal notranslate"><span class="pre">line_intersect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.line_through_points"><code class="docutils literal notranslate"><span class="pre">line_through_points()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.line_from_slope_intersect"><code class="docutils literal notranslate"><span class="pre">line_from_slope_intersect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.get_horizon"><code class="docutils literal notranslate"><span class="pre">get_horizon()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.plot_line"><code class="docutils literal notranslate"><span class="pre">plot_line()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.update_plot_line"><code class="docutils literal notranslate"><span class="pre">update_plot_line()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.setup_plot"><code class="docutils literal notranslate"><span class="pre">setup_plot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="internal.html">internal stuff</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">final_challenge2025</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">things homography</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/homography.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-final_challenge.homography">
+<span id="things-homography"></span><h1>things homography<a class="headerlink" href="#module-final_challenge.homography" title="Link to this heading"></a></h1>
+<p>in this module, in functions like <a class="reference internal" href="#final_challenge.homography.uv_to_xy_line" title="final_challenge.homography.uv_to_xy_line"><code class="xref py py-func docutils literal notranslate"><span class="pre">uv_to_xy_line()</span></code></a>, etc,</p>
+<p>a “uv” coordinate is of images:</p>
+<p>The top left pixel is the origin, v axis increases to right, and u axis
+increases down.</p>
+<p>THIS HAVE U, V AXIS FLIPPED COMPARED TO THE &#64;ADELENE ONE</p>
+<p>“xy” is of the ground, in meters</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="final_challenge.homography.Point">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">Point</span></span><a class="headerlink" href="#final_challenge.homography.Point" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>A parameter annotated with <cite>Point</cite> can take one of</dt><dd><ol class="arabic simple">
+<li><p>(x, y)</p></li>
+<li><p>(x, y, z), in projective coordinates.
+this is equivalent to the euclidean point (x/z, y/z).</p></li>
+</ol>
+</dd>
+</dl>
+<p>These can be python or numpy.</p>
+<p>functions returning Point mostly returns in project coordinates.
+use <a class="reference internal" href="#final_challenge.homography.point_coord" title="final_challenge.homography.point_coord"><code class="xref py py-func docutils literal notranslate"><span class="pre">point_coord()</span></code></a> to convert to euclidean</p>
+<p>alias of <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="final_challenge.homography.Line">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">Line</span></span><a class="headerlink" href="#final_challenge.homography.Line" title="Link to this definition"></a></dt>
+<dd><p>(a, b, c), represents the line ax + by + c = 0</p>
+<p>can be python or numpy.</p>
+<p>construct a Line with  <a class="reference internal" href="#final_challenge.homography.line_from_slope_intersect" title="final_challenge.homography.line_from_slope_intersect"><code class="xref py py-func docutils literal notranslate"><span class="pre">line_from_slope_intersect()</span></code></a>, <a class="reference internal" href="#final_challenge.homography.line_through_points" title="final_challenge.homography.line_through_points"><code class="xref py py-func docutils literal notranslate"><span class="pre">line_through_points()</span></code></a></p>
+<p>alias of <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.point_coord">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">point_coord</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Point</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#point_coord"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.point_coord" title="Link to this definition"></a></dt>
+<dd><p>get the euclidean coordinate; cannot be at infinity</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.xy_to_uv_point">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">xy_to_uv_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Point</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Point</span></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#xy_to_uv_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.xy_to_uv_point" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.xy_to_uv_line">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">xy_to_uv_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Line</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Line</span></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#xy_to_uv_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.xy_to_uv_line" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.uv_to_xy_line">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">uv_to_xy_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Line</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Line</span></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#uv_to_xy_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.uv_to_xy_line" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.line_intersect">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">line_intersect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Line</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Point</span></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#line_intersect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.line_intersect" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.line_through_points">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">line_through_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Point</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Line</span></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#line_through_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.line_through_points" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.line_from_slope_intersect">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">line_from_slope_intersect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slope</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">intercept</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Line</span></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#line_from_slope_intersect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.line_from_slope_intersect" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.get_horizon">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">get_horizon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#get_horizon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.get_horizon" title="Link to this definition"></a></dt>
+<dd><p>line of horizon in image, in pixels from the top</p>
+<p>x_dist: only look this far in meters</p>
+<p>returns:</p>
+<p>x_dist==None ==&gt; 144 (4/30, Alan)</p>
+<p>x_dist==10 ==&gt; 153 (4/30, Alan)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.plot_line">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">plot_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.1)"><span class="pre">Axes</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">l</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Line</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.AxLine.html#matplotlib.lines.AxLine" title="(in Matplotlib v3.10.1)"><span class="pre">AxLine</span></a></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#plot_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.plot_line" title="Link to this definition"></a></dt>
+<dd><p>this flips x and y when plotting</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.update_plot_line">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">update_plot_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.AxLine.html#matplotlib.lines.AxLine" title="(in Matplotlib v3.10.1)"><span class="pre">AxLine</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">l</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Line</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/final_challenge/homography.html#update_plot_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.update_plot_line" title="Link to this definition"></a></dt>
+<dd><p>this flips x and y when plotting</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.setup_plot">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">setup_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.1)"><span class="pre">Axes</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/final_challenge/homography.html#setup_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.setup_plot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="final_challenge2025 documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="internal.html" class="btn btn-neutral float-right" title="internal stuff" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, rss-2025-team4.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

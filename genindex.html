@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="index.html">final_challenge2025 documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="homography.html">things homography</a></li>
 <li class="toctree-l1"><a class="reference internal" href="internal.html">internal stuff</a></li>
 </ul>
 
@@ -81,11 +82,13 @@
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
+ | <a href="#X"><strong>X</strong></a>
  | <a href="#Z"><strong>Z</strong></a>
  
 </div>
@@ -159,8 +162,6 @@
         <li><a href="alan.html#module-final_challenge.alan.sam2_video_predictor_example">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     final_challenge.alan.segmentation
 
@@ -168,11 +169,20 @@
         <li><a href="alan.html#module-final_challenge.alan.segmentation">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     final_challenge.alan.utils
 
       <ul>
         <li><a href="alan.html#module-final_challenge.alan.utils">module</a>
+</li>
+      </ul></li>
+      <li>
+    final_challenge.homography
+
+      <ul>
+        <li><a href="homography.html#module-final_challenge.homography">module</a>
 </li>
       </ul></li>
       <li><a href="index.html#final_challenge.alan.FrameData">FrameData (class in final_challenge.alan)</a>
@@ -187,10 +197,12 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="alan.html#final_challenge.alan.rosbag.get_images">get_images() (in module final_challenge.alan.rosbag)</a>
+      <li><a href="homography.html#final_challenge.homography.get_horizon">get_horizon() (in module final_challenge.homography)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="alan.html#final_challenge.alan.rosbag.get_images">get_images() (in module final_challenge.alan.rosbag)</a>
+</li>
       <li><a href="alan.html#final_challenge.alan.sam2_video_predictor_example.get_mask">get_mask() (in module final_challenge.alan.sam2_video_predictor_example)</a>
 </li>
   </ul></td>
@@ -227,14 +239,22 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="homography.html#final_challenge.homography.Line">Line (in module final_challenge.homography)</a>
+</li>
+      <li><a href="homography.html#final_challenge.homography.line_from_slope_intersect">line_from_slope_intersect() (in module final_challenge.homography)</a>
+</li>
+      <li><a href="homography.html#final_challenge.homography.line_intersect">line_intersect() (in module final_challenge.homography)</a>
+</li>
+      <li><a href="homography.html#final_challenge.homography.line_through_points">line_through_points() (in module final_challenge.homography)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="index.html#final_challenge.alan.FrameData.load">load() (final_challenge.alan.FrameData static method)</a>
 
       <ul>
         <li><a href="alan.html#final_challenge.alan.segmentation.FrameData.load">(final_challenge.alan.segmentation.FrameData static method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="index.html#final_challenge.alan.FrameData.load_all">load_all() (final_challenge.alan.FrameData static method)</a>
 
       <ul>
@@ -260,6 +280,8 @@
         <li><a href="alan.html#module-final_challenge.alan.segmentation">final_challenge.alan.segmentation</a>
 </li>
         <li><a href="alan.html#module-final_challenge.alan.utils">final_challenge.alan.utils</a>
+</li>
+        <li><a href="homography.html#module-final_challenge.homography">final_challenge.homography</a>
 </li>
       </ul></li>
   </ul></td>
@@ -297,17 +319,33 @@
   </ul></td>
 </tr></table>
 
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="homography.html#final_challenge.homography.plot_line">plot_line() (in module final_challenge.homography)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="homography.html#final_challenge.homography.Point">Point (in module final_challenge.homography)</a>
+</li>
+      <li><a href="homography.html#final_challenge.homography.point_coord">point_coord() (in module final_challenge.homography)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="homography.html#final_challenge.homography.setup_plot">setup_plot() (in module final_challenge.homography)</a>
+</li>
       <li><a href="alan.html#final_challenge.alan.sam2_video_predictor_example.show_box">show_box() (in module final_challenge.alan.sam2_video_predictor_example)</a>
 </li>
       <li><a href="alan.html#final_challenge.alan.sam2_video_predictor_example.show_mask">show_mask() (in module final_challenge.alan.sam2_video_predictor_example)</a>
 </li>
-      <li><a href="alan.html#final_challenge.alan.sam2_video_predictor_example.show_points">show_points() (in module final_challenge.alan.sam2_video_predictor_example)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="alan.html#final_challenge.alan.sam2_video_predictor_example.show_points">show_points() (in module final_challenge.alan.sam2_video_predictor_example)</a>
+</li>
       <li><a href="index.html#final_challenge.alan.FrameData.size">size (final_challenge.alan.FrameData property)</a>
 
       <ul>
@@ -339,6 +377,12 @@
       <li><a href="alan.html#final_challenge.alan.utils.unique">unique() (in module final_challenge.alan.utils)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="homography.html#final_challenge.homography.update_plot_line">update_plot_line() (in module final_challenge.homography)</a>
+</li>
+      <li><a href="homography.html#final_challenge.homography.uv_to_xy_line">uv_to_xy_line() (in module final_challenge.homography)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="V">V</h2>
@@ -362,6 +406,18 @@
         <li><a href="alan.html#final_challenge.alan.segmentation.FrameData.width">(final_challenge.alan.segmentation.FrameData property)</a>
 </li>
       </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="X">X</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="homography.html#final_challenge.homography.xy_to_uv_line">xy_to_uv_line() (in module final_challenge.homography)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="homography.html#final_challenge.homography.xy_to_uv_point">xy_to_uv_point() (in module final_challenge.homography)</a>
+</li>
   </ul></td>
 </tr></table>
 
