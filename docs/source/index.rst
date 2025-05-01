@@ -7,6 +7,7 @@
    :maxdepth: 2
 
    self
+   homography
    internal
 
 .. automodule:: final_challenge.alan

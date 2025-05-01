@@ -30,6 +30,13 @@ from final_challenge.alan.sam2_video_predictor_example import (
     show_points,
 )
 from final_challenge.alan.utils import cast_unchecked_
+from final_challenge.homography import (
+    line_from_slope_intersect,
+    plot_line,
+    setup_plot,
+    update_plot_line,
+    uv_to_xy_line,
+)
 from libracecar.utils import jit, tree_at_
 
 np.set_printoptions(precision=7, suppress=True)
@@ -146,8 +153,7 @@ def mask_to_line(mask: np.ndarray):
     coefficients = np.polyfit(xs, ys, 1)
     slope = float(coefficients[0])
     intercept = float(coefficients[1])
-    other = intercept + slope * len(mask)
-    return intercept, other
+    return line_from_slope_intersect(slope, intercept)
 
 
 # def get_history_filter(color_filter: Array, threshold=5e-5):
@@ -201,6 +207,59 @@ def fit_line_to_color(color_mask: Array, topy: Array, boty: Array):
     return top_cands[am], bot_cands[am]
 
 
+def plot_data():
+    # data_dir = Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_given_labeled")
+    data_dir = Path(
+        "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part3"
+    )
+
+    plt.ion()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1, 2, 1)
+    ax2 = fig.add_subplot(1, 2, 2)
+
+    it = iter(FrameData.load_all(data_dir))
+
+    # for _ in range(1000):
+    #     _ = next(it)
+
+    first = next(it)
+
+    print("first.width", first.width)
+
+    viz_img = ax1.imshow(np.array(first.viz_img))
+    ax1.set_ylim((first.height, 0))
+
+    l1 = mask_to_line(first.out_left_bool)
+    l2 = mask_to_line(first.out_right_bool)
+
+    setup_plot(ax2)
+
+    line_left = plot_line(ax1, l1)
+    line_right = plot_line(ax1, l2)
+
+    line_left_xy = plot_line(ax2, uv_to_xy_line(l1))
+    line_right_xy = plot_line(ax2, uv_to_xy_line(l2))
+
+    for cur in it:
+
+        viz_img.set_data(np.array(cur.viz_img))
+
+        l1 = mask_to_line(cur.out_left_bool)
+        l2 = mask_to_line(cur.out_right_bool)
+
+        update_plot_line(line_left, l1)
+        update_plot_line(line_right, l2)
+
+        update_plot_line(line_left_xy, uv_to_xy_line(l1))
+        update_plot_line(line_right_xy, uv_to_xy_line(l2))
+
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+        time.sleep(0.1)
+
+
 def f2(color_filter: Array):
     data_dir = Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_given_labeled")
     # data_dir = Path(
@@ -224,8 +283,8 @@ def f2(color_filter: Array):
     viz_img = ax1.imshow(np.array(first.viz_img))
     ax1.set_ylim((first.height, 0))
 
-    y1, y2 = mask_to_line(first.out_left_bool)
-    line = ax1.plot([y1, y2], [0, first.height], marker="o")[0]
+    # y1, y2 = mask_to_line(first.out_left_bool)
+    # line = ax1.plot([y1, y2], [0, first.height], marker="o")[0]
 
     # fig.add_artist(lines.Line2D([0, 1], [0.47, 0.47], linewidth=3))
     # return
@@ -261,7 +320,7 @@ def f2(color_filter: Array):
         # mask = mask > 1.0e-5
 
         # y1, y2 = mask_to_line(cur.out_right_bool)
-        line.set_data(([y1, y2], [0, first.height]))
+        # line.set_data(([y1, y2], [0, first.height]))
 
         # cax.set_data(mask.astype(np.int32) * 5 + color_mask)
         viz_img.set_data(np.array(cur.viz_img))

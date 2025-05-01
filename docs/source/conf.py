@@ -32,10 +32,16 @@ autodoc_class_signature = "separated"
 
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "jax": ("https://docs.jax.dev/en/latest/", None),
     "PIL": ("https://pillow.readthedocs.io/en/stable", None),
+    "jax": ("https://docs.jax.dev/en/latest/", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "python": ("https://docs.python.org/3/", None),
+}
+
+autodoc_type_aliases = {
+    "Line": "Line",
+    "Point": "Point",
 }
 
 templates_path = ["_templates"]
