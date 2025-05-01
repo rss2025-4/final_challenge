@@ -150,7 +150,7 @@ def update_mask(memory: tuple[np.ndarray, np.ndarray], filter: np.ndarray, thres
 def mask_to_line(mask: np.ndarray):
     # return (top_pt, bot_pt)
     xs, ys = np.where(mask)
-    coefficients = np.polyfit(xs, ys, 1)
+    coefficients = np.polyfit(ys, xs, 1)
     slope = float(coefficients[0])
     intercept = float(coefficients[1])
     return line_from_slope_intersect(slope, intercept)
@@ -265,7 +265,6 @@ def f2(color_filter: Array):
     # data_dir = Path(
     #     "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part3"
     # )
-
     plt.ion()
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 2, 1)
