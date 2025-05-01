@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import time
 from pathlib import Path
 
@@ -8,21 +9,30 @@ import jax
 import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
-from jax import Array
+from jax import Array, lax
 from jax import numpy as jnp
 from jax.typing import ArrayLike
 from PIL import Image
 from scipy.ndimage import uniform_filter
 
 from final_challenge.alan import FrameData
+from final_challenge.alan.utils import cast
 from final_challenge.homography import (
+    ImagPlot,
+    Line,
     LinePlot,
     LinePlotXY,
+    homography_line,
+    homography_point,
     line_from_slope_intersect,
+    matrix_rot,
+    matrix_xy_to_uv,
     setup_xy_plot,
+    shift_line,
     uv_to_xy_line,
+    xy_to_uv_line,
 )
-from libracecar.utils import jit, tree_at_
+from libracecar.utils import jit, pformat_repr, tree_at_, tree_select
 
 np.set_printoptions(precision=7, suppress=True)
 
@@ -94,7 +104,10 @@ class color_counter(eqx.Module):
         return np.array(color_counter._apply_filter(color_filter, jnp.array(img)))
 
 
-def get_color_filter() -> Array:
+color_filter_path = Path(__file__).parent / "color_filter.npy"
+
+
+def get_color_filter():
     data_dirs = [
         Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_given_labeled"),
         Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part1"),
@@ -109,7 +122,8 @@ def get_color_filter() -> Array:
             counter = counter.push_image(jnp.array(frame.in_img), jnp.array(frame.out_left_bool))
             counter = counter.push_image(jnp.array(frame.in_img), jnp.array(frame.out_right_bool))
 
-    return counter.get_ratios()
+    ans = np.array(counter.get_ratios())
+    np.save(color_filter_path, ans)
 
 
 def update_mask(memory: tuple[np.ndarray, np.ndarray], filter: np.ndarray, threshold=5e-5):
@@ -172,6 +186,90 @@ def score_one(color_mask: Array, topy: Array, boty: Array):
     return jnp.sum(jax.vmap(inner)(jnp.arange(len(color_mask))))
 
 
+class _score_line_res(eqx.Module):
+    hits: Array
+    total: Array
+
+    __repr__ = pformat_repr
+
+
+def _score_line(weights: Array, line: Array) -> _score_line_res:
+    # ax + by + c = 0
+    # y = -(a/b) x - (c/b)
+
+    a, b, c = line / jnp.linalg.norm(line)
+    b = tree_select(jnp.abs(b) < 1e-6, on_true=1e-6, on_false=b)
+
+    assert len(weights.shape) == 2
+
+    def inner(x: Array):
+        y = (-a / b) * x - (c / b)
+        return tree_select(
+            (0 < y) & (y < weights.shape[1]),
+            on_true=(
+                weights.at[x, y.astype(jnp.int32)].get(mode="promise_in_bounds"),
+                1.0,
+            ),
+            on_false=(0.0, 0.0),
+        )
+
+    hits, total = jax.vmap(inner)(jnp.arange(len(weights)))
+    return _score_line_res(jnp.sum(hits), jnp.sum(total))
+
+
+@jit
+def score_line(weight_uncropped: ArrayLike, xy_line: Line):
+    a, b, c = jnp.array(xy_to_uv_line(xy_line))
+    weight_uncropped = jnp.array(weight_uncropped).astype(jnp.float32)
+
+    # au + bv + c == 0
+    # =>
+    # au + b(v'+153) + c == 0
+    # au + bv'+ (c + 153b) == 0
+    weight_cropped = weight_uncropped[200:, :]
+    c = c + 200 * b
+
+    s1 = _score_line(weight_cropped, jnp.array([b, a, c]))
+    s2 = _score_line(weight_cropped.T, jnp.array([a, b, c]))
+
+    # return s1, s2
+    return _score_line_res(s1.hits + s2.hits, s1.total + s2.total)
+
+
+def _get_max(values: Array, keys: Array):
+    (n,) = keys.shape
+    assert len(values) == n
+    i = jnp.argmax(keys)
+    return values[i], keys[i]
+
+
+@jit
+def update_line(weight_uncropped: ArrayLike, xy_line: Line, shifts: Array) -> Array:
+    xy_line = xy_line / jnp.linalg.norm(xy_line)
+
+    def per_rot(a_rad: Array):
+        line_rot = homography_line(matrix_rot(a_rad), xy_line)
+
+        def per_shift_err(s1: Array):
+            shifted_once = shift_line(line_rot, s1)
+
+            def per_lane(s2: Array) -> tuple[Array, Array]:
+                # returns (hits, total) for one white line
+                line_rot_shift = shift_line(shifted_once, s2)
+                score = score_line(weight_uncropped, line_rot_shift)
+                return score.hits, score.total
+
+            hits, total = jax.vmap(per_lane)(shifts)
+            return jnp.array(shifted_once), jnp.sum(hits) / (jnp.sum(total) + 100)
+
+        lines, scores = jax.vmap(per_shift_err)(jnp.linspace(-0.4, 0.4, num=41))
+        return _get_max(lines, scores)
+
+    lines, scores = jax.vmap(per_rot)(jnp.linspace(-0.3, 0.3, num=21))
+    line, _score = _get_max(lines, scores)
+    return line
+
+
 @jit
 def fit_line_to_color(color_mask: Array, topy: Array, boty: Array):
     h = color_mask.shape[0]
@@ -198,6 +296,8 @@ def plot_data():
         "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part3"
     )
 
+    color_filter = np.load(color_filter_path)
+
     plt.ion()
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 2, 1)
@@ -205,111 +305,136 @@ def plot_data():
 
     it = iter(FrameData.load_all(data_dir))
 
+    # it = itertools.islice(it, 10)
+
     # for _ in range(1000):
     #     _ = next(it)
 
     first = next(it)
 
-    print("first.width", first.width)
+    # print("first.width", first.width)
 
-    viz_img = ax1.imshow(np.array(first.viz_img))
-    ax1.set_ylim((first.height, 0))
+    viz_img = ImagPlot(ax1)
+    # viz_img = ax1.imshow(np.array(first.viz_img))
+    # viz_img = ax1.imshow(np.array(first.viz_img))
+    # ax1.set_ylim((first.height, 0))
 
-    l1 = mask_to_line(first.out_left_bool)
-    l2 = mask_to_line(first.out_right_bool)
+    line = uv_to_xy_line(mask_to_line(first.out_right_bool))
+    # l2 = mask_to_line(first.out_right_bool)
 
     setup_xy_plot(ax2)
 
-    line_left = LinePlot(ax1)
-    line_right = LinePlot(ax1)
+    shifts = [-2, -1, 0, 1, 2]
+    lines = [LinePlot(ax1) for _ in shifts]
 
     line_left_xy = LinePlotXY(ax2)
     line_right_xy = LinePlotXY(ax2)
 
     for cur in it:
 
-        viz_img.set_data(np.array(cur.viz_img))
-
-        l1 = mask_to_line(cur.out_left_bool)
-        l2 = mask_to_line(cur.out_right_bool)
-
-        line_left.set_line(l1)
-        line_right.set_line(l2)
-
-        line_left_xy.set_xy_line(uv_to_xy_line(l1))
-        line_right_xy.set_xy_line(uv_to_xy_line(l2))
-
-        fig.canvas.draw()
-        fig.canvas.flush_events()
-
-        time.sleep(0.1)
-
-
-def f2(color_filter: Array):
-    data_dir = Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_given_labeled")
-    # data_dir = Path(
-    #     "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part3"
-    # )
-    plt.ion()
-    fig = plt.figure()
-    ax1 = fig.add_subplot(1, 2, 1)
-    ax2 = fig.add_subplot(1, 2, 2)
-
-    it = iter(FrameData.load_all(data_dir))
-
-    # for _ in range(1000):
-    #     _ = next(it)
-
-    first = next(it)
-
-    print("first.width", first.width)
-
-    viz_img = ax1.imshow(np.array(first.viz_img))
-    ax1.set_ylim((first.height, 0))
-
-    # y1, y2 = mask_to_line(first.out_left_bool)
-    # line = ax1.plot([y1, y2], [0, first.height], marker="o")[0]
-
-    # fig.add_artist(lines.Line2D([0, 1], [0.47, 0.47], linewidth=3))
-    # return
-
-    # ax2.plot()
-
-    # print(mask_to_line(first.out_right_bool))
-    # assert False
-
-    # mask_to_line
-
-    memory_ = first.out_right_bool.astype(np.float32)
-    memory = (memory_, memory_)
-
-    cax = ax2.imshow(memory_, cmap="gray", vmin=0, vmax=6)
-    # cax = ax2.imshow(memory, cmap="viridis", vmin=0, vmax=1e-5)
-    fig.colorbar(cax)
-
-    # for _ in range(100):
-    #     fig.canvas.draw()
-    #     fig.canvas.flush_events()
-    #     time.sleep(0.1)
-
-    for cur in it:
         color_mask = color_counter.apply_filter(color_filter, cur.in_img)
+        color_mask = (
+            uniform_filter(color_mask.astype(np.float32), size=3, mode="constant", cval=0.0) > 1e-8
+        )
 
-        y12, y22 = fit_line_to_color(jnp.array(color_mask), jnp.array(y1), jnp.array(y2))
-        y1 = float(y12)
-        y2 = float(y22)
+        # viz_img.set_imag(cur.viz_img)
+        viz_img.set_imag(color_mask)
 
-        memory, mask = update_mask(memory, color_mask)
-        cax.set_data(mask * 5 + color_mask)
-        # mask = mask > 1.0e-5
+        line = update_line(color_mask, line, jnp.array(shifts))
 
-        # y1, y2 = mask_to_line(cur.out_right_bool)
-        # line.set_data(([y1, y2], [0, first.height]))
+        # print("color_mask", color_mask)
 
-        # cax.set_data(mask.astype(np.int32) * 5 + color_mask)
-        viz_img.set_data(np.array(cur.viz_img))
+        # l1 = mask_to_line(cur.out_left_bool)
+        # l2 = mask_to_line(cur.out_right_bool)
+
+        # print(score_line(color_mask, line))
+        # print(score_line(color_mask, uv_to_xy_line(l2)))
+        print()
+        print()
+        print()
+        print()
+
+        for s, l in zip(shifts, lines):
+            l.set_line(xy_to_uv_line(shift_line(line, s)))
+
+        # line_right.set_line(l2)
+
+        line_left_xy.set_xy_line(line)
+        # line_right_xy.set_xy_line(uv_to_xy_line(l2))
 
         fig.canvas.draw()
         fig.canvas.flush_events()
 
         time.sleep(0.1)
+
+
+# def f2(color_filter: Array):
+#     data_dir = Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_given_labeled")
+#     # data_dir = Path(
+#     #     "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part3"
+#     # )
+#     plt.ion()
+#     fig = plt.figure()
+#     ax1 = fig.add_subplot(1, 2, 1)
+#     ax2 = fig.add_subplot(1, 2, 2)
+
+#     it = iter(FrameData.load_all(data_dir))
+
+#     # for _ in range(1000):
+#     #     _ = next(it)
+
+#     first = next(it)
+
+#     print("first.width", first.width)
+
+#     viz_img = ax1.imshow(np.array(first.viz_img))
+#     ax1.set_ylim((first.height, 0))
+
+#     # y1, y2 = mask_to_line(first.out_left_bool)
+#     # line = ax1.plot([y1, y2], [0, first.height], marker="o")[0]
+
+#     # fig.add_artist(lines.Line2D([0, 1], [0.47, 0.47], linewidth=3))
+#     # return
+
+#     # ax2.plot()
+
+#     # print(mask_to_line(first.out_right_bool))
+#     # assert False
+
+#     # mask_to_line
+
+#     memory_ = first.out_right_bool.astype(np.float32)
+#     memory = (memory_, memory_)
+
+#     cax = ax2.imshow(memory_, cmap="gray", vmin=0, vmax=6)
+#     # cax = ax2.imshow(memory, cmap="viridis", vmin=0, vmax=1e-5)
+#     fig.colorbar(cax)
+
+#     # for _ in range(100):
+#     #     fig.canvas.draw()
+#     #     fig.canvas.flush_events()
+#     #     time.sleep(0.1)
+
+#     for cur in it:
+#         color_mask = color_counter.apply_filter(color_filter, cur.in_img)
+#         # crop
+#         # color_mask[:153, :] = 0
+
+#         y12, y22 = fit_line_to_color(jnp.array(color_mask), jnp.array(y1), jnp.array(y2))
+#         y1 = float(y12)
+#         y2 = float(y22)
+
+#         memory, mask = update_mask(memory, color_mask)
+#         cax.set_data(mask * 5 + color_mask)
+#         # mask = mask > 1.0e-5
+
+#         # y1, y2 = mask_to_line(cur.out_right_bool)
+#         # line.set_data(([y1, y2], [0, first.height]))
+
+#         # cax.set_data(mask.astype(np.int32) * 5 + color_mask)
+#         viz_img.set_data(np.array(cur.viz_img))
+
+#         fig.canvas.draw()
+#         fig.canvas.flush_events()
+
+#         time.sleep(0.1)

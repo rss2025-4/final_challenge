@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import cv2
 import numpy as np
@@ -24,7 +24,18 @@ from matplotlib.lines import AxLine
 from PIL import Image
 from typing_extensions import Never
 
-from .alan.utils import unreachable
+from .alan.utils import cast_unchecked_, unreachable
+
+try:
+    from jax import Array
+    from jax import numpy as jnp
+
+    Arr = Union[Array, np.ndarray]
+except ModuleNotFoundError:
+    jnp = np
+    if not TYPE_CHECKING:
+        Arr = np.ndarray
+
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +64,7 @@ METERS_PER_INCH = 0.0254
 
 
 @functools.cache
-def matrix_uv_to_xy():
+def matrix_uv_to_xy() -> np.ndarray:
     np_pts_ground = np.array(PTS_GROUND_PLANE)
     np_pts_ground = np_pts_ground * METERS_PER_INCH
     np_pts_ground = np_pts_ground[:, np.newaxis, :]
@@ -68,7 +79,7 @@ def matrix_uv_to_xy():
 
 
 @functools.cache
-def matrix_xy_to_uv():
+def matrix_xy_to_uv() -> np.ndarray:
     return np.linalg.inv(matrix_uv_to_xy())
 
 
@@ -81,30 +92,30 @@ def matrix_xy_to_uv():
 #:
 #: functions returning Point mostly returns in project coordinates.
 #: use :func:`point_coord` to convert to euclidean
-Point = Union[np.ndarray, tuple[float, float]]
+Point = Union[Arr, tuple[float, float]]
 
 #: (a, b, c), represents the line ax + by + c = 0
 #:
 #: can be python or numpy.
 #:
 #: construct a Line with  :func:`line_from_slope_intersect`, :func:`line_through_points`
-Line = Union[np.ndarray, tuple[float, float, float]]
+Line = Union[Arr, tuple[float, float, float]]
 
 
-def _ck_line(x: Line) -> np.ndarray:
+def _ck_line(x: Line) -> Arr:
     """validate a line"""
-    x = np.array(x)
-    assert isinstance(x, np.ndarray)
+    x = jnp.array(x)
+    assert isinstance(x, jnp.ndarray)
     assert x.shape == (3,)
     return x
 
 
-def _ck_point(x: Point) -> np.ndarray:
+def _ck_point(x: Point) -> Arr:
     """validate a point"""
-    x = np.array(x)
-    assert isinstance(x, np.ndarray)
+    x = jnp.array(x)
+    assert isinstance(x, jnp.ndarray)
     if x.shape == (2,):
-        x = np.array([x[0], x[1], 1.0])
+        x = jnp.array([x[0], x[1], 1.0])
     assert x.shape == (3,)
     return x
 
@@ -132,17 +143,21 @@ _image_top: Line = (0.0, 1.0, 0.0)
 _image_bottom: Line = (0.0, 1.0, -H)
 
 
+def homography_point(matrix: Arr, point: Point) -> Point:
+    return _ck_point(matrix @ _ck_point(point))
+
+
 def xy_to_uv_point(point: Point) -> Point:
-    return _ck_point(matrix_uv_to_xy() @ _ck_point(point))
+    return homography_point(matrix_uv_to_xy(), point)
 
 
-def homography_line(matrix: np.ndarray, line: Line) -> Line:
+def homography_line(matrix: Arr, line: Line) -> Line:
     # <prev, line> == 0
     # <=>
     # <M^-1 @ ans, line> == 0
     # <=>
     # <uv, M^T^-1 @ line> == 0
-    return _ck_line(np.linalg.inv(matrix.T) @ _ck_line(line))
+    return _ck_line(jnp.linalg.inv(matrix.T) @ _ck_line(line))
 
 
 def xy_to_uv_line(line: Line) -> Line:
@@ -154,11 +169,11 @@ def uv_to_xy_line(line: Line) -> Line:
 
 
 def line_intersect(l1: Line, l2: Line) -> Point:
-    return _ck_point(np.cross(_ck_line(l1), _ck_line(l2)))
+    return _ck_point(jnp.cross(_ck_line(l1), _ck_line(l2)))
 
 
 def line_through_points(l1: Point, l2: Point) -> Line:
-    return _ck_line(np.cross(_ck_point(l1), _ck_point(l2)))
+    return _ck_line(jnp.cross(_ck_point(l1), _ck_point(l2)))
 
 
 def line_from_slope_intersect(slope: float, intercept: float) -> Line:
@@ -166,15 +181,50 @@ def line_from_slope_intersect(slope: float, intercept: float) -> Line:
     return _ck_line((slope, -1.0, intercept))
 
 
+def matrix_rot(ang_rad: Union[Arr, float]) -> Arr:
+    # UNTESTED!!
+    sin = jnp.sin(ang_rad)
+    cos = jnp.cos(ang_rad)
+
+    return jnp.array(
+        [
+            [cos, -sin, 0.0],
+            [sin, cos, 0.0],
+            [0.0, 0.0, 1.0],
+        ]
+    )
+
+
+def matrix_trans(dx: Union[Arr, float] = 0.0, dy: Union[Arr, float] = 0.0) -> Arr:
+    # UNTESTED!!
+    return jnp.array(
+        [
+            [1.0, 0.0, dx],
+            [0.0, 1.0, dy],
+            [0.0, 0.0, 1.0],
+        ]
+    )
+
+
+def shift_line(l: Line, d: Union[Arr, float]) -> Line:
+    # UNTESTED!!
+    return _ck_line(_ck_line(l) + jnp.array([0.0, 0.0, jnp.linalg.norm(l[:2]) * d]))
+
+
 def angle_bisector(l1: Line, l2: Line) -> Line:
+    # UNTESTED!!
     l1 = _ck_line(l1)
     l2 = _ck_line(l2)
 
-    if np.dot(l1[:2], l2[:2]) < 0:
-        l2 = -l2
+    l2 = jnp.where(
+        jnp.dot(l1[:2], l2[:2]) < 0,
+        # flip if true
+        -l2,
+        l2,
+    )
 
-    r1 = np.linalg.norm(l1[:2])
-    r2 = np.linalg.norm(l2[:2])
+    r1 = jnp.linalg.norm(l1[:2])
+    r2 = jnp.linalg.norm(l2[:2])
 
     return _ck_line(l1 * r2 + l2 * r1)
 
@@ -208,7 +258,7 @@ def get_horizon(x_dist: float | None = None) -> int:
 def _get_2_points(l: Line):
     """get two distinct points on a line"""
     l = _ck_line(l)
-    l = l / np.linalg.norm(l)
+    l = l / jnp.linalg.norm(l)
 
     if abs(l[0]) <= 1e-3:
         # approx y=* line
@@ -259,21 +309,33 @@ class LinePlotXY(LinePlot):
         unreachable(l)
 
 
-class ImagPlotXY:
+class ImagPlot:
     def __init__(self, ax: Axes):
         self.ax = ax
         self.image: Optional[AxesImage] = None
 
-    def set_uv_imag(self, image: Image.Image):
-        image_ = cv2.warpPerspective(
-            np.array(image),
-            matrix_xy_to_xyplot() @ matrix_uv_to_xy(),
-            (400, 200),
-        )
+    def set_imag(self, image: Image.Image | np.ndarray):
+        image_ = np.array(image)
         if self.image is None:
             self.image = self.ax.imshow(image_)
+            self.ax.set_xlim(0, image_.shape[1])
+            self.ax.set_ylim(image_.shape[0], 0)
         else:
             self.image.set_data(image_)
+
+
+class ImagPlotXY(ImagPlot):
+    def __init__(self, ax: Axes):
+        self.ax = ax
+        self.image: Optional[AxesImage] = None
+
+    def set_uv_imag(self, image: Image.Image | np.ndarray):
+        image_ = cv2.warpPerspective(
+            np.array(image),
+            cast_unchecked_(matrix_xy_to_xyplot() @ matrix_uv_to_xy()),
+            (400, 200),
+        )
+        super().set_imag(image_)
 
 
 def setup_xy_plot(ax: Axes):
