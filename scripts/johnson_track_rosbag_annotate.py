@@ -16,7 +16,6 @@ from final_challenge.alan import FrameData
 from final_challenge.alan.rosbag import get_images
 from final_challenge.alan.sam2_video_predictor_example import (
     get_mask,
-    show_points,
 )
 from final_challenge.alan.utils import cast_unchecked_
 

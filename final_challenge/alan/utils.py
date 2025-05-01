@@ -1,5 +1,7 @@
 from typing import Any, Callable, Generic, Iterable, ParamSpec, TypeVar, final
 
+from typing_extensions import Never
+
 T = TypeVar("T")
 R = TypeVar("R")
 P = ParamSpec("P")
@@ -59,3 +61,7 @@ def zip(*args):
     for arg in args[1:]:
         assert len(arg) == n, f"length mismatch: {list(map(len, args))}"
     return list(old_zip(*args))
+
+
+def unreachable(x: Never) -> Never:
+    raise RuntimeError("unreachable", x)

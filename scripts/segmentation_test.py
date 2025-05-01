@@ -1,40 +1,25 @@
 from __future__ import annotations
 
-import itertools
-import json
-import random
 import time
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import equinox as eqx
 import jax
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 import tqdm
 from jax import Array
 from jax import numpy as jnp
 from jax.typing import ArrayLike
 from PIL import Image
-from sam2.build_sam import build_sam2_video_predictor
-from sam2.sam2_video_predictor import SAM2VideoPredictor
-from sam2.utils.misc import load_video_frames_from_jpg_images
-from scipy.ndimage import convolve, uniform_filter
-from sklearn.svm import SVC
+from scipy.ndimage import uniform_filter
 
 from final_challenge.alan import FrameData
-from final_challenge.alan.rosbag import get_images
-from final_challenge.alan.sam2_video_predictor_example import (
-    get_mask,
-    show_points,
-)
-from final_challenge.alan.utils import cast_unchecked_
 from final_challenge.homography import (
+    LinePlot,
+    LinePlotXY,
     line_from_slope_intersect,
-    plot_line,
-    setup_plot,
-    update_plot_line,
+    setup_xy_plot,
     uv_to_xy_line,
 )
 from libracecar.utils import jit, tree_at_
@@ -233,13 +218,13 @@ def plot_data():
     l1 = mask_to_line(first.out_left_bool)
     l2 = mask_to_line(first.out_right_bool)
 
-    setup_plot(ax2)
+    setup_xy_plot(ax2)
 
-    line_left = plot_line(ax1, l1)
-    line_right = plot_line(ax1, l2)
+    line_left = LinePlot(ax1)
+    line_right = LinePlot(ax1)
 
-    line_left_xy = plot_line(ax2, uv_to_xy_line(l1))
-    line_right_xy = plot_line(ax2, uv_to_xy_line(l2))
+    line_left_xy = LinePlotXY(ax2)
+    line_right_xy = LinePlotXY(ax2)
 
     for cur in it:
 
@@ -248,11 +233,11 @@ def plot_data():
         l1 = mask_to_line(cur.out_left_bool)
         l2 = mask_to_line(cur.out_right_bool)
 
-        update_plot_line(line_left, l1)
-        update_plot_line(line_right, l2)
+        line_left.set_line(l1)
+        line_right.set_line(l2)
 
-        update_plot_line(line_left_xy, uv_to_xy_line(l1))
-        update_plot_line(line_right_xy, uv_to_xy_line(l2))
+        line_left_xy.set_xy_line(uv_to_xy_line(l1))
+        line_right_xy.set_xy_line(uv_to_xy_line(l2))
 
         fig.canvas.draw()
         fig.canvas.flush_events()

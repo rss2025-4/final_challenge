@@ -14,12 +14,17 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Union
+from typing import Optional, Union
 
 import cv2
 import numpy as np
 from matplotlib.axes import Axes
+from matplotlib.image import AxesImage
 from matplotlib.lines import AxLine
+from PIL import Image
+from typing_extensions import Never
+
+from .alan.utils import unreachable
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +53,7 @@ METERS_PER_INCH = 0.0254
 
 
 @functools.cache
-def get_homography_matrix():
+def matrix_uv_to_xy():
     np_pts_ground = np.array(PTS_GROUND_PLANE)
     np_pts_ground = np_pts_ground * METERS_PER_INCH
     np_pts_ground = np_pts_ground[:, np.newaxis, :]
@@ -58,8 +63,13 @@ def get_homography_matrix():
     np_pts_image = np_pts_image[:, np.newaxis, :]
 
     ans, err = cv2.findHomography(np_pts_image, np_pts_ground)
-    logger.warning(f"err {err}")
+    logger.warning(f"matrix_uv_to_xy: findHomography: err={err}")
     return np.array(ans)
+
+
+@functools.cache
+def matrix_xy_to_uv():
+    return np.linalg.inv(matrix_uv_to_xy())
 
 
 #: A parameter annotated with `Point` can take one of
@@ -104,7 +114,7 @@ def point_coord(x: Point) -> tuple[float, float]:
     ans = _ck_point(x)
     z = ans[2]
     if abs(z) <= 1e-10:
-        logger.warn(f"getting coordinate of far-away pont {x}")
+        logger.warning(f"getting coordinate of far-away pont {x}")
         z = 1e-8
     return float(ans[0] / z), float(ans[1] / z)
 
@@ -123,25 +133,24 @@ _image_bottom: Line = (0.0, 1.0, -H)
 
 
 def xy_to_uv_point(point: Point) -> Point:
-    return _ck_point(get_homography_matrix() @ _ck_point(point))
+    return _ck_point(matrix_uv_to_xy() @ _ck_point(point))
+
+
+def homography_line(matrix: np.ndarray, line: Line) -> Line:
+    # <prev, line> == 0
+    # <=>
+    # <M^-1 @ ans, line> == 0
+    # <=>
+    # <uv, M^T^-1 @ line> == 0
+    return _ck_line(np.linalg.inv(matrix.T) @ _ck_line(line))
 
 
 def xy_to_uv_line(line: Line) -> Line:
-    # <xy, line> == 0
-    # <=>
-    # <M @ uv, line> == 0
-    # <=>
-    # <uv, M^T @ line> == 0
-    return _ck_line(get_homography_matrix().T @ _ck_line(line))
+    return homography_line(matrix_xy_to_uv(), line)
 
 
 def uv_to_xy_line(line: Line) -> Line:
-    # <uv, line> == 0
-    # <=>
-    # <M^-1 @ uv, line> == 0
-    # <=>
-    # <uv, M^-1^T @ line> == 0
-    return _ck_line(np.linalg.inv(get_homography_matrix()).T @ _ck_line(line))
+    return homography_line(matrix_uv_to_xy(), line)
 
 
 def line_intersect(l1: Line, l2: Line) -> Point:
@@ -155,6 +164,19 @@ def line_through_points(l1: Point, l2: Point) -> Line:
 def line_from_slope_intersect(slope: float, intercept: float) -> Line:
     # mx -y + b
     return _ck_line((slope, -1.0, intercept))
+
+
+def angle_bisector(l1: Line, l2: Line) -> Line:
+    l1 = _ck_line(l1)
+    l2 = _ck_line(l2)
+
+    if np.dot(l1[:2], l2[:2]) < 0:
+        l2 = -l2
+
+    r1 = np.linalg.norm(l1[:2])
+    r2 = np.linalg.norm(l2[:2])
+
+    return _ck_line(l1 * r2 + l2 * r1)
 
 
 @functools.cache
@@ -184,6 +206,7 @@ def get_horizon(x_dist: float | None = None) -> int:
 
 
 def _get_2_points(l: Line):
+    """get two distinct points on a line"""
     l = _ck_line(l)
     l = l / np.linalg.norm(l)
 
@@ -195,26 +218,76 @@ def _get_2_points(l: Line):
         p1 = point_coord(line_intersect(l, (0.0, 1.0, 0.0)))  # y == 0
         p2 = point_coord(line_intersect(l, (0.0, 1.0, -1.0)))  # y == 1
 
-    # return (p1[1], p1[0]), (p2[1], p2[0])
     return p1, p2
 
 
-def plot_line(ax: Axes, l: Line) -> AxLine:
-    p1, p2 = _get_2_points(l)
-    return ax.axline(xy1=p1, xy2=p2)
+class LinePlot:
+    def __init__(self, ax: Axes):
+        self.ax = ax
+        self.line: Optional[AxLine] = None
+
+    def set_line(self, l: Line):
+        p1, p2 = _get_2_points(l)
+        if self.line is None:
+            self.line = self.ax.axline(xy1=p1, xy2=p2)
+        else:
+            self.line.set_xy1(p1)
+            self.line.set_xy2(p2)
 
 
-def update_plot_line(plot: AxLine, l: Line):
-    p1, p2 = _get_2_points(l)
-    plot.set_xy1(p1)
-    plot.set_xy2(p2)
+@functools.cache
+def matrix_xy_to_xyplot():
+    return (
+        #
+        np.diag([100, 100, 1])
+        @ np.array(
+            [
+                [0, -1, 2],
+                [-1, 0, 2],
+                [0, 0, 1],
+            ]
+        )
+    )
 
 
-def setup_plot(ax: Axes):
-    ax.set_xlim(-1, 15)
-    ax.set_ylim(-5, 5)
+class LinePlotXY(LinePlot):
+    def set_xy_line(self, l: Line):
+        super().set_line(homography_line(matrix_xy_to_xyplot(), l))
+
+    def set_line(self, l: Never):
+        """you probably dont want to call this"""
+        unreachable(l)
+
+
+class ImagPlotXY:
+    def __init__(self, ax: Axes):
+        self.ax = ax
+        self.image: Optional[AxesImage] = None
+
+    def set_uv_imag(self, image: Image.Image):
+        image_ = cv2.warpPerspective(
+            np.array(image),
+            matrix_xy_to_xyplot() @ matrix_uv_to_xy(),
+            (400, 200),
+        )
+        if self.image is None:
+            self.image = self.ax.imshow(image_)
+        else:
+            self.image.set_data(image_)
+
+
+def setup_xy_plot(ax: Axes):
+    ax.set_xlim(0, 400)
+    ax.set_ylim(200, 0)
     ax.set_aspect("equal")
 
-    plot_line(ax, uv_to_xy_line(_image_left))
-    plot_line(ax, uv_to_xy_line(_image_right))
-    plot_line(ax, uv_to_xy_line(_image_bottom))
+    LinePlotXY(ax).set_xy_line(uv_to_xy_line(_image_left))
+    LinePlotXY(ax).set_xy_line(uv_to_xy_line(_image_right))
+    LinePlotXY(ax).set_xy_line(uv_to_xy_line(_image_bottom))
+
+
+@functools.cache
+def xy_plot_top_to_uv_line():
+    return homography_line(
+        matrix_xy_to_uv() @ np.linalg.inv(matrix_xy_to_xyplot()), (0.0, 1.0, 0.0)
+    )
