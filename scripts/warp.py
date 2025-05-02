@@ -18,7 +18,7 @@ np.set_printoptions(precision=7, suppress=True)
 
 
 def plot_data():
-    bagpath = Path("/home/alan/6.4200/rosbags_4_29/bag2")
+    bagpath = Path("/home/alan/6.4200/rosbags_5_1/out_bag2")
     messages = get_images(bagpath)
 
     plt.ion()
@@ -37,7 +37,7 @@ def plot_data():
 
     viz_img = ax1.imshow(np.array(first.image))
     ax1.set_ylim((first.image.height, 0))
-    LinePlot(ax1).set_line(xy_plot_top_to_uv_line())
+    # LinePlot(ax1).set_line(xy_plot_top_to_uv_line())
 
     setup_xy_plot(ax2)
     wrap_img = ImagPlotXY(ax2)

@@ -359,7 +359,7 @@ def plot_data():
 
         # line_right.set_line(l2)
 
-        line_left_xy.set_xy_line(line)
+        line_left_xy.set_line(line)
         # line_right_xy.set_xy_line(uv_to_xy_line(l2))
 
         fig.canvas.draw()

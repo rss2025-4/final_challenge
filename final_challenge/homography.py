@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import cv2
 import numpy as np
@@ -229,6 +229,18 @@ def angle_bisector(l1: Line, l2: Line) -> Line:
     return _ck_line(l1 * r2 + l2 * r1)
 
 
+def get_foot(point: Point, line: Line) -> Point:
+    x, y, z = _ck_point(point)
+    a, b, c = _ck_line(line)
+
+    ans = (
+        b * b * x - a * b * y - a * c * z,
+        a * a * y - a * b * x - b * c * z,
+        a * a * z + b * b * z,
+    )
+    return _ck_point(jnp.array(ans))
+
+
 @functools.cache
 def get_horizon(x_dist: float | None = None) -> int:
     """
@@ -272,14 +284,15 @@ def _get_2_points(l: Line):
 
 
 class LinePlot:
-    def __init__(self, ax: Axes):
+    def __init__(self, ax: Axes, **kwargs):
         self.ax = ax
         self.line: Optional[AxLine] = None
+        self.kwargs = kwargs
 
     def set_line(self, l: Line):
         p1, p2 = _get_2_points(l)
         if self.line is None:
-            self.line = self.ax.axline(xy1=p1, xy2=p2)
+            self.line = self.ax.axline(xy1=p1, xy2=p2, **self.kwargs)
         else:
             self.line.set_xy1(p1)
             self.line.set_xy2(p2)
@@ -301,12 +314,8 @@ def matrix_xy_to_xyplot():
 
 
 class LinePlotXY(LinePlot):
-    def set_xy_line(self, l: Line):
-        super().set_line(homography_line(matrix_xy_to_xyplot(), l))
-
-    def set_line(self, l: Never):
-        """you probably dont want to call this"""
-        unreachable(l)
+    def set_line(self, l: Line, **kwargs):
+        super().set_line(homography_line(matrix_xy_to_xyplot(), l), **kwargs)
 
 
 class ImagPlot:
@@ -343,9 +352,9 @@ def setup_xy_plot(ax: Axes):
     ax.set_ylim(200, 0)
     ax.set_aspect("equal")
 
-    LinePlotXY(ax).set_xy_line(uv_to_xy_line(_image_left))
-    LinePlotXY(ax).set_xy_line(uv_to_xy_line(_image_right))
-    LinePlotXY(ax).set_xy_line(uv_to_xy_line(_image_bottom))
+    LinePlotXY(ax).set_line(uv_to_xy_line(_image_left))
+    LinePlotXY(ax).set_line(uv_to_xy_line(_image_right))
+    LinePlotXY(ax).set_line(uv_to_xy_line(_image_bottom))
 
 
 @functools.cache
