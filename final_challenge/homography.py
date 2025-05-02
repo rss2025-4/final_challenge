@@ -229,6 +229,18 @@ def angle_bisector(l1: Line, l2: Line) -> Line:
     return _ck_line(l1 * r2 + l2 * r1)
 
 
+def get_foot(point: Point, line: Line) -> Point:
+    x, y, z = _ck_point(point)
+    a, b, c = _ck_line(line)
+
+    ans = (
+        b * b * x - a * b * y - a * c * z,
+        a * a * y - a * b * x - b * c * z,
+        a * a * z + b * b * z,
+    )
+    return _ck_point(jnp.array(ans))
+
+
 @functools.cache
 def get_horizon(x_dist: float | None = None) -> int:
     """

@@ -10,8 +10,10 @@ import equinox as eqx
 import jax
 import matplotlib.pyplot as plt
 import numpy as np
+import rclpy
 import tf2_ros
 import tqdm
+from ackermann_msgs.msg import AckermannDrive, AckermannDriveStamped
 from geometry_msgs.msg import PoseWithCovariance
 from jax import Array, lax
 from jax import numpy as jnp
@@ -42,6 +44,7 @@ from libracecar.utils import timer
 
 from ..homography import (
     ImagPlot,
+    Line,
     LinePlot,
     LinePlotXY,
     _ck_line,
@@ -63,6 +66,8 @@ class TrackerConfig:
     #: initial y location; currently assuming heading exactly +x
     init_y: float = 0.5
 
+    target_y: float | None = None
+
     base_frame: str = "base_link"
 
     odom_sub_topic: str = "/vesc/odom"
@@ -71,6 +76,11 @@ class TrackerConfig:
 
     time_overwrite: bool = False
     invert_odom: bool = True
+
+    def get_target_y(self) -> float:
+        if self.target_y is None:
+            return self.init_y
+        return self.target_y
 
 
 class TrackerNode(Node):
@@ -93,6 +103,10 @@ class TrackerNode(Node):
 
         self.odom_sub = self.create_subscription(
             Odometry, self.cfg.odom_sub_topic, self.odom_callback, 1
+        )
+
+        self.drive_pub = self.create_publisher(
+            AckermannDriveStamped, "/vesc/high_level/input/nav_0", 1
         )
 
         self.line_xy = _ck_line((0.0, 1.0, -self.cfg.init_y))
@@ -143,6 +157,11 @@ class TrackerNode(Node):
         # self.do_publish()
         # print()
 
+    def get_angle(self, target_line: Line):
+        # ax + by + c = 0
+        # b a
+        pass
+
     def image_callback(self, msg: Image):
         print("image_callback")
         self._counter += 1
@@ -160,6 +179,20 @@ class TrackerNode(Node):
             jax.block_until_ready(self.line_xy)
 
             print("image cb: took", t.update())
+
+            target_line = shift_line(self.line_xy, self.cfg.get_target_y())
+
+            drive_cmd = AckermannDriveStamped()
+
+            drive = AckermannDrive()
+            drive.steering_angle = ang
+            drive.speed = 0.2
+            # drive.steering_angle = 0.0
+            # drive.speed = 0.0
+
+            drive_cmd.drive = drive
+
+            self.drive_pub.publish(drive_cmd)
 
             if self._counter % 10 != 0:
                 return
