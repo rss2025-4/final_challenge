@@ -161,6 +161,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">unreachable</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Never</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Never</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;unreachable&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></div>
 
+
+
+<div class="viewcode-block" id="check">
+<a class="viewcode-back" href="../../../alan.html#final_challenge.alan.utils.check">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;not equal: </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
 </pre></div>
 
            </div>

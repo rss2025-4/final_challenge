@@ -62,6 +62,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.matrix_trans"><code class="docutils literal notranslate"><span class="pre">matrix_trans()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.shift_line"><code class="docutils literal notranslate"><span class="pre">shift_line()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.angle_bisector"><code class="docutils literal notranslate"><span class="pre">angle_bisector()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.get_foot"><code class="docutils literal notranslate"><span class="pre">get_foot()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.get_horizon"><code class="docutils literal notranslate"><span class="pre">get_horizon()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.LinePlot"><code class="docutils literal notranslate"><span class="pre">LinePlot</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#final_challenge.homography.LinePlot.__init__"><code class="docutils literal notranslate"><span class="pre">LinePlot.__init__()</span></code></a></li>
@@ -70,7 +71,6 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.matrix_xy_to_xyplot"><code class="docutils literal notranslate"><span class="pre">matrix_xy_to_xyplot()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.LinePlotXY"><code class="docutils literal notranslate"><span class="pre">LinePlotXY</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#final_challenge.homography.LinePlotXY.set_xy_line"><code class="docutils literal notranslate"><span class="pre">LinePlotXY.set_xy_line()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#final_challenge.homography.LinePlotXY.set_line"><code class="docutils literal notranslate"><span class="pre">LinePlotXY.set_line()</span></code></a></li>
 </ul>
 </li>
@@ -225,6 +225,11 @@ use <a class="reference internal" href="#final_challenge.homography.point_coord"
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.get_foot">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">get_foot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Line</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Point</span></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#get_foot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.get_foot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="final_challenge.homography.get_horizon">
 <span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">get_horizon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_dist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#get_horizon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.get_horizon" title="Link to this definition"></a></dt>
 <dd><p>line of horizon in image, in pixels from the top</p>
@@ -239,7 +244,7 @@ use <a class="reference internal" href="#final_challenge.homography.point_coord"
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">LinePlot</span></span><a class="reference internal" href="_modules/final_challenge/homography.html#LinePlot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.LinePlot" title="Link to this definition"></a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="final_challenge.homography.LinePlot.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.1)"><span class="pre">Axes</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/final_challenge/homography.html#LinePlot.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.LinePlot.__init__" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="(in Matplotlib v3.10.1)"><span class="pre">Axes</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/final_challenge/homography.html#LinePlot.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.LinePlot.__init__" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -258,15 +263,9 @@ use <a class="reference internal" href="#final_challenge.homography.point_coord"
 <dt class="sig sig-object py" id="final_challenge.homography.LinePlotXY">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">LinePlotXY</span></span><a class="reference internal" href="_modules/final_challenge/homography.html#LinePlotXY"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.LinePlotXY" title="Link to this definition"></a></dt>
 <dd><dl class="py method">
-<dt class="sig sig-object py" id="final_challenge.homography.LinePlotXY.set_xy_line">
-<span class="sig-name descname"><span class="pre">set_xy_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Line</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/final_challenge/homography.html#LinePlotXY.set_xy_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.LinePlotXY.set_xy_line" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="final_challenge.homography.LinePlotXY.set_line">
-<span class="sig-name descname"><span class="pre">set_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Never</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/final_challenge/homography.html#LinePlotXY.set_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.LinePlotXY.set_line" title="Link to this definition"></a></dt>
-<dd><p>you probably dont want to call this</p>
-</dd></dl>
+<span class="sig-name descname"><span class="pre">set_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Line</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/final_challenge/homography.html#LinePlotXY.set_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.LinePlotXY.set_line" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 

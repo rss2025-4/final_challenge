@@ -86,7 +86,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -346,6 +346,21 @@
 
 
 
+<div class="viewcode-block" id="get_foot">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.get_foot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_foot</span><span class="p">(</span><span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Point</span><span class="p">:</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">point</span><span class="p">)</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+    <span class="n">ans</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">b</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">x</span> <span class="o">-</span> <span class="n">a</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">y</span> <span class="o">-</span> <span class="n">a</span> <span class="o">*</span> <span class="n">c</span> <span class="o">*</span> <span class="n">z</span><span class="p">,</span>
+        <span class="n">a</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">y</span> <span class="o">-</span> <span class="n">a</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">x</span> <span class="o">-</span> <span class="n">b</span> <span class="o">*</span> <span class="n">c</span> <span class="o">*</span> <span class="n">z</span><span class="p">,</span>
+        <span class="n">a</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">z</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">z</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_ck_point</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ans</span><span class="p">))</span></div>
+
+
+
 <div class="viewcode-block" id="get_horizon">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.get_horizon">[docs]</a>
 <span class="nd">@functools</span><span class="o">.</span><span class="n">cache</span>
@@ -396,9 +411,10 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">LinePlot</span><span class="p">:</span>
 <div class="viewcode-block" id="LinePlot.__init__">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.LinePlot.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">ax</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AxLine</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AxLine</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span></div>
 
 
 <div class="viewcode-block" id="LinePlot.set_line">
@@ -406,7 +422,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">set_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="n">Line</span><span class="p">):</span>
         <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">_get_2_points</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">line</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">axline</span><span class="p">(</span><span class="n">xy1</span><span class="o">=</span><span class="n">p1</span><span class="p">,</span> <span class="n">xy2</span><span class="o">=</span><span class="n">p2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">axline</span><span class="p">(</span><span class="n">xy1</span><span class="o">=</span><span class="n">p1</span><span class="p">,</span> <span class="n">xy2</span><span class="o">=</span><span class="n">p2</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="o">.</span><span class="n">set_xy1</span><span class="p">(</span><span class="n">p1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="o">.</span><span class="n">set_xy2</span><span class="p">(</span><span class="n">p2</span><span class="p">)</span></div>
@@ -435,17 +451,10 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">LinePlotXY</span><span class="p">(</span><span class="n">LinePlot</span><span class="p">):</span>
-<div class="viewcode-block" id="LinePlotXY.set_xy_line">
-<a class="viewcode-back" href="../../homography.html#final_challenge.homography.LinePlotXY.set_xy_line">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_xy_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="n">Line</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_line</span><span class="p">(</span><span class="n">homography_line</span><span class="p">(</span><span class="n">matrix_xy_to_xyplot</span><span class="p">(),</span> <span class="n">l</span><span class="p">))</span></div>
-
-
 <div class="viewcode-block" id="LinePlotXY.set_line">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.LinePlotXY.set_line">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="n">Never</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;you probably dont want to call this&quot;&quot;&quot;</span>
-        <span class="n">unreachable</span><span class="p">(</span><span class="n">l</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="n">Line</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_line</span><span class="p">(</span><span class="n">homography_line</span><span class="p">(</span><span class="n">matrix_xy_to_xyplot</span><span class="p">(),</span> <span class="n">l</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 </div>
 
 
@@ -504,9 +513,9 @@
     <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s2">&quot;equal&quot;</span><span class="p">)</span>
 
-    <span class="n">LinePlotXY</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span><span class="o">.</span><span class="n">set_xy_line</span><span class="p">(</span><span class="n">uv_to_xy_line</span><span class="p">(</span><span class="n">_image_left</span><span class="p">))</span>
-    <span class="n">LinePlotXY</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span><span class="o">.</span><span class="n">set_xy_line</span><span class="p">(</span><span class="n">uv_to_xy_line</span><span class="p">(</span><span class="n">_image_right</span><span class="p">))</span>
-    <span class="n">LinePlotXY</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span><span class="o">.</span><span class="n">set_xy_line</span><span class="p">(</span><span class="n">uv_to_xy_line</span><span class="p">(</span><span class="n">_image_bottom</span><span class="p">))</span></div>
+    <span class="n">LinePlotXY</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span><span class="o">.</span><span class="n">set_line</span><span class="p">(</span><span class="n">uv_to_xy_line</span><span class="p">(</span><span class="n">_image_left</span><span class="p">))</span>
+    <span class="n">LinePlotXY</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span><span class="o">.</span><span class="n">set_line</span><span class="p">(</span><span class="n">uv_to_xy_line</span><span class="p">(</span><span class="n">_image_right</span><span class="p">))</span>
+    <span class="n">LinePlotXY</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span><span class="o">.</span><span class="n">set_line</span><span class="p">(</span><span class="n">uv_to_xy_line</span><span class="p">(</span><span class="n">_image_bottom</span><span class="p">))</span></div>
 
 
 
