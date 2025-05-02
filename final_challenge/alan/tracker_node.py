@@ -159,7 +159,7 @@ class TrackerNode(Node):
         # self.do_publish()
         # print()
 
-    def get_angle(self, target_line: Line):
+    def pure_pursuit(self, target_line: Line):
         x, y = np.array(point_coord(get_foot((0, 0), target_line)))
 
         dist = np.linalg.norm([x, y])
@@ -167,19 +167,29 @@ class TrackerNode(Node):
         lookahead = 5
 
         forward_dist = lookahead**2 - dist**2
-        print("forward_dist", forward_dist)
-
+        if forward_dist < 0:
+            print("forward_dist negative", forward_dist)
         forward_dist = np.sqrt(forward_dist)
 
-        tmp = np.array([-y, x])
-        tmp = tmp / np.linalg.norm(tmp)
+        forward_dir = np.array([-y, x])
+        forward_dir = forward_dir / np.linalg.norm(forward_dir)
+        if forward_dir[0] < 0:
+            forward_dir = -forward_dir
 
-        forward_point = np.array([x, y]) + forward_dist * tmp
-        print("forward_point")
+        forward_point = np.array([x, y]) + forward_dist * forward_dir
+        print("forward_point", forward_point)
 
-        # ax + by + c = 0
-        # b a
-        pass
+        drive_cmd = AckermannDriveStamped()
+
+        drive = AckermannDrive()
+        drive.steering_angle = forward_point[1] / forward_point[0]
+        drive.speed = 0.2
+        # drive.steering_angle = 0.0
+        # drive.speed = 0.0
+
+        drive_cmd.drive = drive
+
+        self.drive_pub.publish(drive_cmd)
 
     def image_callback(self, msg: Image):
         print("image_callback")
@@ -201,30 +211,20 @@ class TrackerNode(Node):
 
             target_line = shift_line(self.line_xy, self.cfg.get_target_y())
 
-            drive_cmd = AckermannDriveStamped()
+            self.pure_pursuit(target_line)
 
-            drive = AckermannDrive()
-            drive.steering_angle = ang
-            drive.speed = 0.2
-            # drive.steering_angle = 0.0
-            # drive.speed = 0.0
+            # if self._counter % 10 != 0:
+            #     return
 
-            drive_cmd.drive = drive
+            # self.image_plot.set_imag(image.image)
 
-            self.drive_pub.publish(drive_cmd)
+            # for s, l in zip(self.cfg.shifts, self.lines_plot):
+            #     l.set_line(xy_to_uv_line(shift_line(self.line_xy, s)))
 
-            if self._counter % 10 != 0:
-                return
+            # for s, l in zip(self.cfg.shifts, self.lines_plot_xy):
+            #     l.set_line(shift_line(self.line_xy, s))
 
-            self.image_plot.set_imag(image.image)
+            # self.fig.canvas.draw()
+            # self.fig.canvas.flush_events()
 
-            for s, l in zip(self.cfg.shifts, self.lines_plot):
-                l.set_line(xy_to_uv_line(shift_line(self.line_xy, s)))
-
-            for s, l in zip(self.cfg.shifts, self.lines_plot_xy):
-                l.set_line(shift_line(self.line_xy, s))
-
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
-
-            print("matplotlib: took", t.update())
+            # print("matplotlib: took", t.update())
