@@ -127,8 +127,7 @@ class TrackerNode(Node):
 
         self.image_plot = ImagPlot(self.ax1)
         self.lines_plot = [
-            LinePlot(self.ax1, color=cmap(i / shifts_len))
-            for i, _ in enumerate(cfg.shifts)
+            LinePlot(self.ax1, color=cmap(i / shifts_len)) for i, _ in enumerate(cfg.shifts)
         ]
 
         setup_xy_plot(self.ax2)
@@ -207,15 +206,11 @@ class TrackerNode(Node):
 
             color_mask = color_counter.apply_filter(self.color_filter, image.image)
             color_mask = (
-                uniform_filter(
-                    color_mask.astype(np.float32), size=3, mode="constant", cval=0.0
-                )
+                uniform_filter(color_mask.astype(np.float32), size=3, mode="constant", cval=0.0)
                 > 1e-8
             )
 
-            self.line_xy = update_line(
-                color_mask, self.line_xy, jnp.array(self.cfg.shifts)
-            )
+            self.line_xy = update_line(color_mask, self.line_xy, jnp.array(self.cfg.shifts))
             jax.block_until_ready(self.line_xy)
 
             print("image cb: took", t.update())
