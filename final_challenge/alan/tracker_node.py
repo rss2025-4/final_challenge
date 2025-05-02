@@ -102,11 +102,21 @@ class TrackerNode(Node):
         self.ax1 = self.fig.add_subplot(1, 2, 1)
         self.ax2 = self.fig.add_subplot(1, 2, 2)
 
+        cmap = plt.get_cmap("turbo")
+        x = cmap(0)
+
+        shifts_len = len(cfg.shifts)
+
         self.image_plot = ImagPlot(self.ax1)
-        self.lines_plot = [LinePlot(self.ax1) for _ in self.cfg.shifts]
+        self.lines_plot = [
+            LinePlot(self.ax1, color=cmap(i / shifts_len)) for i, _ in enumerate(cfg.shifts)
+        ]
 
         setup_xy_plot(self.ax2)
-        self.lines_plot_xy = [LinePlotXY(self.ax2) for _ in self.cfg.shifts]
+        self.lines_plot_xy = [
+            LinePlotXY(self.ax2, color=cmap(i / shifts_len), linewidth=6)
+            for i, _ in enumerate(cfg.shifts)
+        ]
 
     def odom_callback(self, msg: Odometry):
         check(msg.child_frame_id, self.cfg.base_frame)
@@ -147,7 +157,7 @@ class TrackerNode(Node):
 
         for s, l in zip(self.cfg.shifts, self.lines_plot_xy):
             print("shift", shift_line(self.line_xy, s))
-            l.set_xy_line(shift_line(self.line_xy, s))
+            l.set_line(shift_line(self.line_xy, s))
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
