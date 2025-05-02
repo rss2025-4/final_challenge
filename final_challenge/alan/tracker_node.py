@@ -56,7 +56,7 @@ from .utils import check
 @dataclass
 class TrackerConfig:
     #: list of parellel lines, in meters
-    shifts: list[float] = field(default_factory=lambda: [-2.0, 1.0, 0.0, 1.0, 2.0])
+    shifts: list[float] = field(default_factory=lambda: [-2.0, -1.0, 0.0, 1.0, 2.0])
 
     #: initial y location; currently assuming heading exactly +x
     init_y: float = 0.5
@@ -146,6 +146,7 @@ class TrackerNode(Node):
             l.set_line(xy_to_uv_line(shift_line(self.line_xy, s)))
 
         for s, l in zip(self.cfg.shifts, self.lines_plot_xy):
+            print("shift", shift_line(self.line_xy, s))
             l.set_xy_line(shift_line(self.line_xy, s))
 
         self.fig.canvas.draw()
