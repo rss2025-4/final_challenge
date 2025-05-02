@@ -1,0 +1,29 @@
+name: tests
+on:
+  push:
+
+env:
+  PROJECT_DIR: ./src/final_challenge
+  BETTER_EXCEPTIONS: 1
+  FORCE_COLOR: 1
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: sebagarc/racecar2
+      options: --privileged --user root
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+
+      - if: success() || failure()
+        name: Run tests
+        uses: ./.github/actions/run_venv
+        with:
+          commands: |
+            pytest -s
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}

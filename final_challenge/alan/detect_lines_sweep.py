@@ -1,38 +1,19 @@
 from __future__ import annotations
 
-import itertools
-import time
-from pathlib import Path
-
 import equinox as eqx
 import jax
-import matplotlib.pyplot as plt
-import numpy as np
-import tqdm
-from jax import Array, lax
+from jax import Array
 from jax import numpy as jnp
 from jax.typing import ArrayLike
-from PIL import Image
-from scipy.ndimage import uniform_filter
 
-from final_challenge.alan import FrameData
-from final_challenge.alan.utils import cast
 from final_challenge.homography import (
-    ImagPlot,
     Line,
-    LinePlot,
-    LinePlotXY,
     homography_line,
-    homography_point,
-    line_from_slope_intersect,
     matrix_rot,
-    matrix_xy_to_uv,
-    setup_xy_plot,
     shift_line,
-    uv_to_xy_line,
     xy_to_uv_line,
 )
-from libracecar.utils import jit, pformat_repr, tree_at_, tree_select
+from libracecar.utils import jit, pformat_repr, tree_select
 
 
 class _score_line_res(eqx.Module):

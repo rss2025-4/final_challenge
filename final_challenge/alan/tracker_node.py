@@ -1,24 +1,13 @@
 from __future__ import annotations
 
-import itertools
-import time
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Callable
 
-import equinox as eqx
 import jax
 import matplotlib.pyplot as plt
 import numpy as np
-import rclpy
-import tf2_ros
-import tqdm
 from ackermann_msgs.msg import AckermannDrive, AckermannDriveStamped
-from geometry_msgs.msg import PoseWithCovariance
-from jax import Array, lax
 from jax import numpy as jnp
-from jax.typing import ArrayLike
-from nav_msgs.msg import OccupancyGrid, Odometry
+from nav_msgs.msg import Odometry
 from rclpy import Context
 from rclpy.node import Node
 from rclpy.qos import (
@@ -27,18 +16,11 @@ from rclpy.qos import (
     QoSProfile,
     QoSReliabilityPolicy,
 )
-from rclpy.time import Time
 from scipy.ndimage import uniform_filter
-from sensor_msgs.msg import Image, LaserScan
+from sensor_msgs.msg import Image
 from tf2_ros import (
-    Duration,
     Node,
-    PoseWithCovarianceStamped,
-    TransformBroadcaster,
-    TransformStamped,
-    rclpy,
 )
-from visualization_msgs.msg import Marker
 
 from libracecar.utils import timer
 
@@ -52,7 +34,6 @@ from ..homography import (
     point_coord,
     setup_xy_plot,
     shift_line,
-    xy_to_uv_line,
 )
 from .colors import color_counter, load_color_filter
 from .detect_lines_sweep import update_line
@@ -78,6 +59,8 @@ class TrackerConfig:
 
     time_overwrite: bool = False
     invert_odom: bool = True
+
+    matplotlib: bool = False
 
     def get_target_y(self) -> float:
         if self.target_y is None:
@@ -121,7 +104,6 @@ class TrackerNode(Node):
         self.ax2 = self.fig.add_subplot(1, 2, 2)
 
         cmap = plt.get_cmap("turbo")
-        x = cmap(0)
 
         shifts_len = len(cfg.shifts)
 

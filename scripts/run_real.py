@@ -1,16 +1,11 @@
 #!/usr/bin/env python
 
-import os
-import subprocess
 
-import better_exceptions
 import jax
 import numpy as np
 import rclpy
 
 from final_challenge.alan.tracker_node import TrackerConfig, TrackerNode
-from libracecar.sandbox import isolate
-from libracecar.test_utils import proc_manager
 
 jax.config.update("jax_default_device", jax.devices("cpu")[0])
 # jax.config.update("jax_platform_name", "cpu")

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import cv2
 import numpy as np
@@ -22,19 +22,20 @@ from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 from matplotlib.lines import AxLine
 from PIL import Image
-from typing_extensions import Never
 
-from .alan.utils import cast_unchecked_, unreachable
+from .alan.utils import cast_unchecked_
 
 try:
     from jax import Array
     from jax import numpy as jnp
 
     Arr = Union[Array, np.ndarray]
+    ArrLike = Union[Array, np.ndarray, float]
 except ModuleNotFoundError:
     jnp = np
     if not TYPE_CHECKING:
         Arr = np.ndarray
+        ArrLike = Union[np.ndarray, float]
 
 
 logger = logging.getLogger(__name__)
@@ -92,14 +93,18 @@ def matrix_xy_to_uv() -> np.ndarray:
 #:
 #: functions returning Point mostly returns in project coordinates.
 #: use :func:`point_coord` to convert to euclidean
-Point = Union[Arr, tuple[float, float]]
+Point = Union[Arr, tuple[ArrLike, ArrLike]]
 
 #: (a, b, c), represents the line ax + by + c = 0
 #:
 #: can be python or numpy.
 #:
 #: construct a Line with  :func:`line_from_slope_intersect`, :func:`line_through_points`
-Line = Union[Arr, tuple[float, float, float]]
+#:
+#: The "positive side" is points (x, y) such that ax + by + c >= 0
+#:
+#: The "direction" of the line is, direction == up <=> left is "positive side"
+Line = Union[Arr, tuple[ArrLike, ArrLike, ArrLike]]
 
 
 def _ck_line(x: Line) -> Arr:
@@ -128,6 +133,17 @@ def point_coord(x: Point) -> tuple[float, float]:
         logger.warning(f"getting coordinate of far-away pont {x}")
         z = 1e-8
     return float(ans[0] / z), float(ans[1] / z)
+
+
+def line_direction(line: Line, normalize: bool = False) -> Arr:
+    """vector of the direction of the line"""
+    a, b, _c = _ck_line(line)
+    ans = jnp.array([b, -a])
+
+    if normalize:
+        return ans / jnp.linalg.norm(ans)
+    else:
+        return ans
 
 
 W: int = 640
@@ -172,6 +188,16 @@ def line_intersect(l1: Line, l2: Line) -> Point:
     return _ck_point(jnp.cross(_ck_line(l1), _ck_line(l2)))
 
 
+def line_x_equals(x0: ArrLike):
+    # x == x0 line, pointing at +y direction
+    return _ck_line((-1.0, 0.0, x0))
+
+
+def line_y_equals(y0: ArrLike):
+    # y == y0 line, pointing at +x direction
+    return _ck_line((0.0, 1.0, -y0))
+
+
 def line_through_points(l1: Point, l2: Point) -> Line:
     return _ck_line(jnp.cross(_ck_point(l1), _ck_point(l2)))
 
@@ -181,8 +207,7 @@ def line_from_slope_intersect(slope: float, intercept: float) -> Line:
     return _ck_line((slope, -1.0, intercept))
 
 
-def matrix_rot(ang_rad: Union[Arr, float]) -> Arr:
-    # UNTESTED!!
+def matrix_rot(ang_rad: ArrLike) -> Arr:
     sin = jnp.sin(ang_rad)
     cos = jnp.cos(ang_rad)
 
@@ -195,8 +220,7 @@ def matrix_rot(ang_rad: Union[Arr, float]) -> Arr:
     )
 
 
-def matrix_trans(dx: Union[Arr, float] = 0.0, dy: Union[Arr, float] = 0.0) -> Arr:
-    # UNTESTED!!
+def matrix_trans(dx: ArrLike = 0.0, dy: ArrLike = 0.0) -> Arr:
     return jnp.array(
         [
             [1.0, 0.0, dx],
@@ -206,27 +230,28 @@ def matrix_trans(dx: Union[Arr, float] = 0.0, dy: Union[Arr, float] = 0.0) -> Ar
     )
 
 
-def shift_line(l: Line, d: Union[Arr, float]) -> Line:
-    # UNTESTED!!
-    return _ck_line(_ck_line(l) + jnp.array([0.0, 0.0, jnp.linalg.norm(l[:2]) * d]))
+def shift_line(l: Line, d: ArrLike) -> Line:
+    """shift line to the positive side by scalar d"""
+    l = _ck_line(l)
+    return _ck_line(l + jnp.array([0.0, 0.0, -jnp.linalg.norm(l[:2]) * d]))
 
 
-def angle_bisector(l1: Line, l2: Line) -> Line:
-    # UNTESTED!!
-    l1 = _ck_line(l1)
-    l2 = _ck_line(l2)
+# def angle_bisector(l1: Line, l2: Line) -> Line:
+#     # UNTESTED!!
+#     l1 = _ck_line(l1)
+#     l2 = _ck_line(l2)
 
-    l2 = jnp.where(
-        jnp.dot(l1[:2], l2[:2]) < 0,
-        # flip if true
-        -l2,
-        l2,
-    )
+#     l2 = jnp.where(
+#         jnp.dot(l1[:2], l2[:2]) < 0,
+#         # flip if true
+#         -l2,
+#         l2,
+#     )
 
-    r1 = jnp.linalg.norm(l1[:2])
-    r2 = jnp.linalg.norm(l2[:2])
+#     r1 = jnp.linalg.norm(l1[:2])
+#     r2 = jnp.linalg.norm(l2[:2])
 
-    return _ck_line(l1 * r2 + l2 * r1)
+#     return _ck_line(l1 * r2 + l2 * r1)
 
 
 def get_foot(point: Point, line: Line) -> Point:

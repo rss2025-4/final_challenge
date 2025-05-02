@@ -9,9 +9,7 @@ import numpy as np
 from final_challenge.alan.rosbag import get_images
 from final_challenge.homography import (
     ImagPlotXY,
-    LinePlot,
     setup_xy_plot,
-    xy_plot_top_to_uv_line,
 )
 
 np.set_printoptions(precision=7, suppress=True)

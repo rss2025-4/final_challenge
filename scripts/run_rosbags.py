@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import os
-import subprocess
 
 import rclpy
 
@@ -13,7 +11,6 @@ def main():
     import time
     from pathlib import Path
 
-    import better_exceptions
     import jax
     import numpy as np
 
