@@ -41,6 +41,8 @@ equinox = { version = "^0.12.1", optional = true }
 # libracecar = { path = "/home/dockeruser/racecar_ws/src/libracecar/", develop = true, optional = true }
 libracecar = { git = "https://github.com/rss2025-4/libracecar.git", optional = true }
 
+tqdm = "^4.67.1"
+
 [tool.poetry.extras]
 jax = [
   #
