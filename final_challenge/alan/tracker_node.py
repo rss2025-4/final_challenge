@@ -86,7 +86,7 @@ class TrackerNode(Node):
             QoSProfile(
                 reliability=QoSReliabilityPolicy.BEST_EFFORT,
                 history=QoSHistoryPolicy.KEEP_LAST,
-                depth=1,
+                depth=5,
                 durability=QoSDurabilityPolicy.VOLATILE,
             ),
         )
@@ -161,7 +161,7 @@ class TrackerNode(Node):
 
             print("image cb: took", t.update())
 
-            if self._counter % 5 != 0:
+            if self._counter % 10 != 0:
                 return
 
             self.image_plot.set_imag(image.image)
