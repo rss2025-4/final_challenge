@@ -64,13 +64,14 @@ basedpyright = "^1.29.1"
 black = "^25.1.0"
 isort = "^6.0.1"
 
-[tool.poetry.group.docs]
-optional = true
 [tool.poetry.group.docs.dependencies]
 rstfmt = "^0.0.14"
 sphinx = "^8"
 sphinx-rtd-theme = "^3.0.2"
 sphinxcontrib-restbuilder = "^0.3"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.5"
 
 [tool.black]
 line-length = 100

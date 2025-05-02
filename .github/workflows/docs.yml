@@ -21,6 +21,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           PROJECT_DIR: ${{ env.PROJECT_DIR }}
+          POETRY_GROUPS: main,docs
 
       - name: generate docs
         uses: ./.github/actions/run_venv

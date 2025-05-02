@@ -3,6 +3,8 @@ name: "setup"
 inputs:
   PROJECT_DIR:
     required: true
+  POETRY_GROUPS:
+    required: true
 
 runs:
   using: "composite"
@@ -60,7 +62,7 @@ runs:
     #----------------------------------------------
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root --only main,docs
+      run: poetry install --no-interaction --no-root --only ${{ inputs.POETRY_GROUPS }}
       working-directory: ${{ inputs.PROJECT_DIR }}
       shell: bash
 

@@ -8,7 +8,7 @@ env:
   FORCE_COLOR: 1
 
 jobs:
-  run-tests:
+  unittests:
     runs-on: ubuntu-latest
     container:
       image: sebagarc/racecar2
@@ -19,11 +19,33 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           PROJECT_DIR: ${{ env.PROJECT_DIR }}
+          POETRY_GROUPS: main,test
 
       - if: success() || failure()
         name: Run tests
         uses: ./.github/actions/run_venv
         with:
           commands: |
-            pytest -s
+            pytest -s tests/test_homography.py
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+
+  unittests-with-jax:
+    runs-on: ubuntu-latest
+    container:
+      image: sebagarc/racecar2
+      options: --privileged --user root
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
+          POETRY_GROUPS: main,jax,test
+
+      - if: success() || failure()
+        name: Run tests
+        uses: ./.github/actions/run_venv
+        with:
+          commands: |
+            pytest -s tests/test_homography.py
           PROJECT_DIR: ${{ env.PROJECT_DIR }}
