@@ -21,7 +21,7 @@ np.set_printoptions(precision=5, suppress=True)
 
 def main():
     tracker_cfg = TrackerConfig(
-        init_y=0.0,
+        init_y=0.5,
         shifts=[-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0],
     )
     rclpy.init()

@@ -127,7 +127,8 @@ class TrackerNode(Node):
 
         self.image_plot = ImagPlot(self.ax1)
         self.lines_plot = [
-            LinePlot(self.ax1, color=cmap(i / shifts_len)) for i, _ in enumerate(cfg.shifts)
+            LinePlot(self.ax1, color=cmap(i / shifts_len))
+            for i, _ in enumerate(cfg.shifts)
         ]
 
         setup_xy_plot(self.ax2)
@@ -162,13 +163,16 @@ class TrackerNode(Node):
     def pure_pursuit(self, target_line: Line):
         x, y = np.array(point_coord(get_foot((0, 0), target_line)))
 
+        print("foot", x, y)
+
         dist = np.linalg.norm([x, y])
 
-        lookahead = 5
+        lookahead = 10
 
         forward_dist = lookahead**2 - dist**2
         if forward_dist < 0:
             print("forward_dist negative", forward_dist)
+            return
         forward_dist = np.sqrt(forward_dist)
 
         forward_dir = np.array([-y, x])
@@ -182,8 +186,11 @@ class TrackerNode(Node):
         drive_cmd = AckermannDriveStamped()
 
         drive = AckermannDrive()
-        drive.steering_angle = forward_point[1] / forward_point[0]
-        drive.speed = 0.2
+        drive.steering_angle = forward_point[1] / forward_point[0] / 4 - 0.035
+
+        # drive.steering_angle = -0.04
+        drive.speed = 3.0
+        # drive.speed = 0.5
         # drive.steering_angle = 0.0
         # drive.speed = 0.0
 
@@ -200,11 +207,15 @@ class TrackerNode(Node):
 
             color_mask = color_counter.apply_filter(self.color_filter, image.image)
             color_mask = (
-                uniform_filter(color_mask.astype(np.float32), size=3, mode="constant", cval=0.0)
+                uniform_filter(
+                    color_mask.astype(np.float32), size=3, mode="constant", cval=0.0
+                )
                 > 1e-8
             )
 
-            self.line_xy = update_line(color_mask, self.line_xy, jnp.array(self.cfg.shifts))
+            self.line_xy = update_line(
+                color_mask, self.line_xy, jnp.array(self.cfg.shifts)
+            )
             jax.block_until_ready(self.line_xy)
 
             print("image cb: took", t.update())
