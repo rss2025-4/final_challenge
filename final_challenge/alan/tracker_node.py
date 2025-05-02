@@ -48,6 +48,8 @@ from ..homography import (
     LinePlot,
     LinePlotXY,
     _ck_line,
+    get_foot,
+    point_coord,
     setup_xy_plot,
     shift_line,
     xy_to_uv_line,
@@ -158,6 +160,23 @@ class TrackerNode(Node):
         # print()
 
     def get_angle(self, target_line: Line):
+        x, y = np.array(point_coord(get_foot((0, 0), target_line)))
+
+        dist = np.linalg.norm([x, y])
+
+        lookahead = 5
+
+        forward_dist = lookahead**2 - dist**2
+        print("forward_dist", forward_dist)
+
+        forward_dist = np.sqrt(forward_dist)
+
+        tmp = np.array([-y, x])
+        tmp = tmp / np.linalg.norm(tmp)
+
+        forward_point = np.array([x, y]) + forward_dist * tmp
+        print("forward_point")
+
         # ax + by + c = 0
         # b a
         pass
