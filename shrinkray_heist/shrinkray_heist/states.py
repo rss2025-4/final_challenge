@@ -11,6 +11,8 @@ from ackermann_msgs.msg import AckermannDriveStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from std_msgs.msg import Float32, String
+from definitions import States, Target
+
 """
 High level node to control other nodes
 """
@@ -24,6 +26,11 @@ class StatesNode(Node):
         self.end_pose = self.create_subscription(PoseWithCovarianceStamped, '/goal_pose', self.end_pose_cb, 10)
         self.locations = self.create_subscription(PoseWithCovarianceStamped, '/locations', self.locations_pose_cb, 10)
         self.current_goal_pose = None
+        msg = Target.DETECTOR
+        self.state_pub = self.create_publisher(int, '/toggle_state', 1)
+        
+        
+        
 
         # self.trajectory = LineTrajectory("/followed_trajectory")
         self.np_trajectory = None
