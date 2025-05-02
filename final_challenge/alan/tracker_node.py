@@ -120,6 +120,8 @@ class TrackerNode(Node):
             for i, _ in enumerate(cfg.shifts)
         ]
 
+        self._counter = 0
+
     def odom_callback(self, msg: Odometry):
         check(msg.child_frame_id, self.cfg.base_frame)
 
@@ -143,6 +145,7 @@ class TrackerNode(Node):
 
     def image_callback(self, msg: Image):
         print("image_callback")
+        self._counter += 1
 
         with timer.create() as t:
             image = ImageMsg.parse(msg)
@@ -157,6 +160,9 @@ class TrackerNode(Node):
             jax.block_until_ready(self.line_xy)
 
             print("image cb: took", t.update())
+
+            if self._counter % 5 != 0:
+                return
 
             self.image_plot.set_imag(image.image)
 
