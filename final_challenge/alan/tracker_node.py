@@ -3,14 +3,17 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import jax
-import matplotlib.pyplot as plt
 import numpy as np
 from ackermann_msgs.msg import AckermannDrive, AckermannDriveStamped
+from geometry_msgs.msg import Vector3
+from jax import Array
 from jax import numpy as jnp
+from jax import vmap
 from nav_msgs.msg import Odometry
 from rclpy import Context
 from rclpy.node import Node
 from rclpy.qos import (
+    Duration,
     QoSDurabilityPolicy,
     QoSHistoryPolicy,
     QoSProfile,
@@ -22,7 +25,7 @@ from tf2_ros import (
     Node,
 )
 
-from libracecar.utils import timer
+from libracecar.utils import jit, time_function, timer
 
 from ..homography import (
     ImagPlot,
@@ -31,9 +34,11 @@ from ..homography import (
     LinePlotXY,
     _ck_line,
     get_foot,
+    line_y_equals,
     point_coord,
     setup_xy_plot,
     shift_line,
+    xy_to_uv_line,
 )
 from .colors import color_counter, load_color_filter
 from .detect_lines_sweep import update_line
@@ -79,9 +84,9 @@ class TrackerNode(Node):
             "/zed/zed_node/rgb/image_rect_color",
             self.image_callback,
             QoSProfile(
-                reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                reliability=QoSReliabilityPolicy.RELIABLE,
                 history=QoSHistoryPolicy.KEEP_LAST,
-                depth=5,
+                depth=1,
                 durability=QoSDurabilityPolicy.VOLATILE,
             ),
         )
@@ -93,31 +98,11 @@ class TrackerNode(Node):
         self.drive_pub = self.create_publisher(
             AckermannDriveStamped, "/vesc/high_level/input/nav_0", 1
         )
+        self.line_pub = self.create_publisher(Vector3, "/tracker_line", 1)
 
-        self.line_xy = _ck_line((0.0, 1.0, -self.cfg.init_y))
+        self.line_xy = _ck_line(line_y_equals(-self.cfg.init_y))
 
         self.color_filter = jnp.array(load_color_filter())
-
-        plt.ion()
-        self.fig = plt.figure()
-        self.ax1 = self.fig.add_subplot(1, 2, 1)
-        self.ax2 = self.fig.add_subplot(1, 2, 2)
-
-        cmap = plt.get_cmap("turbo")
-
-        shifts_len = len(cfg.shifts)
-
-        self.image_plot = ImagPlot(self.ax1)
-        self.lines_plot = [
-            LinePlot(self.ax1, color=cmap(i / shifts_len)) for i, _ in enumerate(cfg.shifts)
-        ]
-
-        setup_xy_plot(self.ax2)
-        self.lines_plot_xy = [
-            LinePlotXY(self.ax2, color=cmap(i / shifts_len), linewidth=6)
-            for i, _ in enumerate(cfg.shifts)
-        ]
-
         self._counter = 0
 
     def odom_callback(self, msg: Odometry):
@@ -179,40 +164,48 @@ class TrackerNode(Node):
 
         self.drive_pub.publish(drive_cmd)
 
-    def image_callback(self, msg: Image):
-        print("image_callback")
+    def get_target_line(self):
+        return shift_line(self.line_xy, self.cfg.get_target_y())
+
+    @time_function
+    def image_callback(self, msg_ros: Image):
         self._counter += 1
+        msg = ImageMsg.parse(msg_ros)
 
-        with timer.create() as t:
-            image = ImageMsg.parse(msg)
+        self._image_callback(msg)
 
-            color_mask = color_counter.apply_filter(self.color_filter, image.image)
-            color_mask = (
-                uniform_filter(color_mask.astype(np.float32), size=3, mode="constant", cval=0.0)
-                > 1e-8
-            )
+        self.pure_pursuit(self.get_target_line())
 
-            self.line_xy = update_line(color_mask, self.line_xy, jnp.array(self.cfg.shifts))
-            jax.block_until_ready(self.line_xy)
+        # if self._counter % 2 == 0:
+        # self.matplotlib_plot(msg)
+        self.publish_line()
 
-            print("image cb: took", t.update())
+        print()
+        print()
+        print()
 
-            target_line = shift_line(self.line_xy, self.cfg.get_target_y())
+    @time_function
+    def _image_callback(self, image: ImageMsg):
 
-            self.pure_pursuit(target_line)
+        color_mask = color_counter.apply_filter(self.color_filter, image.image)
+        color_mask = (
+            uniform_filter(color_mask.astype(np.float32), size=3, mode="constant", cval=0.0) > 1e-8
+        )
 
-            # if self._counter % 10 != 0:
-            #     return
+        self.line_xy = update_line(color_mask, self.line_xy, jnp.array(self.cfg.shifts))
+        jax.block_until_ready(self.line_xy)
 
-            # self.image_plot.set_imag(image.image)
+        # print("image cb: took", t.update())
 
-            # for s, l in zip(self.cfg.shifts, self.lines_plot):
-            #     l.set_line(xy_to_uv_line(shift_line(self.line_xy, s)))
+        # target_line = shift_line(self.line_xy, self.cfg.get_target_y())
 
-            # for s, l in zip(self.cfg.shifts, self.lines_plot_xy):
-            #     l.set_line(shift_line(self.line_xy, s))
+        # if self._counter % 10 != 0:
+        #     return
 
-            # self.fig.canvas.draw()
-            # self.fig.canvas.flush_events()
-
-            # print("matplotlib: took", t.update())
+    def publish_line(self):
+        x, y, z = self.line_xy.tolist()
+        msg = Vector3()
+        msg.x = x
+        msg.y = y
+        msg.z = z
+        self.line_pub.publish(msg)

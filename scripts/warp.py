@@ -49,6 +49,8 @@ def plot_data():
 
         wrap_img.set_uv_imag(cur.image)
 
+        print(f"this cycle took {(time.time() - start_t)}")
+        print(f"ros time is {(cur.time - prev_stamp)}")
         time.sleep(max(0, (cur.time - prev_stamp) - (time.time() - start_t)))
         prev_stamp = cur.time
         start_t = time.time()

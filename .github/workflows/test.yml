@@ -40,7 +40,8 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           PROJECT_DIR: ${{ env.PROJECT_DIR }}
-          POETRY_GROUPS: main,jax,test
+          POETRY_GROUPS: main,test
+          POETRY_EXTRAS: jax
 
       - if: success() || failure()
         name: Run tests

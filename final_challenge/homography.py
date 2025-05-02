@@ -188,12 +188,12 @@ def line_intersect(l1: Line, l2: Line) -> Point:
     return _ck_point(jnp.cross(_ck_line(l1), _ck_line(l2)))
 
 
-def line_x_equals(x0: ArrLike):
+def line_x_equals(x0: ArrLike) -> Line:
     # x == x0 line, pointing at +y direction
     return _ck_line((-1.0, 0.0, x0))
 
 
-def line_y_equals(y0: ArrLike):
+def line_y_equals(y0: ArrLike) -> Line:
     # y == y0 line, pointing at +x direction
     return _ck_line((0.0, 1.0, -y0))
 
