@@ -38,6 +38,8 @@ from tf2_ros import (
 )
 from visualization_msgs.msg import Marker
 
+from libracecar.utils import timer
+
 from ..homography import (
     ImagPlot,
     LinePlot,
@@ -141,23 +143,30 @@ class TrackerNode(Node):
 
     def image_callback(self, msg: Image):
         print("image_callback")
-        image = ImageMsg.parse(msg)
 
-        color_mask = color_counter.apply_filter(self.color_filter, image.image)
-        color_mask = (
-            uniform_filter(color_mask.astype(np.float32), size=3, mode="constant", cval=0.0) > 1e-8
-        )
+        with timer.create() as t:
+            image = ImageMsg.parse(msg)
 
-        self.line_xy = update_line(color_mask, self.line_xy, jnp.array(self.cfg.shifts))
+            color_mask = color_counter.apply_filter(self.color_filter, image.image)
+            color_mask = (
+                uniform_filter(color_mask.astype(np.float32), size=3, mode="constant", cval=0.0)
+                > 1e-8
+            )
 
-        self.image_plot.set_imag(image.image)
+            self.line_xy = update_line(color_mask, self.line_xy, jnp.array(self.cfg.shifts))
+            jax.block_until_ready(self.line_xy)
 
-        for s, l in zip(self.cfg.shifts, self.lines_plot):
-            l.set_line(xy_to_uv_line(shift_line(self.line_xy, s)))
+            print("image cb: took", t.update())
 
-        for s, l in zip(self.cfg.shifts, self.lines_plot_xy):
-            print("shift", shift_line(self.line_xy, s))
-            l.set_line(shift_line(self.line_xy, s))
+            self.image_plot.set_imag(image.image)
 
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
+            for s, l in zip(self.cfg.shifts, self.lines_plot):
+                l.set_line(xy_to_uv_line(shift_line(self.line_xy, s)))
+
+            for s, l in zip(self.cfg.shifts, self.lines_plot_xy):
+                l.set_line(shift_line(self.line_xy, s))
+
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
+
+            print("matplotlib: took", t.update())
