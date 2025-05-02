@@ -86,7 +86,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -94,19 +94,20 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.image</span><span class="w"> </span><span class="kn">import</span> <span class="n">AxesImage</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.lines</span><span class="w"> </span><span class="kn">import</span> <span class="n">AxLine</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Never</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.alan.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast_unchecked_</span><span class="p">,</span> <span class="n">unreachable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.alan.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast_unchecked_</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
 
     <span class="n">Arr</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="n">ArrLike</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="n">jnp</span> <span class="o">=</span> <span class="n">np</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
         <span class="n">Arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+        <span class="n">ArrLike</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -170,14 +171,18 @@
 <span class="c1">#:</span>
 <span class="c1">#: functions returning Point mostly returns in project coordinates.</span>
 <span class="c1">#: use :func:`point_coord` to convert to euclidean</span>
-<span class="n">Point</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+<span class="n">Point</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ArrLike</span><span class="p">,</span> <span class="n">ArrLike</span><span class="p">]]</span>
 
 <span class="c1">#: (a, b, c), represents the line ax + by + c = 0</span>
 <span class="c1">#:</span>
 <span class="c1">#: can be python or numpy.</span>
 <span class="c1">#:</span>
 <span class="c1">#: construct a Line with  :func:`line_from_slope_intersect`, :func:`line_through_points`</span>
-<span class="n">Line</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+<span class="c1">#:</span>
+<span class="c1">#: The &quot;positive side&quot; is points (x, y) such that ax + by + c &gt;= 0</span>
+<span class="c1">#:</span>
+<span class="c1">#: The &quot;direction&quot; of the line is, direction == up &lt;=&gt; left is &quot;positive side&quot;</span>
+<span class="n">Line</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ArrLike</span><span class="p">,</span> <span class="n">ArrLike</span><span class="p">,</span> <span class="n">ArrLike</span><span class="p">]]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ck_line</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
@@ -208,6 +213,20 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;getting coordinate of far-away pont </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">z</span> <span class="o">=</span> <span class="mf">1e-8</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">ans</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">z</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">ans</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">z</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="line_direction">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.line_direction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">line_direction</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="n">Line</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;vector of the direction of the line&quot;&quot;&quot;</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">_c</span> <span class="o">=</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="n">ans</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">b</span><span class="p">,</span> <span class="o">-</span><span class="n">a</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">normalize</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ans</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ans</span></div>
 
 
 
@@ -271,6 +290,22 @@
 
 
 
+<div class="viewcode-block" id="line_x_equals">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.line_x_equals">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">line_x_equals</span><span class="p">(</span><span class="n">x0</span><span class="p">:</span> <span class="n">ArrLike</span><span class="p">):</span>
+    <span class="c1"># x == x0 line, pointing at +y direction</span>
+    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">((</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">x0</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="line_y_equals">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.line_y_equals">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">line_y_equals</span><span class="p">(</span><span class="n">y0</span><span class="p">:</span> <span class="n">ArrLike</span><span class="p">):</span>
+    <span class="c1"># y == y0 line, pointing at +x direction</span>
+    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="n">y0</span><span class="p">))</span></div>
+
+
+
 <div class="viewcode-block" id="line_through_points">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.line_through_points">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">line_through_points</span><span class="p">(</span><span class="n">l1</span><span class="p">:</span> <span class="n">Point</span><span class="p">,</span> <span class="n">l2</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Line</span><span class="p">:</span>
@@ -288,8 +323,7 @@
 
 <div class="viewcode-block" id="matrix_rot">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.matrix_rot">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">matrix_rot</span><span class="p">(</span><span class="n">ang_rad</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
-    <span class="c1"># UNTESTED!!</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">matrix_rot</span><span class="p">(</span><span class="n">ang_rad</span><span class="p">:</span> <span class="n">ArrLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
     <span class="n">sin</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">ang_rad</span><span class="p">)</span>
     <span class="n">cos</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">ang_rad</span><span class="p">)</span>
 
@@ -305,8 +339,7 @@
 
 <div class="viewcode-block" id="matrix_trans">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.matrix_trans">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">matrix_trans</span><span class="p">(</span><span class="n">dx</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">dy</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
-    <span class="c1"># UNTESTED!!</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">matrix_trans</span><span class="p">(</span><span class="n">dx</span><span class="p">:</span> <span class="n">ArrLike</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">dy</span><span class="p">:</span> <span class="n">ArrLike</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
         <span class="p">[</span>
             <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">dx</span><span class="p">],</span>
@@ -319,31 +352,29 @@
 
 <div class="viewcode-block" id="shift_line">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.shift_line">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">shift_line</span><span class="p">(</span><span class="n">l</span><span class="p">:</span> <span class="n">Line</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Arr</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Line</span><span class="p">:</span>
-    <span class="c1"># UNTESTED!!</span>
-    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">_ck_line</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">l</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span> <span class="o">*</span> <span class="n">d</span><span class="p">]))</span></div>
+<span class="k">def</span><span class="w"> </span><span class="nf">shift_line</span><span class="p">(</span><span class="n">l</span><span class="p">:</span> <span class="n">Line</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">ArrLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Line</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;shift line to the positive side by scalar d&quot;&quot;&quot;</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">l</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">l</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span> <span class="o">*</span> <span class="n">d</span><span class="p">]))</span></div>
 
 
 
-<div class="viewcode-block" id="angle_bisector">
-<a class="viewcode-back" href="../../homography.html#final_challenge.homography.angle_bisector">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">angle_bisector</span><span class="p">(</span><span class="n">l1</span><span class="p">:</span> <span class="n">Line</span><span class="p">,</span> <span class="n">l2</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Line</span><span class="p">:</span>
-    <span class="c1"># UNTESTED!!</span>
-    <span class="n">l1</span> <span class="o">=</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">l1</span><span class="p">)</span>
-    <span class="n">l2</span> <span class="o">=</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">l2</span><span class="p">)</span>
+<span class="c1"># def angle_bisector(l1: Line, l2: Line) -&gt; Line:</span>
+<span class="c1">#     # UNTESTED!!</span>
+<span class="c1">#     l1 = _ck_line(l1)</span>
+<span class="c1">#     l2 = _ck_line(l2)</span>
 
-    <span class="n">l2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-        <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">l1</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">l2</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="c1"># flip if true</span>
-        <span class="o">-</span><span class="n">l2</span><span class="p">,</span>
-        <span class="n">l2</span><span class="p">,</span>
-    <span class="p">)</span>
+<span class="c1">#     l2 = jnp.where(</span>
+<span class="c1">#         jnp.dot(l1[:2], l2[:2]) &lt; 0,</span>
+<span class="c1">#         # flip if true</span>
+<span class="c1">#         -l2,</span>
+<span class="c1">#         l2,</span>
+<span class="c1">#     )</span>
 
-    <span class="n">r1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">l1</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
-    <span class="n">r2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">l2</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+<span class="c1">#     r1 = jnp.linalg.norm(l1[:2])</span>
+<span class="c1">#     r2 = jnp.linalg.norm(l2[:2])</span>
 
-    <span class="k">return</span> <span class="n">_ck_line</span><span class="p">(</span><span class="n">l1</span> <span class="o">*</span> <span class="n">r2</span> <span class="o">+</span> <span class="n">l2</span> <span class="o">*</span> <span class="n">r1</span><span class="p">)</span></div>
-
+<span class="c1">#     return _ck_line(l1 * r2 + l2 * r1)</span>
 
 
 <div class="viewcode-block" id="get_foot">
