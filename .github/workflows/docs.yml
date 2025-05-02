@@ -10,7 +10,7 @@ env:
   FORCE_COLOR: 1
 
 jobs:
-  run-tests:
+  gen-docs:
     runs-on: ubuntu-latest
     container:
       image: sebagarc/racecar2

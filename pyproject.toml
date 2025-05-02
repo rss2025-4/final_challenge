@@ -29,6 +29,11 @@ rosbags = "^0.10.9"
 scikit-learn = "^1.6.1"
 scipy = "^1.15.2"
 
+# neccessary for ros
+catkin-pkg = "^1.0.0"
+lark = "^1.2.2"
+pyyaml = "^6.0.2"
+
 torch = [
   { version = "^2.7.0", markers = "extra != 'gpu'", source = "pytorch-cpu" },
   { version = "^2.7.0", markers = "extra == 'gpu'", source = "PyPI" },
