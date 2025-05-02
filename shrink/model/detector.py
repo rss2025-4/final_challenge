@@ -127,7 +127,7 @@ class Detector:
     
 def demo():
     import os
-    model = Detector()
+    model = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
     model.set_threshold(0.5)
     
     img_path = f"{os.path.dirname(__file__)}/../../media/minion.png" 
