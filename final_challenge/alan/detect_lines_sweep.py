@@ -111,9 +111,9 @@ def update_line(weight_uncropped: ArrayLike, xy_line: Line, shifts: Array) -> Ar
             hits, total = jax.vmap(per_lane)(shifts)
             return jnp.array(shifted_once), jnp.sum(hits) / (jnp.sum(total) + 100)
 
-        lines, scores = jax.vmap(per_shift_err)(jnp.linspace(-0.4, 0.4, num=41))
+        lines, scores = jax.vmap(per_shift_err)(jnp.linspace(-0.2, 0.2, num=21))
         return _get_max(lines, scores)
 
-    lines, scores = jax.vmap(per_rot)(jnp.linspace(-0.3, 0.3, num=21))
+    lines, scores = jax.vmap(per_rot)(jnp.linspace(-0.1, 0.1, num=11))
     line, _score = _get_max(lines, scores)
     return line
