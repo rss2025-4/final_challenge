@@ -15,7 +15,7 @@ from shrinkray_heist.definitions import  Target, TripSegment, ObjectDetected, St
 from shrinkray_heist.homography_transformer import HomographyTransformer
 
 
-class DetectorNode(Node):
+class DetectionNode(Node):
     def __init__(self):
         super().__init__("detector_node")
         # self.detector = Detector() # ON REAL RACECAR
@@ -184,8 +184,8 @@ class DetectorNode(Node):
             
 def main(args=None):
     rclpy.init(args=args)
-    detector = Detector()
-    rclpy.spin(detector)
+    detection_node = DetectionNode()
+    rclpy.spin(detection_node)
     rclpy.shutdown()
 
 if __name__=="__main__":

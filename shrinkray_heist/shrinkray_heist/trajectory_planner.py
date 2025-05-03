@@ -29,11 +29,7 @@ class PathPlan(Node):
     def __init__(self, extra_eval_configs=InjectedConfig()):
         super().__init__("trajectory_planner", **extra_eval_configs.extra_node_kwargs())
 
-        # TODO: if needed, implement dilation specifically for obstacles
-        self.obstacle_buffer = 0.1
-
-        # NOTE toggle this to True to enable debug mode (i.e. add additional logging)
-        self.debug = False
+       
        
         self.declare_parameter("safety_buffer", 0.6)
         self.declare_parameter("odom_topic", "default")
@@ -81,7 +77,11 @@ class PathPlan(Node):
             ),
         )
 
-        
+         # TODO: if needed, implement dilation specifically for obstacles
+        self.obstacle_buffer = 0.1
+
+        # NOTE toggle this to True to enable debug mode (i.e. add additional logging)
+        self.debug = False
         
         self.map = None
         self.dilated_map = None

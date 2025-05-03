@@ -60,8 +60,8 @@ class PurePursuit(Node):
         self.min_dist = 0.0
 
         # for sim
-        self.alert_subscriber = self.create_subscription(String, "/alert", self.alert_callback, 10)
-        self.pose_sub = self.create_subscription(PoseWithCovarianceStamped, "/initialpose", self.pose_callback, 10)
+        # self.alert_subscriber = self.create_subscription(String, "/alert", self.alert_callback, 10)
+        # self.pose_sub = self.create_subscription(PoseWithCovarianceStamped, "/initialpose", self.pose_callback, 10)
 
         
         # for publishing to state node

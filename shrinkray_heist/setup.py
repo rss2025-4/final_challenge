@@ -40,7 +40,8 @@ setup(
             "states_node = shrinkray_heist.states:main",
             "trajectory_planner = shrinkray_heist.trajectory_planner:main",
             "trajectory_follower = shrinkray_heist.trajectory_follower:main",
-            "detector = shrinkray_heist.model.detector_node:main",
+            "detection_node = shrinkray_heist.model.detection_node:main",
+            "basement_point_publisher = shrinkray_heist.basement_point_publisher:main",
             
         ],
     },
