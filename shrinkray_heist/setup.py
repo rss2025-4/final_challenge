@@ -41,6 +41,7 @@ setup(
             "trajectory_planner = shrinkray_heist.trajectory_planner:main",
             "trajectory_follower = shrinkray_heist.trajectory_follower:main",
             "detector = shrinkray_heist.model.detector_node:main",
+            
         ],
     },
 )
