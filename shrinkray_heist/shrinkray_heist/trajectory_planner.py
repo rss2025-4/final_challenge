@@ -380,23 +380,7 @@ class PathPlan(Node):
         self.get_logger().info("PathPlan: Path published successfully")
 
        
-    def mark_pt(self, subscriber, color_tup, data):
-        msg_data = self.tuple_to_point(data)
-
-        mark_pt = Marker()
-        mark_pt.header.frame_id = "/map"
-        mark_pt.header.stamp = self.get_clock().now().to_msg()
-        mark_pt.type = mark_pt.SPHERE_LIST
-        mark_pt.action = mark_pt.ADD
-        mark_pt.scale.x = 0.5
-        mark_pt.scale.y = 0.5
-        mark_pt.scale.z = 0.5
-        mark_pt.color.a = 1.0
-        mark_pt.color.r = color_tup[0]
-        mark_pt.color.g = color_tup[1]
-        mark_pt.color.b = color_tup[2]
-        mark_pt.points = msg_data
-        subscriber.publish(mark_pt)
+   
     def visualize_pose(self, pose, publisher, color, id):
         pt = Marker()
         pt.type = Marker.SPHERE
