@@ -9,6 +9,7 @@ from final_challenge.homography import (
     matrix_rot,
     point_coord,
     shift_line,
+    uv_to_xy_point,
 )
 
 
@@ -46,12 +47,20 @@ def test_rot():
 
 
 def test_shift():
-    _check_eq_after_norm(shift_line(line_x_equals(10) * 1.2, 2), line_x_equals(8) * 2.3)
+    _check_eq_after_norm(shift_line(line_x_equals(10), 2), line_x_equals(8))
 
-    _check_eq_after_norm(shift_line(line_y_equals(10) * 3.4, 2), line_y_equals(12) * 4.5)
+    _check_eq_after_norm(shift_line(line_y_equals(10), 2), line_y_equals(12))
 
 
 def test_foot():
     _check_eq(point_coord(get_foot((1.23, 10), line_x_equals(1))), (1, 10))
 
     _check_eq(point_coord(get_foot((10, 1.23), line_y_equals(1))), (10, 1))
+
+
+def test_homography_point():
+    x, y = point_coord(uv_to_xy_point((0, 320)))
+    assert x > 0 and y > 0
+
+    x, y = point_coord(uv_to_xy_point((640, 320)))
+    assert x > 0 and y < 0

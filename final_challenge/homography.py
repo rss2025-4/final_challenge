@@ -163,6 +163,10 @@ def homography_point(matrix: Arr, point: Point) -> Point:
 
 
 def xy_to_uv_point(point: Point) -> Point:
+    return homography_point(matrix_xy_to_uv(), point)
+
+
+def uv_to_xy_point(point: Point) -> Point:
     return homography_point(matrix_uv_to_xy(), point)
 
 
