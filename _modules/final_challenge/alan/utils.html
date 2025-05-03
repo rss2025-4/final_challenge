@@ -70,7 +70,8 @@
            <div itemprop="articleBody">
              
   <h1>Source code for final_challenge.alan.utils</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">ParamSpec</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">final</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">ParamSpec</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">final</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Never</span>
 
@@ -167,6 +168,13 @@
 <a class="viewcode-back" href="../../../alan.html#final_challenge.alan.utils.check">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
     <span class="k">assert</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;not equal: </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="cache">
+<a class="viewcode-back" href="../../../alan.html#final_challenge.alan.utils.cache">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cache</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">cast_unchecked_</span><span class="p">(</span><span class="n">functools</span><span class="o">.</span><span class="n">cache</span><span class="p">(</span><span class="n">cast_unchecked_</span><span class="p">(</span><span class="n">f</span><span class="p">)))</span></div>
 
 </pre></div>
 
