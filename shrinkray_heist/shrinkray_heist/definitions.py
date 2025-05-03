@@ -1,12 +1,19 @@
 # Enum where 
 from enum import Enum
 
-class States(Enum):
+class TripSegment(Enum):
     """
-    Enum for the states of the robot.
+    Enum for the current 
     """
-    ON = 0
-    OFF = 1
+    # NOTE doesnt make sense for the way back , could be better organized
+    START = -1 
+    RAY_LOC1 = 0
+    RAY_OBJ1 = 1
+    RAY_LOC2 = 2
+    RAY_OBJ2 = 3
+    
+    # this is for the way back 
+    
 class Target(Enum):
     """
     Enum that defines which node the state machine node is controlling.

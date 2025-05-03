@@ -1,5 +1,5 @@
 from math import atan2, cos, sin
-
+from visualization_msgs.msg import Marker
 
 def world_to_grid(x, y, map_info, logger, debug=False):
     """Convert world coordinates to grid coordinates correctly handling transforms"""
@@ -75,3 +75,20 @@ def grid_to_world(grid_x, grid_y, map_info, logger, debug=False):
         if debug:
             logger.error(f"Grid to world transform error: {str(e)}")
         return None
+    
+'''
+Visualize pose in RViz
+This function takes a pose, a publisher, a color, and an ID as arguments.
+'''
+def visualize_pose(pose, publisher, color, id):
+        pt = Marker()
+        pt.type = Marker.SPHERE
+        pt.id = id
+        pt.action = Marker.ADD
+        pt.header.frame_id = "/map"
+        
+        pt.pose = pose
+        pt.scale.x = pt.scale.y = pt.scale.z = 0.2
+        pt.color.r, pt.color.g, pt.color.b, pt.color.a = color
+        publisher.publish(pt)
+        
