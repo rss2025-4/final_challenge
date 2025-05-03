@@ -42,7 +42,6 @@ class StatesNode(Node):
         
         # Publishers 
         self.state_pub = self.create_publisher(Int32, '/toggle_state', 1)
-        
         self.points_pub = self.create_publisher(PoseArray, '/planned_pts', 1) # publish the points we want to plan a path 
         
         # ? are we getting an end pose from the tas?
@@ -70,21 +69,22 @@ class StatesNode(Node):
     def start_pose_cb(self, msg: PoseWithCovarianceStamped):
         pass
     def trajectory_cb(self, msg: PoseArray):
-        self.get_logger().info("Received trajectory")
+        self.get_logger().info("StatesNode: Received trajectory")
         pass 
         # self.np_trajectory = np.array(self.trajectory.points)
 
     
+    
     def points_cb(self, msg: PoseArray):
-        self.get_logger().info("Received basement points")
+        self.get_logger().info("StatesNode: Received basement points")
         
         # iterate through the poses in the PoseArray
         for pose in msg.poses:
             x, y = pose.position.x, pose.position.y
-            self.get_logger().info(f"Received point: {x}, {y}")
+            self.get_logger().info(f"StatesNode: Received point: {x}, {y}")
             self.goal_points.append((x,y))
         if self.debug: 
-            self.get_logger().info(f"Received points: {self.goal_points}")
+            self.get_logger().info(f"StatesNode: Received points: {self.goal_points}")
         start_point = (self.start.position.x, self.start.position.y)
         
         # sort the goal points based on distance from start point
@@ -104,7 +104,7 @@ class StatesNode(Node):
         self.request_path()
         
     def control_node(self, target: Target):
-        self.get_logger().info(f"Controlling node: {target}")
+        self.get_logger().info(f"StatesNode: Controlling node: {target}")
         msg = Int32()
         msg.data = target
         self.state_pub.publish(msg)
@@ -112,15 +112,15 @@ class StatesNode(Node):
         
     def request_path(self, **kwargs):
         if self.trip_segment == TripSegment.RAY_LOC1:
-            self.get_logger().info("Requesting path for RAY_LOC1")
+            self.get_logger().info("StatesNode: Requesting path for RAY_LOC1")
             start_point = (self.start.position.x, self.start.position.y)
             end_point = self.goal_points[0]
         elif self.trip_segment == TripSegment.RAY_LOC2:
-            self.get_logger().info("Requesting path for RAY_LOC2")
+            self.get_logger().info("StatesNode: Requesting path for RAY_LOC2")
             start_point = self.current_point
             end_point = self.goal_points[1]
         elif self.trip_segment == TripSegment.RAY_OBJ1 or TripSegment.RAY_OBJ2:
-            self.get_logger().info("Requesting path for shrink ray object")
+            self.get_logger().info("StatesNode: Requesting path for shrink ray object")
             start_point = self.current_point
             
             end_point = kwargs.get('shrink_ray_loc', None)
@@ -147,7 +147,7 @@ class StatesNode(Node):
 
         # Print to Command Line
         points_str = '\n'+'\n'.join([f"({p.position.x},{p.position.y})" for p in array])
-        self.get_logger().info(f"Published 2 points: {points_str}")
+        self.get_logger().info(f"StatesNode: Published 2 points: {points_str}")
         
         return 
         
@@ -184,11 +184,11 @@ class StatesNode(Node):
     
     
     def ray_cb(self, msg: PoseWithCovarianceStamped):
-        self.get_logger().info("Received shrink ray location")
+        self.get_logger().info("StatesNode: Received shrink ray location")
         pass 
     
     def traffic_cb(self, msg: PoseWithCovarianceStamped):
-        self.get_logger().info("Received traffic light location")
+        self.get_logger().info("StatesNode: Received traffic light location")
         pass
 
         # z_rotation = euler_from_quaternion(
@@ -204,7 +204,7 @@ class StatesNode(Node):
         # # check if reached goal point
         # # last_point = #np.array(trajectory[-1][:2])
         # if np.linalg.norm(current_point - current_goal_point) < 0.5:
-        #     self.get_logger().info("Goal reached")
+        #     self.get_logger().info("StatesNode: Goal reached")
         #     # self.stop = True
 
         # if (current location is at shrink ray location 1) and (location1 is not handled):
