@@ -1094,7 +1094,7 @@ python-versions = ">=3.10, <3.13"
 groups = ["main"]
 markers = "extra == \"jax\" or extra == \"gpu\""
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 beartype = "^0.20.0"
@@ -1117,8 +1117,10 @@ unshare = "^0.22"
 jax = ["equinox", "jax", "jaxtyping", "numpyro", "optax"]
 
 [package.source]
-type = "directory"
-url = "../../../home/alan/6.4200/libracecar"
+type = "git"
+url = "https://github.com/rss2025-4/libracecar.git"
+reference = "HEAD"
+resolved_reference = "927cf096ef81cac1de03e6d67daf9ca7ce5c6d50"
 
 [[package]]
 name = "lz4"
@@ -3284,4 +3286,4 @@ jax = ["equinox", "jax", "libracecar"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.11"
-content-hash = "588cab3562b3facefd52fbba39a191ab89bb94a04263453e2c03c740a29d5eee"
+content-hash = "12f7fe678814c513a646b40f7b19820ee2a7426a87c08ca58d3bad1346ea4d53"

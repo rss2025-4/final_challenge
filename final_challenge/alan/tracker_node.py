@@ -245,6 +245,13 @@ class TrackerNode(Node):
             twist.linear.x = -twist.linear.x
             twist.angular.z = -twist.angular.z
 
+        # print("twist.angular.z", twist.angular.z)
+
+        if twist.linear.x != 0:
+            print("ratio!!", twist.angular.z / twist.linear.x)
+
+        twist.angular.z += 0.16 * twist.linear.x
+
         translation = matrix_trans(-twist.linear.x * duration)
         rotation = matrix_rot(-twist.angular.z * duration)
 
@@ -294,7 +301,7 @@ class TrackerNode(Node):
     @time_function
     def handle_image(self, msg_ros: Image):
         self._image_count += 1
-        # if self._image_count % 5 != 0:
+        # if self._image_count % 20 != 0:
         #     return
 
         msg = ImageMsg.parse(msg_ros)
