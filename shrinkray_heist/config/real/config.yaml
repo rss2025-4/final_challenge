@@ -14,3 +14,6 @@ safety_controller:
     scan_topic: "/scan"
     drive_topic: "/vesc/low_level/ackermann_cmd"
     published_drive_topic: "/vesc/low_level/input/safety"
+detector_node:
+  ros_parameters:
+    drive_topic: "/vesc/high_level/input/nav_1"
