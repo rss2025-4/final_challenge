@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Union
 
 import jax
 import numpy as np
@@ -26,7 +25,7 @@ from tf2_ros import (
     Node,
 )
 
-from libracecar.ros_utils import float_to_time_msg, time_msg_to_float
+from libracecar.ros_utils import time_msg_to_float
 from libracecar.utils import time_function
 
 from ..homography import (
@@ -46,7 +45,6 @@ from ..homography import (
 from .colors import color_counter, load_color_filter
 from .detect_lines_sweep import ScoreCtx, update_line
 from .ros import ImageMsg
-from .utils import check
 
 
 @dataclass
