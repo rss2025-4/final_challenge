@@ -14,12 +14,29 @@ class TripSegment(Enum):
     
     # this is for the way back 
     
+
+class ObjectDetected(Enum):
+    """
+    Enum for the objects that can be detected by the detector.
+    """
+    NONE = 0
+    TRAFFIC_LIGHT_RED = 1
+    TRAFFIC_LIGHT_GREEN = 2
+    TRAFFIC_LIGHT_YELLOW = 3
+    SHRINK_RAY = 4
+class State(Enum):
+    """
+    Enum that defines the states of the robot
+    """
+    IDLE = 0
+    DETECTING = 1
+    PLANNING = 2
+    FOLLOWING = 3
+    WAITING = 4  
 class Target(Enum):
     """
     Enum that defines which node the state machine node is controlling.
     """
     DETECTOR = 0
     PLANNER = 1
-    BASEMENT = 2
-    TRAFFIC_LIGHT = 3
-    SHRINK_RAY = 4
+    PURE_PURSUIT = 2

@@ -11,7 +11,7 @@ from ackermann_msgs.msg import AckermannDriveStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from std_msgs.msg import Float32, String, Int32
-from .definitions import  Target, TripSegment #States
+from .definitions import  Target, TripSegment, ObjectDetected, State
 from typing import List, Tuple
 
 
@@ -24,7 +24,7 @@ class StatesNode(Node):
         super().__init__("states_node")
         
         # Parameters
-        self.debug = False 
+        self.debug = False
 
         # Subscribers
         self.start_pose = self.create_subscription(PoseWithCovarianceStamped, '/initial_pose', self.start_pose_cb, 10)
@@ -33,12 +33,19 @@ class StatesNode(Node):
         self.traj_sub = self.create_subscription(PoseArray, '/trajectory/current', self.trajectory_cb, 10)
         self.ray_sub = self.create_subscription(PoseWithCovarianceStamped, '/shrink_ray_loc', self.ray_cb, 10)
         self.traffic_light_sub = self.create_subscription(PoseWithCovarianceStamped, '/traffic_light', self.traffic_cb, 10)
+        self.detection_sub = self.create_subscription(Int32, '/detected_obj', self.detection_cb, 5)
+        
+        # pursuit should tell us when it is done / arrived at goal
+        self.pursuit_sub = self.create_subscription(Int32, '/pursuit_state', self.replan_cb, 5)
+        
+        # TODO: how to estimate the distance of the shrink ray object from the robot when it is detected?
         
         # Class Attributes
         self.start = None
         self.trip_segment = TripSegment.RAY_LOC1
         self.goal_points: List[Tuple[float, float]] = []
         self.current_point: Tuple[float, float] | None = None
+        self.state = State.IDLE
         
         # Publishers 
         self.state_pub = self.create_publisher(Int32, '/toggle_state', 1)
@@ -66,14 +73,51 @@ class StatesNode(Node):
         # self.detector_state_pub = self.create_publisher(String, '/detector_states')
         #self.at_shrinkray_loc_pub = self.create_publisher(String, '/at_shrinkray_loc', 1)
         # self.check_trafficlight_pub = self.create_publisher(String, '/traffic_light_check', 10)
+        
+    # TODO these callbacks are not implemented yet
+    
     def start_pose_cb(self, msg: PoseWithCovarianceStamped):
         pass
     def trajectory_cb(self, msg: PoseArray):
         self.get_logger().info("StatesNode: Received trajectory")
         pass 
         # self.np_trajectory = np.array(self.trajectory.points)
-
-    
+    def replan_cb(self, msg: Int32):
+        self.get_logger().info("StatesNode: We have reached arrived at current goal point")
+        pass 
+        
+    def detection_cb(self, msg: Int32):
+        self.get_logger().info("StatesNode: Received detection")
+        if msg.data == ObjectDetected.SHRINK_RAY:
+            self.get_logger().info("StatesNode: Detected shrink ray")
+            # if we detected the shrink ray, we need to drive towards it so stop the pure pursuit
+            self.control_node(target=Target.PURE_PURSUIT)
+            self.control_node(target=Target.DETECTOR) # can stop detecting now 
+            
+            
+            
+            # Represents the transition from travelling to the shrink ray location to travelling to the shrink ray object
+            # TripSegment.RAY_LOC1 ==> TripSegment.RAY_OBJ1 or TripSegment.RAY_LOC2 ==> TripSegment.RAY_OBJ2
+            self.trip_segment += 1 
+            
+            # TODO : get the location of the shrink ray object somehow
+            # self.request_path(shrink_ray_loc=None) # plan path to the shrink ray object (need some buffer tho)
+        elif msg.data == ObjectDetected.TRAFFIC_LIGHT_RED and self.state == State.FOLLOWING:
+            self.get_logger().info("StatesNode: Detected red traffic light")
+            
+            # TODO : we need to get the distance to the traffic light to stop at it
+            # if we detected the traffic light, we need to drive towards it so stop the pure pursuit
+            self.control_node(target=Target.PURE_PURSUIT)
+            self.state = State.WAITING
+            
+        elif msg.data == ObjectDetected.TRAFFIC_LIGHT_GREEN and self.state == State.WAITING:
+            self.get_logger().info("StatesNode: Detected green traffic light : resuming")
+            self.control_node(target=Target.PURE_PURSUIT) # start the pure pursuit again
+            self.state = State.FOLLOWING
+            self.control_node(target=Target.DETECTOR) # turn off the detector 
+        
+        # TODO : add more states if needed
+            
     
     def points_cb(self, msg: PoseArray):
         self.get_logger().info("StatesNode: Received basement points")
