@@ -64,7 +64,7 @@ runs:
     #----------------------------------------------
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root --only ${{ inputs.POETRY_GROUPS }} --extras ${{ inputs.POETRY_EXTRAS }}
+      run: poetry install --no-interaction --no-root --only ${{ inputs.POETRY_GROUPS }} --extras=${{ inputs.POETRY_EXTRAS }}
       working-directory: ${{ inputs.PROJECT_DIR }}
       shell: bash
 
