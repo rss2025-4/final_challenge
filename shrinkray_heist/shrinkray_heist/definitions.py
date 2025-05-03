@@ -40,7 +40,6 @@ class Target(Enum):
     DETECTOR_TRAFFIC_LIGHT = 0
     DETECTOR_SHRINK_RAY = 1
     PLANNER = 2
-<<<<<<< HEAD
     FOLLOWER = 3
     
 class TrafficSimulation(Enum):
@@ -50,9 +49,6 @@ class TrafficSimulation(Enum):
     NO_TRAFFIC = 0
     IN_TRAFFIC = 1
     HANDLED_TRAFFIC = 2
-=======
-    PURE_PURSUIT = 3
->>>>>>> 411c84b4081864e373a6b6fc53df09d0c1f6d962
 
 class Drive(Enum):
     """
