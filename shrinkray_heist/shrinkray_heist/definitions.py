@@ -37,7 +37,7 @@ class Target(Enum):
     """
     Enum that defines which node the state machine node is controlling.
     """
-    DETECTOR = 0
+    DETECTOR_TRAFFIC_LIGHT = 0
     PLANNER = 1
     PURE_PURSUIT = 2
 
