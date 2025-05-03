@@ -308,7 +308,7 @@ class TrackerNode(Node):
 
         self._handle_image(msg)
 
-        # self.pure_pursuit(self.get_target_line())
+        self.pure_pursuit(self.get_target_line())
 
         # if self._counter % 2 == 0:
         # self.matplotlib_plot(msg)
