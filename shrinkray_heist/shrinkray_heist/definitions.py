@@ -6,11 +6,10 @@ class TripSegment(Enum):
     Enum for the current 
     """
     # NOTE doesnt make sense for the way back , could be better organized
-    START = -1 
-    RAY_LOC1 = 0
-    RAY_OBJ1 = 1
+    START = 0
+    RAY_LOC1 = 1
     RAY_LOC2 = 2
-    RAY_OBJ2 = 3
+    END = 3
     
     # this is for the way back 
     
@@ -24,6 +23,7 @@ class ObjectDetected(Enum):
     TRAFFIC_LIGHT_GREEN = 2
     TRAFFIC_LIGHT_YELLOW = 3
     SHRINK_RAY = 4
+
 class State(Enum):
     """
     Enum that defines the states of the robot
@@ -40,7 +40,15 @@ class Target(Enum):
     DETECTOR_TRAFFIC_LIGHT = 0
     DETECTOR_SHRINK_RAY = 1
     PLANNER = 2
-    PURE_PURSUIT = 3
+    FOLLOWER = 3
+    
+class TrafficSimulation(Enum):
+    """
+    Enum that defines the traffic simulation state.
+    """
+    NO_TRAFFIC = 0
+    IN_TRAFFIC = 1
+    HANDLED_TRAFFIC = 2
 
 class Drive(Enum):
     """
