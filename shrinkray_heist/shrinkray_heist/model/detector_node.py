@@ -15,9 +15,9 @@ from shrinkray_heist.definitions import  Target, TripSegment, ObjectDetected, St
 from shrinkray_heist.homography_transformer import HomographyTransformer
 
 
-class ShrinkRayDetector(Node):
+class DetectorNode(Node):
     def __init__(self):
-        super().__init__("shrinkray_detector")
+        super().__init__("detector_node")
         # self.detector = Detector() # ON REAL RACECAR
         self.detector = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
         self.detector.set_threshold(0.5)
@@ -74,6 +74,8 @@ class ShrinkRayDetector(Node):
             drive_msg.drive.speed = 0.0
             self.drive_pub.publish(drive_msg)
             self.get_logger().info("Arrived at shrink ray location, stopping")
+
+            # send stop state
             return
         
         # Too far, go closer to shrink ray
@@ -139,8 +141,8 @@ class ShrinkRayDetector(Node):
             
 def main(args=None):
     rclpy.init(args=args)
-    shrinkray_detector = ShrinkRayDetector()
-    rclpy.spin(shrinkray_detector)
+    detector = Detector()
+    rclpy.spin(detector)
     rclpy.shutdown()
 
 if __name__=="__main__":

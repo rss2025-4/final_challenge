@@ -10,6 +10,7 @@ from visualization_msgs.msg import Marker
 
 from .utils import LineTrajectory
 
+from .definitions import Drive
 
 class PurePursuit(Node):
     """Implements Pure Pursuit trajectory tracking with a fixed lookahead and speed."""
@@ -291,7 +292,7 @@ class PurePursuit(Node):
 
                 # Tell state node that goal is reached
                 msg = Int32()
-                msg.data = 1
+                msg.data = Drive.GOAL_REACHED
                 self.purepursuit_state_pub.publish(msg)
 
                 # self.stop = True

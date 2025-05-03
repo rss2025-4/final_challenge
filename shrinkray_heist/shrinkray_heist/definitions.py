@@ -40,3 +40,10 @@ class Target(Enum):
     DETECTOR = 0
     PLANNER = 1
     PURE_PURSUIT = 2
+
+class Drive(Enum):
+    """
+    Enum that defines which node the state machine node is controlling.
+    """
+    IN_PROGRESS = 0
+    GOAL_REACHED = 1
