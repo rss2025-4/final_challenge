@@ -11,6 +11,7 @@ from visualization_msgs.msg import Marker
 from .utils import LineTrajectory
 
 from .definitions import Drive
+from shrinkray_heist.definitions import  Target, TripSegment, ObjectDetected, State
 
 class PurePursuit(Node):
     """Implements Pure Pursuit trajectory tracking with a fixed lookahead and speed."""
@@ -32,8 +33,8 @@ class PurePursuit(Node):
         # print(f"odom_topic: {self.odom_topic}")
         # print(f"drive_topic: {self.drive_topic}")
 
-        self.speed = 1.0  # ADJUST SPEED #
-        self.lookahead = 1.0 # ADJUST LOOKAHEAD -- NEEDS TO BE TUNED IN REAL LIFE 
+        self.speed = 0.75  # ADJUST SPEED m/s#
+        self.lookahead = 1.0 # ADJUST LOOKAHEAD m -- NEEDS TO BE TUNED IN REAL LIFE 
 
         # FOR VARIABLE LOOKAHEAD (MAYBE NOT NEEDED FOR FINAL RACE THOUGH)
         # self.max_speed = self.speed + 1.0
@@ -62,21 +63,38 @@ class PurePursuit(Node):
         self.alert_subscriber = self.create_subscription(String, "/alert", self.alert_callback, 10)
         self.pose_sub = self.create_subscription(PoseWithCovarianceStamped, "/initialpose", self.pose_callback, 10)
 
-        self.stop = False
-
+        
         # for publishing to state node
         self.purepursuit_state_pub = self.create_publisher(Int32, "/pursuit_state", 1)
 
-    def pose_callback(self, odometry_msg):
-        "For sim testing with safety controller"
-        self.get_logger().info("Initial pose callback")
-        self.stop = False
+        # listen for state machine state
+        self.state_sub = self.create_subscription(Int32, "/toggle_state", self.state_cb, 1)
+        self.purepursuit_on = True # default is on
+        self.stop = False # default is going to drive
 
-    def alert_callback(self, alert_msg):
-        """For sim, but can use as for debug, testing with safety controller"""
-        if alert_msg.data == "STOP":
-            self.stop = True
-            self.get_logger().info('Got alert msg: "%s"' % alert_msg.data)
+
+    def state_cb(self, msg):
+        pass # for testing
+        if msg.data == Target.FOLLOWER:
+            self.purepursuit_on = not self.purepursuit_on
+
+            if self.purepursuit_on:
+                self.get_logger().info("Pure Pursuit Activated")
+                self.stop = False
+            else:
+                self.get_logger().info("Pure Pursuit Deactivated")
+                
+
+    # def pose_callback(self, odometry_msg):
+    #     "For sim testing with safety controller"
+    #     self.get_logger().info("Initial pose callback")
+        # self.stop = False
+
+    # def alert_callback(self, alert_msg):
+    #     """For sim, but can use as for debug, testing with safety controller"""
+    #     if alert_msg.data == "STOP":
+    #         self.stop = True
+    #         self.get_logger().info('Got alert msg: "%s"' % alert_msg.data)
         # else:
         #     self.stop = False
 
@@ -257,15 +275,14 @@ class PurePursuit(Node):
         drive_msg.drive.acceleration = 0.0  # m/s^2
         drive_msg.drive.jerk = 0.0  # m/s^3
 
-        # publish message
-        if not self.stop:  # for sim
-
-            self.drive_pub.publish(drive_msg)
-            # self.get_logger().info('Published drive msg: "%s"' % drive_msg.drive.speed)
-        else:
-            drive_msg.drive.speed = 0.0
-            self.drive_pub.publish(drive_msg)
-            self.get_logger().info('Published stop drive msg: "%s"' % drive_msg.drive.speed)
+        if self.purepursuit_on: #only publish drive msg if pure pursuit is on 
+            if not self.stop:  
+                self.drive_pub.publish(drive_msg)
+                # self.get_logger().info('Published drive msg: "%s"' % drive_msg.drive.speed)
+            else: # stop (when goal is reached)
+                drive_msg.drive.speed = 0.0
+                self.drive_pub.publish(drive_msg)
+                self.get_logger().info('Published stop drive msg: "%s"' % drive_msg.drive.speed)
 
     def pose_callback(self, odometry_msg):
         if self.initialized_traj:
@@ -295,7 +312,7 @@ class PurePursuit(Node):
                 msg.data = Drive.GOAL_REACHED
                 self.purepursuit_state_pub.publish(msg)
 
-                # self.stop = True
+                self.stop = True
 
             # self.get_logger().info('np trajectory "%s"' % trajectory)
             nearest_point, [p1_nearest, p2_nearest], index_p1, index_p2 = self.nearest_point(current_point, trajectory)
