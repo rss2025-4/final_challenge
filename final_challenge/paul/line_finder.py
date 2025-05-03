@@ -20,6 +20,8 @@ import numpy as np
 import argparse
 
 
+RIGHT_Y_CUTOFF = 0.9
+
 
 def threshold_white(img):
     """
@@ -143,7 +145,8 @@ def cluster_and_fit(frame, lines):
             if slope < 0 and mx < w / 2 and abs(slope) >= LEFT_SLOPE_MIN:
                 left_segs.append((x1, y1, x2, y2))
             elif slope > 0 and mx > w / 2 and abs(slope) >= RIGHT_SLOPE_MIN:
-                right_segs.append((x1, y1, x2, y2))
+                if (y1 / h > RIGHT_Y_CUTOFF) or (y2 / h > RIGHT_Y_CUTOFF):
+                    right_segs.append((x1, y1, x2, y2))
         if not left_segs:
             for x1,y1,x2,y2 in lines[:,0]:
                 if x2==x1: continue
@@ -266,8 +269,8 @@ def image_print(img):
 	cv2.destroyAllWindows()
 if __name__ == "__main__":
     # Quick test on images 1..67
-    for i in range(1, 60):
-        img = cv2.imread(f'/Users/paul/racecar_docker/home/racecar_ws/src/final_challenge2025/racetrack_images/lane_3/image{i}.png')
-        # processed = threshold_white(img)
-        processed = process_frame(img)
-        image_print(processed)
+    # for i in range(1, 60):
+    img = cv2.imread(f'/root/racecar_ws/src/final_challenge/final_challenge//racetrack_images/lane_3/image21.png')
+    # processed = threshold_white(img)
+    processed = process_frame(img)
+    image_print(processed)

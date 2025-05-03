@@ -95,7 +95,7 @@ class TrackerNode(Node):
         )
 
         self.odom_sub = self.create_subscription(
-            Odometry, self.cfg.odom_sub_topic, self.odom_callback, 1
+            Odometry, self.cfg.odom_sub_topic, self.odom_callback, 10
         )
 
         self.drive_pub = self.create_publisher(
@@ -210,7 +210,7 @@ class TrackerNode(Node):
         return False
 
     def odom_callback(self, msg: Odometry) -> None:
-        print("odom_callback!!", time_msg_to_float(msg.header.stamp))
+        # print("odom_callback!!", time_msg_to_float(msg.header.stamp))
         self._pending_odoms.append((time_msg_to_float(msg.header.stamp), msg))
 
         self.__maybe_process_messages()
@@ -219,7 +219,7 @@ class TrackerNode(Node):
             _ = self._pending_odoms.pop(0)
 
     def image_callback(self, msg: Image) -> None:
-        print("image_callback!!", time_msg_to_float(msg.header.stamp))
+        # print("image_callback!!", time_msg_to_float(msg.header.stamp))
         self._pending_images.append((time_msg_to_float(msg.header.stamp), msg))
 
         self.__maybe_process_messages()
@@ -283,10 +283,10 @@ class TrackerNode(Node):
         drive_cmd = AckermannDriveStamped()
 
         drive = AckermannDrive()
-        drive.steering_angle = forward_point[1] / forward_point[0] / 4 - 0.035
+        drive.steering_angle = forward_point[1] / forward_point[0] / 6 - 0.035
 
         # drive.steering_angle = -0.04
-        drive.speed = 3.0
+        drive.speed = 4.0
         # drive.speed = 0.5
         # drive.steering_angle = 0.0
         # drive.speed = 0.0

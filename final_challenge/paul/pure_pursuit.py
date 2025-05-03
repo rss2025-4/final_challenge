@@ -9,7 +9,7 @@ class SimplePointFollower(Node):
         super().__init__("simple_point_follower")
         
         # Parameters
-        self.speed = 1.0  # Fixed forward speed
+        self.speed = 3.0  # Fixed forward speed
         self.max_steer = np.pi / 4  # Maximum steering angle
         
         # Publishers/Subscribers
@@ -38,7 +38,8 @@ class SimplePointFollower(Node):
         # Create and publish drive message
         drive_msg = AckermannDriveStamped()
         drive_msg.drive.speed = self.speed
-        # if abs(steering_angle) < 0.1:
+        if abs(steering_angle) < 0.1:
+            steering_angle= 0.0
         drive_msg.drive.steering_angle = steering_angle -0.07
         # else:
         # drive_msg.drive.steering_angle = steering_angle
