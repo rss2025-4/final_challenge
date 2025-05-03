@@ -252,6 +252,13 @@
 <div class="viewcode-block" id="xy_to_uv_point">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.xy_to_uv_point">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">xy_to_uv_point</span><span class="p">(</span><span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Point</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">homography_point</span><span class="p">(</span><span class="n">matrix_xy_to_uv</span><span class="p">(),</span> <span class="n">point</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="uv_to_xy_point">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.uv_to_xy_point">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">uv_to_xy_point</span><span class="p">(</span><span class="n">point</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Point</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">homography_point</span><span class="p">(</span><span class="n">matrix_uv_to_xy</span><span class="p">(),</span> <span class="n">point</span><span class="p">)</span></div>
 
 
