@@ -51,6 +51,8 @@ class StatesNode(Node):
         self.state_pub = self.create_publisher(Int32, '/toggle_state', 1)
         self.points_pub = self.create_publisher(PoseArray, '/planned_pts', 1) # publish the points we want to plan a path 
         
+        self.get_logger().info('State Node Initialized with State: "%s"' % self.trip_segment)
+
         # ? are we getting an end pose from the tas?
         # self.end_pose = self.create_subscription(PoseWithCovarianceStamped, '/goal_pose', self.end_pose_cb, 10)
         # self.locations = self.create_subscription(PoseWithCovarianceStamped, '/locations', self.locations_pose_cb, 10)
