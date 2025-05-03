@@ -6,16 +6,16 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from model.detector import Detector
 
-class DetectorNode(Node):
+class ShrinkRayDetector(Node):
     def __init__(self):
-        super().__init__("detector")
+        super().__init__("shrinkray_detector")
         self.detector = Detector()
         # self.cone_pub = self.create_publisher(ConeLocationPixel, "/relative_cone_px", 10)
         self.publisher = self.create_publisher(Image, "/banana_img", 10)
         self.subscriber = self.create_subscription(Image, "/zed/zed_node/rgb/image_rect_color", self.callback, 1)
         self.bridge = CvBridge()
 
-        self.get_logger().info("Detector Initialized")
+        self.get_logger().info("Shrink Ray Detector Initialized")
 
     def callback(self, img_msg):
         # Process image with CV Bridge
@@ -44,8 +44,8 @@ class DetectorNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    detector = DetectorNode()
-    rclpy.spin(detector)
+    shrinkray_detector = ShrinkRayDetector()
+    rclpy.spin(shrinkray_detector)
     rclpy.shutdown()
 
 if __name__=="__main__":

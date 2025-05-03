@@ -3,15 +3,15 @@ from rclpy.node import Node
 import numpy as np
 
 from sensor_msgs.msg import Image
-from .detector import Detector
-from tf_transformations import euler_from_quaternion
+# from .detector import Detector
+# from tf_transformations import euler_from_quaternion
 
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, PoseArray, Point, PointStamped
 from ackermann_msgs.msg import AckermannDriveStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from std_msgs.msg import Float32, String, Int32
-from definitions import States, Target, TripSegment
+from .definitions import  Target, TripSegment #States
 from typing import List, Tuple
 
 
@@ -67,7 +67,8 @@ class StatesNode(Node):
         # self.detector_state_pub = self.create_publisher(String, '/detector_states')
         #self.at_shrinkray_loc_pub = self.create_publisher(String, '/at_shrinkray_loc', 1)
         # self.check_trafficlight_pub = self.create_publisher(String, '/traffic_light_check', 10)
-    
+    def start_pose_cb(self, msg: PoseWithCovarianceStamped):
+        pass
     def trajectory_cb(self, msg: PoseArray):
         self.get_logger().info("Received trajectory")
         pass 
