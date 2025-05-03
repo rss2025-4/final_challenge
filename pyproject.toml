@@ -25,7 +25,8 @@ ipython = "^8"
 matplotlib = "^3.10.1"
 numpy = "==1.*"
 opencv-python = "^4.11.0.86"
-rosbags = "^0.10.9"
+# rosbags = "^0.10.9"
+rosbags = { git = "https://github.com/rss2025-4/rosbags.git" }
 scikit-learn = "^1.6.1"
 scipy = "^1.15.2"
 
@@ -83,6 +84,7 @@ line-length = 100
 
 [tool.isort]
 profile = "black"
+combine_as_imports = true
 known_first_party = [
   #
   "libracecar",

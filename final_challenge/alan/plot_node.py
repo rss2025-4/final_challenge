@@ -8,29 +8,39 @@ from geometry_msgs.msg import Vector3
 from jax import Array
 from jax import numpy as jnp
 from jax import vmap
+from jax.typing import ArrayLike
 from nav_msgs.msg import Odometry
+from PIL import Image
 from rclpy import Context
 from rclpy.node import Node
-from sensor_msgs.msg import Image
+from scipy.ndimage import uniform_filter
+from sensor_msgs.msg import Image as RosImage
 from tf2_ros import (
     Node,
 )
 
-from libracecar.utils import jit, time_function
+from final_challenge.alan.image import draw_lines
+from final_challenge.alan.tracker import process_image
+from libracecar.batched import batched
+from libracecar.utils import jit, time_function, tree_select
 
 from ..homography import (
     ImagPlot,
     Line,
     LinePlot,
     LinePlotXY,
+    homography_image_rev,
+    homography_line,
+    homography_mask,
+    matrix_xy_to_xy_img,
     setup_xy_plot,
     shift_line,
     xy_plot_top_to_uv_line,
     xy_to_uv_line,
 )
 from .colors import load_color_filter
+from .image import color_image, xy_line_to_xyplot_image
 from .ros import ImageMsg
-from .tracker_node import process_image
 
 
 @dataclass
@@ -53,7 +63,7 @@ class PlotNode(Node):
         )
 
         self.image_sub = self.create_subscription(
-            Image,
+            RosImage,
             "/zed/zed_node/rgb/image_rect_color",
             self.image_callback,
             5,
@@ -69,6 +79,8 @@ class PlotNode(Node):
         self.draw_timer = self.create_timer(1 / 15, self.draw_callback)
 
         self.color_filter = jnp.array(load_color_filter())
+
+        self.last_image: Image.Image = Image.fromarray(np.zeros((360, 640, 4), dtype=np.uint8))
 
         plt.ion()
         self.fig = plt.figure()
@@ -106,43 +118,49 @@ class PlotNode(Node):
     def odom_callback(self, msg: Odometry):
         pass
 
-    def image_callback(self, msg_ros: Image):
-        print("plot node: image_callback")
+    def image_callback(self, msg_ros: RosImage):
+        # print("plot node: image_callback")
         msg = ImageMsg.parse(msg_ros)
+        self.last_image = msg.image
 
-        self.image_plot.set_imag(msg.image)
+        # self.image_plot.set_imag(msg.image)
 
         # color_mask = color_counter.apply_filter(self.color_filter, msg.image)
 
         # self.image_plot.set_imag(msg.image)
 
-        image_processed = process_image(np.array(msg.image), self.color_filter)
+        # image_processed = process_image(np.array(msg.image), self.color_filter)
 
-        self.image_plot_xy.set_imag(image_processed)
+        # self.image_plot_xy.set_imag(image_processed)
 
     @time_function
     def line_callback(self, msg: Vector3):
 
         line_xy = (float(msg.x), float(msg.y), float(msg.z))
 
-        xy_lines, uv_lines = _get_xy_uv_lines_for_plt(
-            line_xy,
-            jnp.array(self.cfg.shifts),
+        xy_image = np.array(xy_line_to_xyplot_image(line_xy, jnp.array(self.cfg.shifts)))
+
+        xy_image = (
+            uniform_filter(xy_image.astype(np.float32), size=7, mode="constant", cval=0.0) > 1e-6
         )
+        # self.image_plot_xy.set_imag(xy_image)
 
-        for p, l in zip(self.lines_plot, np.array(uv_lines)):
-            p.set_line(l)
+        image_processed = process_image(np.array(self.last_image), self.color_filter)
+        self.image_plot_xy.set_imag(image_processed)
 
-        for p, l in zip(self.lines_plot_xy, np.array(xy_lines)):
-            p.set_line(l)
+        overlay = homography_image_rev(np.array(color_image(xy_image)))
+        # composite.paste(Image.fromarray(overlay))
 
+        # color_image(xy_image)
 
-@jit
-def _get_xy_uv_lines_for_plt(line_xy: Line, shifts: Array):
-    def inner(s: Array):
-        assert s.shape == ()
-        ans_xy = shift_line(line_xy, s)
-        ans_uv = xy_to_uv_line(ans_xy)
-        return ans_xy, ans_uv
+        self.image_plot.set_imag(Image.alpha_composite(self.last_image, Image.fromarray(overlay)))
 
-    return vmap(inner)(shifts)
+        # xy_image
+
+        # draw_line
+
+        # for p, l in zip(self.lines_plot, np.array(uv_lines)):
+        #     p.set_line(l)
+
+        # for p, l in zip(self.lines_plot_xy, np.array(plot_xy_lines)):
+        #     p.set_line(l)

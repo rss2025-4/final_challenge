@@ -12,6 +12,7 @@ from jax.typing import ArrayLike
 from PIL import Image
 
 from final_challenge.alan import FrameData
+from final_challenge.alan.segmentation import FrameDataV2
 from final_challenge.homography import homography_image
 from libracecar.utils import jit, tree_at_
 
@@ -30,6 +31,10 @@ class color_counter(eqx.Module):
         return count.at[xs[:, 0], xs[:, 1], xs[:, 2]].add(counts)
 
     def push_image(self, img: Image.Image, mask: np.ndarray):
+        # img = homography_image(img)
+        # mask = homography_image(mask)
+        # img = img[175:]
+        # mask = mask[175:]
         return self._push_image(
             img=jnp.array(homography_image(img)),
             mask=jnp.array(homography_image(mask.astype(np.float32))),
@@ -39,11 +44,6 @@ class color_counter(eqx.Module):
     def _push_image(self, img: Array, mask: Array):
         assert img.dtype == jnp.uint8
         img = (img // 2)[:, :, :3]
-
-        # img = homography_image(img)
-        # mask = homography_image(mask)
-        # img = img[175:]
-        # mask = mask[175:]
 
         h, w, _ = img.shape
 
@@ -94,20 +94,31 @@ color_filter_path = Path(__file__).parent / "color_filter.npy"
 
 
 def compute_color_filter():
-    data_dirs = [
-        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_given_labeled"),
-        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part1"),
-        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part2"),
-        Path("/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part3"),
-    ]
-
     counter = color_counter.new()
 
-    for data_dir in data_dirs:
-        for frame in tqdm.tqdm(FrameData.load_all(data_dir)):
-            counter = counter.push_image(frame.in_img, frame.out_left_bool)
-            counter = counter.push_image(frame.in_img, frame.out_right_bool)
+    base = Path("/home/alan/6.4200/final_challenge2025/data")
 
+    data_dirs_v1 = [
+        base / "johnson_track_rosbag_given_labeled",
+        base / "johnson_track_rosbag_4_29_labeled/part1",
+        base / "johnson_track_rosbag_4_29_labeled/part2",
+        base / "johnson_track_rosbag_4_29_labeled/part3",
+    ]
+    for data_dir in data_dirs_v1:
+        for frame in tqdm.tqdm(FrameData.load_all(data_dir)):
+            counter = counter.push_image(frame.in_img, frame.out_left_bool | frame.out_right_bool)
+
+    dat_5_3 = base / "johnson_track_rosbag_5_3_labeled"
+    data_dirs_v2 = [
+        dat_5_3 / "bag1/bag1_part1",
+        dat_5_3 / "bag1/bag1_part2",
+        dat_5_3 / "bag1/bag1_part3",
+        dat_5_3 / "bag1/bag1_part4",
+        dat_5_3 / "bag2/bag2_part1",
+    ]
+    for data_dir in data_dirs_v2:
+        for frame in tqdm.tqdm(FrameDataV2.load_all(data_dir)):
+            counter = counter.push_image(frame.in_img, frame.out_mask)
     ans = np.array(counter.get_ratios())
     np.save(color_filter_path, ans)
 

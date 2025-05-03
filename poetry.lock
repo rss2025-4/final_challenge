@@ -2229,15 +2229,13 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "rosbags"
-version = "0.10.9"
+version = "0.0"
 description = "Pure Python library to read, modify, convert, and write rosbag files."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-files = [
-    {file = "rosbags-0.10.9-py3-none-any.whl", hash = "sha256:3b0f4e4821af69921aff4217432ffe8670ad245ab60198dbfcc3b578e83990ac"},
-    {file = "rosbags-0.10.9.tar.gz", hash = "sha256:38fc1999370f6c173765c827b230f7486137fdd43c134b116374ad0fe264a135"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 lz4 = "*"
@@ -2245,6 +2243,12 @@ numpy = "*"
 "ruamel.yaml" = "*"
 typing_extensions = ">=4.5"
 zstandard = "*"
+
+[package.source]
+type = "git"
+url = "https://github.com/rss2025-4/rosbags.git"
+reference = "HEAD"
+resolved_reference = "06e49f5024c433104652b28f3f0bfc8c3b1f20df"
 
 [[package]]
 name = "rstfmt"
@@ -3286,4 +3290,4 @@ jax = ["equinox", "jax", "libracecar"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.11"
-content-hash = "12f7fe678814c513a646b40f7b19820ee2a7426a87c08ca58d3bad1346ea4d53"
+content-hash = "0acba6a3bc644c66457e0b339215d9383ef669873a9f1b74d1f81d943c14a20b"

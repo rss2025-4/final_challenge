@@ -16,16 +16,17 @@ from final_challenge.alan import FrameData
 from final_challenge.alan.rosbag import get_images
 from final_challenge.alan.sam2_video_predictor_example import (
     get_mask,
+    show_points,
 )
 from final_challenge.alan.utils import cast_unchecked_
 
+bagpath = Path("/home/alan/6.4200/rosbags_5_3/out_bag3")
+
 
 def viz_data():
-    bagpath = Path("/home/alan/6.4200/rosbags_4_29/bag2")
-
     it = iter(get_images(bagpath))
 
-    it = islice(it, 1300, 1500)
+    it = islice(it, 330, 331)
 
     first = next(it)
 
@@ -65,9 +66,8 @@ def build_predictor():
 
 
 def main(predictor: SAM2VideoPredictor | None = None):
-    bagpath = Path("/home/alan/6.4200/rosbags_4_29/bag2")
-    out_dir = Path(__file__).parent.parent / "data" / "johnson_track_rosbag_4_29_labeled/part3"
-    # out_dir = Path(__file__).parent.parent / "data" / "johnson_track_rosbag_4_29_labeled_test"
+    out_dir = Path(__file__).parent.parent / "data" / "johnson_track_rosbag_5_3_labeled_v1/bag3"
+    # out_dir = Path(__file__).parent.parent / "data" / "johnson_track_rosbag_5_3_labeled_v1_test"
     out_dir.mkdir(parents=True, exist_ok=False)
     # out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -76,8 +76,9 @@ def main(predictor: SAM2VideoPredictor | None = None):
 
     # it = islice(it, 1300, 1500)
     messages = list(
-        # islice(get_images(bagpath), 1300, 1301),
-        islice(get_images(bagpath), 1300, 1500),
+        get_images(bagpath)
+        # islice(get_images(bagpath), 0, 10),
+        # islice(get_images(bagpath), 330, 340),
         # islice(get_images(bagpath), 105, 106),
     )
     # messages = messages[:300]
@@ -105,19 +106,38 @@ def main(predictor: SAM2VideoPredictor | None = None):
             offload_video_to_cpu=True,
         )
 
-        ann_frame_idx = 0
-
         prompts = [
-            np.array([[167, 212, 1]]),
-            np.array([[505, 225, 1]]),
-            # np.array([[516, 231, 1]]),
+            # left
+            (0, 0, np.array([[174, 263, 1]])),
+            # right
+            (1, 0, np.array([[528, 209, 1]])),
+            (
+                1,
+                325,
+                np.array(
+                    [
+                        [542, 180, 1],
+                        [453, 155, 1],
+                    ]
+                ),
+            ),
+            (
+                1,
+                330,
+                np.array(
+                    [
+                        [392, 159, 1],
+                        [543, 197, 1],
+                    ]
+                ),
+            ),
         ]
 
-        for obj_id, prompt in enumerate(prompts):
+        for obj_id, ann_frame_idx, prompt in prompts:
             points = prompt[:, :2].astype(np.float32)
             labels = prompt[:, 2].astype(np.int32)
 
-            # _ = show_points
+            _ = show_points
             # show_points(points, labels, ax)
 
             _, out_obj_ids, out_mask_logits = predictor.add_new_points_or_box(
@@ -126,7 +146,9 @@ def main(predictor: SAM2VideoPredictor | None = None):
                 obj_id=obj_id,
                 points=points,
                 labels=labels,
+                clear_old_points=False,
             )
+        # return
 
         for out_frame_idx, out_obj_ids, out_mask_logits in predictor.propagate_in_video(
             inference_state
@@ -163,7 +185,8 @@ def main(predictor: SAM2VideoPredictor | None = None):
 
 def example_plot():
     data_dir = Path(
-        "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_4_29_labeled/part2"
+        "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_5_3_labeled_v1/bag3"
+        # "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_5_3_labeled_v1_test"
     )
 
     plt.ion()
@@ -178,17 +201,20 @@ def example_plot():
     cax = ax2.imshow(first.out_left, cmap="viridis")
     fig.colorbar(cax, ax=[ax1, ax2])
 
-    prev_stamp = first.time
+    prev_stamp = None
 
-    for i in range(1504):
+    for i in range(0, 2000):
+        print(i)
         start_t = time.time()
         cur = FrameData.load(data_dir, i)
 
-        cax.set_data(cur.out_left)
+        cax.set_data(cur.out_right)
         img2.set_data(cast_unchecked_(cur.viz_img))
+        print("sum", np.sum(cur.out_right_bool))
 
         fig.canvas.draw()
         fig.canvas.flush_events()
 
-        time.sleep(max(0, (cur.time - prev_stamp) - (time.time() - start_t)))
+        if prev_stamp is not None:
+            time.sleep(max(0, (cur.time - prev_stamp) - (time.time() - start_t)))
         prev_stamp = cur.time

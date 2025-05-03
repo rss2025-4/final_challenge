@@ -25,8 +25,7 @@ from PIL import Image
 from .alan.utils import cache, cast_unchecked_
 
 try:
-    from jax import Array
-    from jax import numpy as jnp
+    from jax import Array, numpy as jnp
 
     Arr = Union[Array, np.ndarray]
     ArrLike = Union[Array, np.ndarray, float]
@@ -106,7 +105,7 @@ Point = Union[Arr, tuple[ArrLike, ArrLike]]
 Line = Union[Arr, tuple[ArrLike, ArrLike, ArrLike]]
 
 
-def _ck_line(x: Line) -> Arr:
+def ck_line(x: Line) -> Arr:
     """validate a line"""
     x = jnp.array(x)
     assert isinstance(x, jnp.ndarray)
@@ -114,7 +113,7 @@ def _ck_line(x: Line) -> Arr:
     return x
 
 
-def _ck_point(x: Point) -> Arr:
+def ck_point(x: Point) -> Arr:
     """validate a point"""
     x = jnp.array(x)
     assert isinstance(x, jnp.ndarray)
@@ -126,7 +125,7 @@ def _ck_point(x: Point) -> Arr:
 
 def point_coord(x: Point) -> tuple[float, float]:
     """get the euclidean coordinate; cannot be at infinity"""
-    ans = _ck_point(x)
+    ans = ck_point(x)
     z = ans[2]
     if abs(z) <= 1e-10:
         logger.warning(f"getting coordinate of far-away pont {x}")
@@ -136,7 +135,7 @@ def point_coord(x: Point) -> tuple[float, float]:
 
 def line_direction(line: Line, normalize: bool = False) -> Arr:
     """vector of the direction of the line"""
-    a, b, _c = _ck_line(line)
+    a, b, _c = ck_line(line)
     ans = jnp.array([b, -a])
 
     if normalize:
@@ -159,7 +158,7 @@ _image_bottom: Line = (0.0, 1.0, -H)
 
 
 def homography_point(matrix: Arr, point: Point) -> Point:
-    return _ck_point(matrix @ _ck_point(point))
+    return ck_point(matrix @ ck_point(point))
 
 
 def xy_to_uv_point(point: Point) -> Point:
@@ -176,7 +175,7 @@ def homography_line(matrix: Arr, line: Line) -> Line:
     # <M^-1 @ ans, line> == 0
     # <=>
     # <uv, M^T^-1 @ line> == 0
-    return _ck_line(jnp.linalg.inv(matrix.T) @ _ck_line(line))
+    return ck_line(jnp.linalg.inv(matrix.T) @ ck_line(line))
 
 
 def xy_to_uv_line(line: Line) -> Line:
@@ -188,26 +187,26 @@ def uv_to_xy_line(line: Line) -> Line:
 
 
 def line_intersect(l1: Line, l2: Line) -> Point:
-    return _ck_point(jnp.cross(_ck_line(l1), _ck_line(l2)))
+    return ck_point(jnp.cross(ck_line(l1), ck_line(l2)))
 
 
 def line_x_equals(x0: ArrLike) -> Line:
     # x == x0 line, pointing at +y direction
-    return _ck_line((-1.0, 0.0, x0))
+    return ck_line((-1.0, 0.0, x0))
 
 
 def line_y_equals(y0: ArrLike) -> Line:
     # y == y0 line, pointing at +x direction
-    return _ck_line((0.0, 1.0, -y0))
+    return ck_line((0.0, 1.0, -y0))
 
 
 def line_through_points(l1: Point, l2: Point) -> Line:
-    return _ck_line(jnp.cross(_ck_point(l1), _ck_point(l2)))
+    return ck_line(jnp.cross(ck_point(l1), ck_point(l2)))
 
 
-def line_from_slope_intersect(slope: float, intercept: float) -> Line:
+def line_from_slope_intersect(slope: ArrLike, intercept: ArrLike) -> Line:
     # mx -y + b
-    return _ck_line((slope, -1.0, intercept))
+    return ck_line((slope, -1.0, intercept))
 
 
 def matrix_rot(ang_rad: ArrLike) -> Arr:
@@ -235,38 +234,38 @@ def matrix_trans(dx: ArrLike = 0.0, dy: ArrLike = 0.0) -> Arr:
 
 def shift_line(l: Line, d: ArrLike) -> Line:
     """shift line to the positive side by scalar d"""
-    l = _ck_line(l)
-    return _ck_line(l + jnp.array([0.0, 0.0, -jnp.linalg.norm(l[:2]) * d]))
+    l = ck_line(l)
+    return ck_line(l + jnp.array([0.0, 0.0, -jnp.linalg.norm(l[:2]) * d]))
 
 
-# def angle_bisector(l1: Line, l2: Line) -> Line:
-#     # UNTESTED!!
-#     l1 = _ck_line(l1)
-#     l2 = _ck_line(l2)
+def angle_bisector(l1: Line, l2: Line) -> Line:
+    # UNTESTED!!
+    l1 = ck_line(l1)
+    l2 = ck_line(l2)
 
-#     l2 = jnp.where(
-#         jnp.dot(l1[:2], l2[:2]) < 0,
-#         # flip if true
-#         -l2,
-#         l2,
-#     )
+    l2 = jnp.where(
+        jnp.dot(l1[:2], l2[:2]) < 0,
+        # flip if true
+        -l2,
+        l2,
+    )
 
-#     r1 = jnp.linalg.norm(l1[:2])
-#     r2 = jnp.linalg.norm(l2[:2])
+    r1 = jnp.linalg.norm(l1[:2])
+    r2 = jnp.linalg.norm(l2[:2])
 
-#     return _ck_line(l1 * r2 + l2 * r1)
+    return ck_line(l1 * r2 + l2 * r1)
 
 
 def get_foot(point: Point, line: Line) -> Point:
-    x, y, z = _ck_point(point)
-    a, b, c = _ck_line(line)
+    x, y, z = ck_point(point)
+    a, b, c = ck_line(line)
 
     ans = (
         b * b * x - a * b * y - a * c * z,
         a * a * y - a * b * x - b * c * z,
         a * a * z + b * b * z,
     )
-    return _ck_point(jnp.array(ans))
+    return ck_point(jnp.array(ans))
 
 
 @cache
@@ -295,9 +294,9 @@ def get_horizon(x_dist: float | None = None) -> int:
     return int((u1 + u2) / 2)
 
 
-def _get_2_points(l: Line):
+def get_2_points(l: Line):
     """get two distinct points on a line"""
-    l = _ck_line(l)
+    l = ck_line(l)
     l = l / jnp.linalg.norm(l)
 
     if abs(l[0]) <= 1e-3:
@@ -318,7 +317,7 @@ class LinePlot:
         self.kwargs = kwargs
 
     def set_line(self, l: Line):
-        p1, p2 = _get_2_points(l)
+        p1, p2 = get_2_points(l)
         if self.line is None:
             self.line = self.ax.axline(xy1=p1, xy2=p2, **self.kwargs)
         else:
@@ -352,16 +351,19 @@ class LinePlotXY(LinePlot):
 
 
 class ImagPlot:
-    def __init__(self, ax: Axes, **kwargs):
+    def __init__(self, ax: Axes, *, xlim: tuple[int, int] | None = None, **kwargs):
         self.ax = ax
         self.image: Optional[AxesImage] = None
         self.kwargs = kwargs
+        self.xlim = xlim
 
     def set_imag(self, image: Image.Image | np.ndarray):
         image_ = np.array(image)
         if self.image is None:
             self.image = self.ax.imshow(image_, **self.kwargs)
-            self.ax.set_xlim(0, image_.shape[1])
+            if self.xlim is None:
+                self.xlim = (0, image_.shape[1])
+            self.ax.set_xlim(self.xlim[0], self.xlim[1])
             self.ax.set_ylim(image_.shape[0], 0)
         else:
             self.image.set_data(image_)
@@ -378,6 +380,14 @@ def homography_image(image: Image.Image | np.ndarray) -> np.ndarray:
         np.array(image),
         cast_unchecked_(matrix_xy_to_xy_img() @ matrix_uv_to_xy()),
         (400, 200),
+    )
+
+
+def homography_image_rev(image: Image.Image | np.ndarray) -> np.ndarray:
+    return cv2.warpPerspective(
+        np.array(image),
+        np.linalg.inv(matrix_xy_to_xy_img() @ matrix_uv_to_xy()),
+        (640, 360),
     )
 
 

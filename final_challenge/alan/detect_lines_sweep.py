@@ -112,7 +112,7 @@ def update_line(
 
     xy_line = xy_line / jnp.linalg.norm(xy_line)
 
-    n_try = 21
+    n_try = 41
     try_rotations = batched.create(jnp.linspace(-0.2, 0.2, num=n_try), (n_try,))
     try_shifts = batched.create(jnp.linspace(-0.2, 0.2, num=n_try), (n_try,))
 

@@ -25,12 +25,13 @@ from tf2_ros import (
     Node,
 )
 
+from final_challenge.alan.tracker import update_with_image
 from libracecar.ros_utils import time_msg_to_float
 from libracecar.utils import time_function
 
 from ..homography import (
     Line,
-    _ck_line,
+    ck_line,
     get_foot,
     homography_image,
     homography_line,
@@ -114,7 +115,7 @@ class TrackerNode(Node):
 
         ######################################################
 
-        self.line_xy: Line = _ck_line(line_y_equals(-self.cfg.init_y))
+        self.line_xy: Line = ck_line(line_y_equals(-self.cfg.init_y))
 
         self.color_filter = jnp.array(load_color_filter())
 
@@ -319,17 +320,10 @@ class TrackerNode(Node):
     @time_function
     def _handle_image(self, msg: ImageMsg):
 
-        weights = process_image(msg.image, self.color_filter)
-
-        self.line_xy, res = update_line(
-            ScoreCtx(
-                weights=jnp.array(weights),
-                weights_mask=jnp.array(homography_mask((msg.image.height, msg.image.width))),
-                homography=jnp.array(matrix_xy_to_xy_img()),
-            ),
-            self.line_xy,
-            jnp.array(self.cfg.shifts),
+        self.line_xy, res = update_with_image(
+            self.line_xy, msg.image, self.color_filter, self.cfg.shifts
         )
+
         print("res", res)
         jax.block_until_ready(self.line_xy)
 
@@ -347,18 +341,3 @@ class TrackerNode(Node):
         msg.y = y
         msg.z = z
         self.line_pub.publish(msg)
-
-
-def process_image(image: np.ndarray | PIL.Image.Image, color_filter: Array) -> np.ndarray:
-
-    image = color_counter.apply_filter(color_filter, image)
-
-    image = uniform_filter(image.astype(np.float32), size=3, mode="constant", cval=0.0) > 1e-8
-
-    # print("homography_image", image)
-    image = homography_image(image.astype(np.float32))
-    # print("result", image)
-
-    image = uniform_filter(image.astype(np.float32), size=11, mode="constant", cval=0.0)
-
-    return image

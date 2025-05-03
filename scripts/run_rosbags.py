@@ -22,17 +22,14 @@ def main():
     np.set_printoptions(precision=5, suppress=True)
     # jax.config.update("jax_enable_x64", True)
 
-    # bag_dir = Path("/root/repos/rosbags_5_1/")
-    # bag = "out_bag2"
-
-    bag_dir = Path("/root/repos/rosbags_4_29")
-    bag = "bag2"
+    bag_dir = Path("/root/repos/rosbags_5_3")
+    bag = "out_bag2"
 
     procs = proc_manager.new()
     procs.spin_thread()
 
     tracker_cfg = TrackerConfig(
-        init_y=0.5,
+        init_y=2.5,
         shifts=[3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0],
     )
     plot_cfg = PlotConfig(shifts=tracker_cfg.shifts)
