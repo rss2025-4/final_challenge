@@ -12,7 +12,6 @@ increases down.
 
 from __future__ import annotations
 
-import functools
 import logging
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -23,7 +22,7 @@ from matplotlib.image import AxesImage
 from matplotlib.lines import AxLine
 from PIL import Image
 
-from .alan.utils import cast_unchecked_
+from .alan.utils import cache, cast_unchecked_
 
 try:
     from jax import Array
@@ -64,7 +63,7 @@ PTS_GROUND_PLANE = [
 METERS_PER_INCH = 0.0254
 
 
-@functools.cache
+@cache
 def matrix_uv_to_xy() -> np.ndarray:
     np_pts_ground = np.array(PTS_GROUND_PLANE)
     np_pts_ground = np_pts_ground * METERS_PER_INCH
@@ -79,7 +78,7 @@ def matrix_uv_to_xy() -> np.ndarray:
     return np.array(ans)
 
 
-@functools.cache
+@cache
 def matrix_xy_to_uv() -> np.ndarray:
     return np.linalg.inv(matrix_uv_to_xy())
 
@@ -266,7 +265,7 @@ def get_foot(point: Point, line: Line) -> Point:
     return _ck_point(jnp.array(ans))
 
 
-@functools.cache
+@cache
 def get_horizon(x_dist: float | None = None) -> int:
     """
     line of horizon in image, in pixels from the top
@@ -323,39 +322,59 @@ class LinePlot:
             self.line.set_xy2(p2)
 
 
-@functools.cache
-def matrix_xy_to_xyplot():
+see_meters = 2
+
+
+@cache
+def matrix_xy_to_xy_img():
     return (
-        #
-        np.diag([100, 100, 1])
-        @ np.array(
+        # 50 -> sees 200 / 50 meters
+        np.array(
             [
-                [0, -1, 2],
-                [-1, 0, 2],
+                # u = -y + 2
+                # v = -x + 2
+                [0, -1, 200],
+                [-1, 0, 200],
                 [0, 0, 1],
             ]
         )
+        @ np.diag([200 / see_meters, 200 / see_meters, 1])
     )
 
 
 class LinePlotXY(LinePlot):
     def set_line(self, l: Line, **kwargs):
-        super().set_line(homography_line(matrix_xy_to_xyplot(), l), **kwargs)
+        super().set_line(homography_line(matrix_xy_to_xy_img(), l), **kwargs)
 
 
 class ImagPlot:
-    def __init__(self, ax: Axes):
+    def __init__(self, ax: Axes, **kwargs):
         self.ax = ax
         self.image: Optional[AxesImage] = None
+        self.kwargs = kwargs
 
     def set_imag(self, image: Image.Image | np.ndarray):
         image_ = np.array(image)
         if self.image is None:
-            self.image = self.ax.imshow(image_)
+            self.image = self.ax.imshow(image_, **self.kwargs)
             self.ax.set_xlim(0, image_.shape[1])
             self.ax.set_ylim(image_.shape[0], 0)
         else:
             self.image.set_data(image_)
+
+
+@cache
+def homography_mask(shape: tuple[int, int]) -> np.ndarray:
+    ans = homography_image(np.ones(shape))
+    return np.array(ans) > 1e-3
+
+
+def homography_image(image: Image.Image | np.ndarray) -> np.ndarray:
+    return cv2.warpPerspective(
+        np.array(image),
+        cast_unchecked_(matrix_xy_to_xy_img() @ matrix_uv_to_xy()),
+        (400, 200),
+    )
 
 
 class ImagPlotXY(ImagPlot):
@@ -364,12 +383,7 @@ class ImagPlotXY(ImagPlot):
         self.image: Optional[AxesImage] = None
 
     def set_uv_imag(self, image: Image.Image | np.ndarray):
-        image_ = cv2.warpPerspective(
-            np.array(image),
-            cast_unchecked_(matrix_xy_to_xyplot() @ matrix_uv_to_xy()),
-            (400, 200),
-        )
-        super().set_imag(image_)
+        super().set_imag(homography_image(image))
 
 
 def setup_xy_plot(ax: Axes):
@@ -382,8 +396,8 @@ def setup_xy_plot(ax: Axes):
     LinePlotXY(ax).set_line(uv_to_xy_line(_image_bottom))
 
 
-@functools.cache
+@cache
 def xy_plot_top_to_uv_line():
     return homography_line(
-        matrix_xy_to_uv() @ np.linalg.inv(matrix_xy_to_xyplot()), (0.0, 1.0, 0.0)
+        matrix_xy_to_uv() @ np.linalg.inv(matrix_xy_to_xy_img()), (0.0, 1.0, 0.0)
     )

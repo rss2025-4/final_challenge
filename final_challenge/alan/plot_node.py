@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-import jax
 import matplotlib.pyplot as plt
 import numpy as np
-import rclpy
-from ackermann_msgs.msg import AckermannDrive, AckermannDriveStamped
 from geometry_msgs.msg import Vector3
 from jax import Array
 from jax import numpy as jnp
@@ -14,37 +11,26 @@ from jax import vmap
 from nav_msgs.msg import Odometry
 from rclpy import Context
 from rclpy.node import Node
-from rclpy.qos import (
-    QoSDurabilityPolicy,
-    QoSHistoryPolicy,
-    QoSProfile,
-    QoSReliabilityPolicy,
-)
-from scipy.ndimage import uniform_filter
 from sensor_msgs.msg import Image
 from tf2_ros import (
     Node,
 )
 
-from libracecar.utils import jit, time_function, timer
+from libracecar.utils import jit, time_function
 
 from ..homography import (
     ImagPlot,
     Line,
     LinePlot,
     LinePlotXY,
-    _ck_line,
-    get_foot,
-    line_y_equals,
-    point_coord,
     setup_xy_plot,
     shift_line,
+    xy_plot_top_to_uv_line,
     xy_to_uv_line,
 )
-from .colors import color_counter, load_color_filter
-from .detect_lines_sweep import update_line
+from .colors import load_color_filter
 from .ros import ImageMsg
-from .utils import check
+from .tracker_node import process_image
 
 
 @dataclass
@@ -98,9 +84,17 @@ class PlotNode(Node):
             LinePlot(self.ax1, color=cmap(i / shifts_len)) for i, _ in enumerate(cfg.shifts)
         ]
 
+        LinePlot(self.ax1).set_line(xy_plot_top_to_uv_line())
+
         setup_xy_plot(self.ax2)
+        self.image_plot_xy = ImagPlot(self.ax2, cmap="viridis", vmin=0, vmax=2.0)
         self.lines_plot_xy = [
-            LinePlotXY(self.ax2, color=cmap(i / shifts_len), linewidth=6)
+            LinePlotXY(
+                self.ax2,
+                color=cmap(i / shifts_len),
+                # linewidth=6,
+                linewidth=2,
+            )
             for i, _ in enumerate(cfg.shifts)
         ]
 
@@ -117,6 +111,14 @@ class PlotNode(Node):
         msg = ImageMsg.parse(msg_ros)
 
         self.image_plot.set_imag(msg.image)
+
+        # color_mask = color_counter.apply_filter(self.color_filter, msg.image)
+
+        # self.image_plot.set_imag(msg.image)
+
+        image_processed = process_image(np.array(msg.image), self.color_filter)
+
+        self.image_plot_xy.set_imag(image_processed)
 
     @time_function
     def line_callback(self, msg: Vector3):

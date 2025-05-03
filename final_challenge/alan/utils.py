@@ -1,3 +1,4 @@
+import functools
 from typing import Any, Callable, Generic, Iterable, ParamSpec, TypeVar, final
 
 from typing_extensions import Never
@@ -69,3 +70,7 @@ def unreachable(x: Never) -> Never:
 
 def check(a: str, b: str):
     assert a == b, f"not equal: {a} and {b}"
+
+
+def cache(f: T) -> T:
+    return cast_unchecked_(functools.cache(cast_unchecked_(f)))

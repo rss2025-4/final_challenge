@@ -12,6 +12,7 @@ from jax.typing import ArrayLike
 from PIL import Image
 
 from final_challenge.alan import FrameData
+from final_challenge.homography import homography_image
 from libracecar.utils import jit, tree_at_
 
 
@@ -28,16 +29,23 @@ class color_counter(eqx.Module):
     def _push_one(count: Array, xs: Array, counts: ArrayLike):
         return count.at[xs[:, 0], xs[:, 1], xs[:, 2]].add(counts)
 
-    @jit
-    def push_image(self, img: Array, mask: Array):
-        h, w, _ = img.shape
+    def push_image(self, img: Image.Image, mask: np.ndarray):
+        return self._push_image(
+            img=jnp.array(homography_image(img)),
+            mask=jnp.array(homography_image(mask.astype(np.float32))),
+        )
 
+    @jit
+    def _push_image(self, img: Array, mask: Array):
         assert img.dtype == jnp.uint8
         img = (img // 2)[:, :, :3]
-        h_ = int(h * 0.3)
-        img = img[h_:]
-        mask = mask[h_:]
-        h = img.shape[0]
+
+        # img = homography_image(img)
+        # mask = homography_image(mask)
+        # img = img[175:]
+        # mask = mask[175:]
+
+        h, w, _ = img.shape
 
         self = tree_at_(
             lambda me: me.full,
@@ -78,7 +86,7 @@ class color_counter(eqx.Module):
         return jax.vmap(jax.vmap(_one))(jnp.array(img))
 
     @staticmethod
-    def apply_filter(color_filter: Array, img: Image.Image) -> np.ndarray:
+    def apply_filter(color_filter: Array, img: Image.Image | np.ndarray) -> np.ndarray:
         return np.array(color_counter._apply_filter(color_filter, jnp.array(img)))
 
 
@@ -97,8 +105,8 @@ def compute_color_filter():
 
     for data_dir in data_dirs:
         for frame in tqdm.tqdm(FrameData.load_all(data_dir)):
-            counter = counter.push_image(jnp.array(frame.in_img), jnp.array(frame.out_left_bool))
-            counter = counter.push_image(jnp.array(frame.in_img), jnp.array(frame.out_right_bool))
+            counter = counter.push_image(frame.in_img, frame.out_left_bool)
+            counter = counter.push_image(frame.in_img, frame.out_right_bool)
 
     ans = np.array(counter.get_ratios())
     np.save(color_filter_path, ans)

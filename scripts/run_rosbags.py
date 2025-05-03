@@ -11,7 +11,6 @@ def main():
 
     import jax
     import numpy as np
-    import rclpy
 
     from final_challenge.alan.plot_node import PlotConfig, PlotNode
     from final_challenge.alan.tracker_node import TrackerConfig, TrackerNode
@@ -24,13 +23,13 @@ def main():
     # jax.config.update("jax_enable_x64", True)
 
     bag_dir = Path("/root/repos/rosbags_5_1/")
-    bag = "out_bag"
+    bag = "out_bag2"
 
     procs = proc_manager.new()
     procs.spin_thread()
 
     tracker_cfg = TrackerConfig(
-        init_y=1.5,
+        init_y=0.5,
         shifts=[3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0],
     )
     plot_cfg = PlotConfig(shifts=tracker_cfg.shifts)
