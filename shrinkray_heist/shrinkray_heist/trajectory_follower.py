@@ -4,7 +4,7 @@ from ackermann_msgs.msg import AckermannDriveStamped
 from geometry_msgs.msg import Point, PoseArray, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
-from std_msgs.msg import Float32, String
+from std_msgs.msg import Float32, String, Int32
 from tf_transformations import euler_from_quaternion
 from visualization_msgs.msg import Marker
 
@@ -62,6 +62,9 @@ class PurePursuit(Node):
         self.pose_sub = self.create_subscription(PoseWithCovarianceStamped, "/initialpose", self.pose_callback, 10)
 
         self.stop = False
+
+        # for publishing to state node
+        self.purepursuit_state_pub = self.create_publisher(Int32, "/pursuit_state", 1)
 
     def pose_callback(self, odometry_msg):
         "For sim testing with safety controller"
@@ -285,7 +288,13 @@ class PurePursuit(Node):
             last_point = np.array(trajectory[-1][:2])
             if np.linalg.norm(current_point - last_point) < 0.5:
                 self.get_logger().info("Goal reached")
-                self.stop = True
+
+                # Tell state node that goal is reached
+                msg = Int32()
+                msg.data = 1
+                self.purepursuit_state_pub.publish(msg)
+
+                # self.stop = True
 
             # self.get_logger().info('np trajectory "%s"' % trajectory)
             nearest_point, [p1_nearest, p2_nearest], index_p1, index_p2 = self.nearest_point(current_point, trajectory)
