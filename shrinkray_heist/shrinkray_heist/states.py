@@ -253,7 +253,7 @@ class StatesNode(Node):
     def traffic_cb(self, msg: Float32):
         self.get_logger().info("StatesNode: Received traffic light location")
 
-        # temporary - adelene 
+        # # temporary - adelene 
         # if msg.data < 1.0: # less than 1 meter
         #     # stop the car for 5 seconds
         #     drive_msg = AckermannDriveStamped()
