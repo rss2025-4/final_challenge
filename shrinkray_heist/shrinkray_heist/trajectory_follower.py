@@ -306,7 +306,7 @@ class PurePursuit(Node):
             last_point = np.array(trajectory[-1][:2])
             
             if np.linalg.norm(current_point - last_point) < 0.5:
-                if self.purepursuit_on:
+                if self.purepursuit_on and not self.stop:
                     self.get_logger().info("Goal reached")
 
                     # Tell state node that goal is reached
