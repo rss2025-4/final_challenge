@@ -13,29 +13,28 @@ def _label_to_color(label):
 
 
 class Detector:
-    def __init__(self, yolo_dir="/root/yolo", from_tensor_rt=True, threshold=0.5):
+    def __init__(self, yolo_dir="/root/yolo", from_tensor_rt=True, threshold=0.2):
         # local import
         # from ultralytics import YOLO
-        from ultralytics import YOLOE
-
         # cls = YOLO
+        from ultralytics import YOLOE
         cls = YOLOE
+        
+        
         
         self.threshold = threshold
         self.yolo_dir = yolo_dir
         if from_tensor_rt:
             self.model = cls(f"{self.yolo_dir}/yolo11n.engine", task="detect")
         else:
-            # self.model = cls(f"{self.yolo_dir}/yolo11n.pt", task="detect")
+            self.model = cls(f"{self.yolo_dir}/yolo11n.pt", task="detect")
             # self.model = cls(f"{self.yolo_dir}/yoloe-11s-seg-pf.pt", task="detect")
             # self.model = cls(f"{self.yolo_dir}/yoloe-v8s-seg.pt") #, task="detect")
             self.model = cls(f"{self.yolo_dir}/yoloe-11s-seg.pt", task="detect")
 
-            names = ["stop light", "amber light", "green light", "red light"]
+            names = ["stop light", "red light", "traffic light", "green light", "stop", "go","go light","yellow light", "amber light", "stop sign", "traffic sign"]
             self.model.set_classes(names, self.model.get_text_pe(names))
 
-
-            # model = YOLOE("yoloe-11l-seg.pt")
 
     
     def to(self, device):
@@ -53,17 +52,22 @@ class Detector:
         above the given confidence threshold.
         """
         results = list(self.model(img, verbose=not silent))[0]
+        # print(f"Results: {results}")
         boxes = results.boxes
 
         predictions = []
         # Iterate over the bounding boxes
         for xyxy, conf, cls_idx in zip(boxes.xyxy, boxes.conf, boxes.cls):
+            # print name and confidence
+            print(f"Name: {self.model.names[int(cls_idx.item())]}, Confidence: {conf.item()}")
             if conf.item() >= self.threshold:
                 # Convert bounding box tensor to Python floats
                 x1, y1, x2, y2 = xyxy.tolist()
                 # Map class index to class label using model/ results
                 label = results.names[int(cls_idx.item())]
                 predictions.append(((x1, y1, x2, y2), label))
+                
+                
         
         #convert original image to rgb
         original_image = results.orig_img
@@ -141,7 +145,7 @@ class Detector:
 def demo():
     import os
     model = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
-    model.set_threshold(0.5)
+    model.set_threshold(model.threshold)
 
     
     
@@ -156,7 +160,7 @@ def demo():
         
     out = model.draw_box(original_image, predictions, draw_all=True)
     
-    save_path = f"{os.path.dirname(__file__)}/demo_output6.png"
+    save_path = f"{os.path.dirname(__file__)}/demo_output9.png"
     out.save(save_path)
     print(f"Saved demo to {save_path}!")
 
