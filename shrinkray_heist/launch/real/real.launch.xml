@@ -17,5 +17,8 @@
     <node pkg="shrinkray_heist" exec="detection_node" name="detection_node" output="screen">
         <param from="$(find-pkg-share shrinkray_heist)/config/real/config.yaml"/>
     </node>
+    <node pkg="shrinkray_heist" exec="basement_point_publisher" name="basement_point_publisher" output="screen">
+        <!-- <param from="$(find-pkg-share shrinkray_heist)/config/real/config.yaml"/> -->
+    </node>
     
 </launch>

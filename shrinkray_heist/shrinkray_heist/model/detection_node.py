@@ -44,7 +44,7 @@ class DetectionNode(Node):
     def state_cb(self, msg):
         pass # for testing
 
-        if msg.data == Target.DETECTOR_TRAFFIC_LIGHT:
+        if msg.data == Target.DETECTOR_TRAFFIC_LIGHT.value:
             self.trafficlight_detector_on = not self.trafficlight_detector_on
             
             if self.trafficlight_detector_on:
@@ -52,7 +52,7 @@ class DetectionNode(Node):
             else:
                 self.get_logger().info("Traffic Light Detector Deactivated")
 
-        elif msg.data == Target.DETECTOR_SHRINK_RAY:
+        elif msg.data == Target.DETECTOR_SHRINK_RAY.value:
             self.shrinkray_detector_on = not self.shrinkray_detector_on
             
             if self.shrinkray_detector_on:
@@ -141,7 +141,7 @@ class DetectionNode(Node):
                         self.get_logger().info(f"Published traffic light distance msg /traffic_light: {dist}")
 
                         obj_detected_msg = Int32()
-                        obj_detected_msg.data = ObjectDetected.TRAFFIC_LIGHT_RED
+                        obj_detected_msg.data = ObjectDetected.TRAFFIC_LIGHT_RED.value
                         self.obj_detected_pub.publish(obj_detected_msg) 
                         self.get_logger().info(f"Published traffic light object detected msg /detected_obj: {dist}")
                         # self.get_logger().info(f"Traffic light relative position: {rel_x}, {rel_y}")
@@ -164,7 +164,7 @@ class DetectionNode(Node):
                             self.get_logger().info(f"Saved shrinkray image to {save_path}!")
                             
                             obj_detected_msg = Int32()
-                            obj_detected_msg.data = ObjectDetected.SHRINK_RAY
+                            obj_detected_msg.data = ObjectDetected.SHRINK_RAY.value
                             self.obj_detected_pub.publish(obj_detected_msg) 
                             self.get_logger().info(f"Published shrink ray object detected msg /detected_obj")
 

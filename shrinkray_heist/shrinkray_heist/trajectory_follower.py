@@ -75,7 +75,7 @@ class PurePursuit(Node):
 
     def state_cb(self, msg):
         pass # for testing
-        if msg.data == Target.FOLLOWER:
+        if msg.data == Target.FOLLOWER.value:
             self.purepursuit_on = not self.purepursuit_on
 
             if self.purepursuit_on:
@@ -304,15 +304,17 @@ class PurePursuit(Node):
 
             # check if reached last point
             last_point = np.array(trajectory[-1][:2])
+            
             if np.linalg.norm(current_point - last_point) < 0.5:
-                self.get_logger().info("Goal reached")
+                if self.purepursuit_on:
+                    self.get_logger().info("Goal reached")
 
-                # Tell state node that goal is reached
-                msg = Int32()
-                msg.data = Drive.GOAL_REACHED
-                self.purepursuit_state_pub.publish(msg)
+                    # Tell state node that goal is reached
+                    msg = Int32()
+                    msg.data = Drive.GOAL_REACHED.value
+                    self.purepursuit_state_pub.publish(msg)
 
-                self.stop = True
+                    self.stop = True
 
             # self.get_logger().info('np trajectory "%s"' % trajectory)
             nearest_point, [p1_nearest, p2_nearest], index_p1, index_p2 = self.nearest_point(current_point, trajectory)

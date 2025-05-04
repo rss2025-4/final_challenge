@@ -15,6 +15,7 @@ from .definitions import  Target, TripSegment, ObjectDetected, State, TrafficSim
 from typing import List, Tuple
 from .helper import visualize_pose
 from visualization_msgs.msg import Marker
+from .utils import LineTrajectory
 
 
 """
@@ -30,8 +31,8 @@ class StatesNode(Node):
        
 
         # Subscribers
-        self.start_pose = self.create_subscription(PoseWithCovarianceStamped, '/initial_pose', self.start_pose_cb, 5)
-        self.points_sub = self.create_subscription(PoseArray, '/shell_points', self.points_cb, 5)
+        self.start_pose = self.create_subscription(PoseWithCovarianceStamped, '/initialpose', self.start_pose_cb, 5)
+        self.points_sub = self.create_subscription(PoseArray, '/shrinkray_part', self.points_cb, 5)
         self.current_pose = self.create_subscription(Pose, '/pf/pose/odom', self.current_pose_cb, 10)
         self.traj_sub = self.create_subscription(PoseArray, '/trajectory/current', self.trajectory_cb, 10)
         
@@ -58,7 +59,7 @@ class StatesNode(Node):
         self.start_pub = self.create_publisher(Marker, '/start_pose', 1)
         self.get_logger().info('State Node Initialized with State: "%s"' % self.trip_segment)
 
-       
+        self.trajectory = LineTrajectory(node=self, viz_namespace="/planned_trajectory")
     # TODO these callbacks are not implemented yet
     
     def start_pose_cb(self, pose):
@@ -166,7 +167,8 @@ class StatesNode(Node):
     def control_node(self, target: Target):
         self.get_logger().info(f"StatesNode: Controlling node: {target}")
         msg = Int32()
-        msg.data = target
+        # self.get_logger().info(f"StatesNode: Controlling node type: {type(target)}")
+        msg.data = target.value
         self.state_pub.publish(msg)
         
         
@@ -184,11 +186,18 @@ class StatesNode(Node):
             end_point =  (self.start.position.x, self.start.position.y)
         else:
             self.get_logger().warn("Invalid trip segment")
-        array = []
+        # array = []
+        pose_array = PoseArray()
+        pose_array.header.frame_id = "map"
+        pose_array.header.stamp = self.get_clock().now().to_msg()
         for x, y in [start_point, end_point]:
-            array.append(Pose(position=Point(x=x, y=y, z=0.0)))
+            # pose = Pose()
+            pose_array.poses.append(Pose(position=Point(x=x, y=y, z=0.0)))
+        
         # Publish the points we want to plan a path
-        self.points_pub.publish_pts(array)
+        # self.points_pub.publish_pts(array)
+        self.points_pub.publish(pose_array)
+
         self.state = State.PLANNING
         
     def publish_pts(self, array):
