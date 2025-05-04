@@ -30,9 +30,9 @@ class Detector:
             self.model = cls(f"{self.yolo_dir}/yolo11n.pt", task="detect")
             # self.model = cls(f"{self.yolo_dir}/yoloe-11s-seg-pf.pt", task="detect")
             # self.model = cls(f"{self.yolo_dir}/yoloe-v8s-seg.pt") #, task="detect")
-            self.model = cls(f"{self.yolo_dir}/yoloe-11s-seg.pt", task="detect")
+            # self.model = cls(f"{self.yolo_dir}/yoloe-11s-seg.pt", task="detect")
 
-            names = ["stop light", "red light", "traffic light", "green light", "stop", "go","go light","yellow light", "amber light", "stop sign", "traffic sign"]
+            # names = ["stop light", "red light", "traffic light", "green light", "stop", "go","go light","yellow light", "amber light", "stop sign", "traffic sign"]
             self.model.set_classes(names, self.model.get_text_pe(names))
 
 

@@ -33,8 +33,8 @@ class PurePursuit(Node):
         # print(f"odom_topic: {self.odom_topic}")
         # print(f"drive_topic: {self.drive_topic}")
 
-        self.speed = 0.75  # ADJUST SPEED m/s#
-        self.lookahead = 1.0 # ADJUST LOOKAHEAD m -- NEEDS TO BE TUNED IN REAL LIFE 
+        self.speed = 0.5  # ADJUST SPEED m/s#
+        self.lookahead = 0.7 # ADJUST LOOKAHEAD m -- NEEDS TO BE TUNED IN REAL LIFE 
 
         # FOR VARIABLE LOOKAHEAD (MAYBE NOT NEEDED FOR FINAL RACE THOUGH)
         # self.max_speed = self.speed + 1.0
@@ -229,7 +229,7 @@ class PurePursuit(Node):
         # normalize between [-pi, pi]
         eta = np.arctan2(np.sin(eta), np.cos(eta))
 
-        self.get_logger().info('eta "%s"' % eta)
+        # self.get_logger().info('eta "%s"' % eta)
 
 
         ##### FOR VARIABLE LOOKAHEAD
@@ -246,7 +246,7 @@ class PurePursuit(Node):
         # self.lookahead = np.clip(lookahead_gain * self.max_lookahead, self.min_lookahead, self.max_lookahead)
         #####
 
-        self.get_logger().info('lookahead "%s"' % self.lookahead)
+        # self.get_logger().info('lookahead "%s"' % self.lookahead)
         # Compute curvature with updated lookahead
         curvature = 2 * np.sin(eta) / self.lookahead
         # self.get_logger().info('curvature "%s"' % curvature)
@@ -341,7 +341,7 @@ class PurePursuit(Node):
         self.trajectory.publish_viz(duration=0.0)
 
         self.initialized_traj = True
-        self.get_logger().info('Trajectory "%s"' % self.trajectory.points)
+        # self.get_logger().info('Trajectory "%s"' % self.trajectory.points)
 
     def visualize_lookahead(self, point):
         """

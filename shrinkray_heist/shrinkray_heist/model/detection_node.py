@@ -28,8 +28,8 @@ class DetectionNode(Node):
 
         # listen for state machine state
         self.state_sub = self.create_subscription(Int32, "/toggle_state", self.state_cb, 1)
-        self.trafficlight_detector_on = True # should be False by default
-        self.shrinkray_detector_on = True # should be False by default
+        self.trafficlight_detector_on = False # should be False by default
+        self.shrinkray_detector_on = False # should be False by default
         self.obj_detected_pub = self.create_publisher(Int32, "/detected_obj", 10)
         self.trafficlight_dist_pub = self.create_publisher(Float32, "/traffic_light", 10)
         
@@ -37,7 +37,9 @@ class DetectionNode(Node):
         self.shrinkray_bbox = [0, 0, 0, 0]
         self.homography_transformer = HomographyTransformer() # instantiate homography transformer to get transform
         self.wheelbase_length = 0.33 # in meters
-        self.drive_pub = self.create_publisher(AckermannDriveStamped, "/drive", 10)
+        
+        # self.drive_topic = self.get_parameter("drive_topic").get_parameter_value().string_value
+        self.drive_pub = self.create_publisher(AckermannDriveStamped, "/vesc/high_level/input/nav_1", 10)
 
         self.get_logger().info("Shrink Ray Detector Initialized")
         
@@ -77,8 +79,10 @@ class DetectionNode(Node):
         return x,y
 
     def controller(self, x,y):
+        self.get_logger().info("in controller")
         # Get euclidean distance to the shrink ray
-        L1 = np.linalg.norm(x,y)
+        L1 = np.sqrt(x**2 + y**2) # in meters
+        self.get_logger().info(f"Distance to shrink ray: {L1}")
 
         if L1 < 1.0: # in meters
             drive_msg = AckermannDriveStamped()
@@ -109,7 +113,7 @@ class DetectionNode(Node):
         return L1
         
     def img_cb(self, img_msg):
-        if not self.detector_on:
+        if not self.trafficlight_detector_on and not self.shrinkray_detector_on:
             return
 
         # Process image with CV Bridge
@@ -134,7 +138,7 @@ class DetectionNode(Node):
                         # self.get_logger().info(f"Traffic light bounding box: {trafficlight_bbox}")
                         rel_x,rel_y = self.get_relative_position(trafficlight_bbox)
                         
-                        dist = np.linalg.norm(rel_x, rel_y)
+                        dist = np.sqrt(rel_x**2 + rel_y**2) # in meters
                         dist_msg = Float32()
                         dist_msg.data = dist
                         self.trafficlight_dist_pub.publish(dist_msg)
@@ -150,16 +154,17 @@ class DetectionNode(Node):
                     if label == 'banana':
                         # Get the bounding box coordinates 
                         self.shrinkray_bbox = [bbox[0], bbox[1], bbox[2], bbox[3]] # x1, y1, x2, y2 = shrinkray_bbox
-                        self.get_logger().info(f"Shrinkray bounding box: {self.shrinkray_bbox}")
+                        # self.get_logger().info(f"Shrinkray bounding box: {self.shrinkray_bbox}")
                         rel_x,rel_y = self.get_relative_position(self.shrinkray_bbox)
                         
                         self.get_logger().info(f"Shrinkray relative position: {rel_x}, {rel_y}")
                         dist_to_shrinkray = self.controller(rel_x,rel_y)
-
+                        self.get_logger().info(f"Distance to shrinkray: {dist_to_shrinkray}")
+                        
                         if dist_to_shrinkray < 1.0: # in meters
-
+                            self.get_logger().info("Arrived at shrink ray location, stopping")
                             # Save the image with the bounding box to directory
-                            save_path = f"{os.path.dirname(__file__)}/shrinkray_detected{self.count}.png"
+                            save_path = f"{os.path.dirname(__file__)}/shrinkray_detected_1.png"
                             out.save(save_path)
                             self.get_logger().info(f"Saved shrinkray image to {save_path}!")
                             
@@ -167,7 +172,7 @@ class DetectionNode(Node):
                             obj_detected_msg.data = ObjectDetected.SHRINK_RAY.value
                             self.obj_detected_pub.publish(obj_detected_msg) 
                             self.get_logger().info(f"Published shrink ray object detected msg /detected_obj")
-
+                            # self.shrinkray_detector_on = False # turn off shrink ray detector
                         
                         
             # Convert PIL Image to OpenCV (np array)
@@ -177,7 +182,7 @@ class DetectionNode(Node):
             out_msg = self.bridge.cv2_to_imgmsg(out_np, "rgb8")
             self.yolo_pub.publish(out_msg)
 
-            self.get_logger().info("Published detected image to /yolo_img")
+            # self.get_logger().info("Published detected image to /yolo_img")
             
         except:
             pass
