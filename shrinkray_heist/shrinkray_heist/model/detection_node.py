@@ -134,8 +134,10 @@ class DetectionNode(Node):
                     # publish traffic light distance 
                     if label == 'traffic light':
                         # Get the bounding box coordinates 
-                        trafficlight_bbox = [bbox[0], bbox[1], bbox[2], bbox[3]]
-                        # self.get_logger().info(f"Traffic light bounding box: {trafficlight_bbox}")
+                        #double bounding box since traffic light twice height than actual (due to stud)
+                        bottom = bbox[3]+(bbox[3]-bbox[1]) #y2 + (y2-y1)
+                        trafficlight_bbox = [bbox[0], bbox[1], bbox[2], bottom] # double the height since traffic light has stud underneath
+                        self.get_logger().info(f"Traffic light bounding box: {trafficlight_bbox}")
                         rel_x,rel_y = self.get_relative_position(trafficlight_bbox)
                         
                         dist = np.sqrt(rel_x**2 + rel_y**2) # in meters
@@ -147,7 +149,7 @@ class DetectionNode(Node):
                         obj_detected_msg = Int32()
                         obj_detected_msg.data = ObjectDetected.TRAFFIC_LIGHT_RED.value
                         self.obj_detected_pub.publish(obj_detected_msg) 
-                        self.get_logger().info(f"Published traffic light object detected msg /detected_obj: {dist}")
+                        self.get_logger().info("Published traffic light object detected msg /detected_obj")
                         # self.get_logger().info(f"Traffic light relative position: {rel_x}, {rel_y}")
                 
                 elif self.shrinkray_detector_on:

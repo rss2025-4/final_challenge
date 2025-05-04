@@ -71,6 +71,7 @@ class PurePursuit(Node):
         self.state_sub = self.create_subscription(Int32, "/toggle_state", self.state_cb, 1)
         self.purepursuit_on = True # default is on
         self.stop = False # default is going to drive
+        self.goal_reached = False
 
 
     def state_cb(self, msg):
@@ -282,7 +283,7 @@ class PurePursuit(Node):
             else: # stop (when goal is reached)
                 drive_msg.drive.speed = 0.0
                 self.drive_pub.publish(drive_msg)
-                self.get_logger().info('Published stop drive msg: "%s"' % drive_msg.drive.speed)
+                # self.get_logger().info('Published stop drive msg: "%s"' % drive_msg.drive.speed)
 
     def pose_callback(self, odometry_msg):
         if self.initialized_traj:
@@ -306,14 +307,15 @@ class PurePursuit(Node):
             last_point = np.array(trajectory[-1][:2])
             
             if np.linalg.norm(current_point - last_point) < 0.5:
-                if self.purepursuit_on and not self.stop:
+                if self.purepursuit_on:
                     self.get_logger().info("Goal reached")
 
                     # Tell state node that goal is reached
                     msg = Int32()
                     msg.data = Drive.GOAL_REACHED.value
                     self.purepursuit_state_pub.publish(msg)
-
+                    
+                    self.goal_reached = False
                     self.stop = True
 
             # self.get_logger().info('np trajectory "%s"' % trajectory)
@@ -341,6 +343,7 @@ class PurePursuit(Node):
         self.trajectory.publish_viz(duration=0.0)
 
         self.initialized_traj = True
+        self.goal_reached = False
         # self.get_logger().info('Trajectory "%s"' % self.trajectory.points)
 
     def visualize_lookahead(self, point):

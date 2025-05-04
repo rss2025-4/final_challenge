@@ -33,7 +33,7 @@ class StatesNode(Node):
         # Subscribers
         self.start_pose = self.create_subscription(PoseWithCovarianceStamped, '/initialpose', self.start_pose_cb, 5)
         self.points_sub = self.create_subscription(PoseArray, '/shrinkray_part', self.points_cb, 5)
-        self.current_pose = self.create_subscription(Pose, '/pf/pose/odom', self.current_pose_cb, 10)
+        self.current_pose = self.create_subscription(Odometry, '/pf/pose/odom', self.current_pose_cb, 10)
         self.traj_sub = self.create_subscription(PoseArray, '/trajectory/current', self.trajectory_cb, 10)
         
         self.traffic_light_sub = self.create_subscription(Float32, '/traffic_light', self.traffic_cb, 10)
@@ -58,6 +58,7 @@ class StatesNode(Node):
         self.points_pub = self.create_publisher(PoseArray, '/planned_pts', 1) # publish the points we want to plan a path 
         self.start_pub = self.create_publisher(Marker, '/start_pose', 1)
         self.get_logger().info('State Node Initialized with State: "%s"' % self.trip_segment)
+        self.traffic_stop_drive_pub = self.create_publisher(AckermannDriveStamped, "/vesc/high_level/input/nav_0", 10)
 
         self.trajectory = LineTrajectory(node=self, viz_namespace="/planned_trajectory")
     # TODO these callbacks are not implemented yet
@@ -241,17 +242,30 @@ class StatesNode(Node):
             
     # Shrink Ray Handling 
     def current_pose_cb(self, odometry_msg: Pose):
-        self.current_point = (odometry_msg.position.x, odometry_msg.position.y)
-    
+        # self.current_point = (odometry_msg.position.x, odometry_msg.position.y)
+        self.current_point = (odometry_msg.pose.pose.position.x, odometry_msg.pose.pose.position.y)
     
     
     def ray_cb(self, msg: PoseWithCovarianceStamped):
         self.get_logger().info("StatesNode: Received shrink ray location")
         pass 
     
-    def traffic_cb(self, msg: PoseWithCovarianceStamped):
+    def traffic_cb(self, msg: Float32):
         self.get_logger().info("StatesNode: Received traffic light location")
-        pass
+
+        # temporary - adelene 
+        # if msg.data < 1.0: # less than 1 meter
+        #     # stop the car for 5 seconds
+        #     drive_msg = AckermannDriveStamped()
+        #     drive_msg.drive.steering_angle = 0.0
+        #     drive_msg.drive.speed = 0.0
+        #     traffic_stop_drive_pub.publish(traffic_stop_drive)
+        #     stop_time = 5.0 #seconds
+        #     self.get_logger().info(f"StatesNode: Stopping at traffic light for {stop_time} seconds")
+        #     time.sleep(stop_time)
+
+            
+        # pass
 
         # z_rotation = euler_from_quaternion(
         #         [
