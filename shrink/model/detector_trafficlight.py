@@ -15,10 +15,10 @@ def _label_to_color(label):
 class Detector:
     def __init__(self, yolo_dir="/root/yolo", from_tensor_rt=True, threshold=0.2):
         # local import
-        # from ultralytics import YOLO
-        # cls = YOLO
-        from ultralytics import YOLOE
-        cls = YOLOE
+        from ultralytics import YOLO
+        cls = YOLO
+        # from ultralytics import YOLOE
+        # cls = YOLOE
         
         
         
@@ -33,7 +33,7 @@ class Detector:
             # self.model = cls(f"{self.yolo_dir}/yoloe-11s-seg.pt", task="detect")
 
             # names = ["stop light", "red light", "traffic light", "green light", "stop", "go","go light","yellow light", "amber light", "stop sign", "traffic sign"]
-            self.model.set_classes(names, self.model.get_text_pe(names))
+            # self.model.set_classes(names, self.model.get_text_pe(names))
 
 
     
@@ -143,13 +143,14 @@ class Detector:
         
     
 def demo():
+    # traffic_color = "red"  # Change this to "green" or "yellow" as needed
     import os
     model = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
     model.set_threshold(model.threshold)
 
     
     
-    img_path = f"{os.path.dirname(__file__)}/../../media/trafficlight_2.png" 
+    img_path = f"{os.path.dirname(__file__)}/../../media/trafficlight_6.png" 
         
     img = Image.open(img_path)
     results = model.predict(img)
@@ -160,46 +161,134 @@ def demo():
         
     out = model.draw_box(original_image, predictions, draw_all=True)
     
-    save_path = f"{os.path.dirname(__file__)}/demo_output9.png"
+    save_path = f"{os.path.dirname(__file__)}/demo_output10.png"
     out.save(save_path)
     print(f"Saved demo to {save_path}!")
 
     
-    # # # crop the image to the bounding box
-    # # pil_image = Image.open("your_image.jpg")
+    # # crop the image to the bounding box
+    # pil_image = Image.open("your_image.jpg")
 
-    # # Convert to NumPy array for slicing
+    # Convert to NumPy array for slicing
     
-    # image_np = np.array(img)
-    # # Copy image and blacken it
-    # output = np.zeros_like(image_np)
+    image_np = np.array(img) # rgb
+    # Copy image and blacken it
+    output = np.zeros_like(image_np)
 
-    # # Find the traffic light and paste only that part into the black canvas
-    # for bbox, label in predictions:
-    #     if label == 'traffic light':
-    #         x1, y1, x2, y2 = map(int, bbox)
-    #         output[y1:y2, x1:x2] = image_np[y1:y2, x1:x2]  # keep original pixels only in bbox region
+    # Find the traffic light and paste only that part into the black canvas
+    for bbox, label in predictions:
+        if label == 'traffic light':
+            x1, y1, x2, y2 = map(int, bbox)
+            output[y1:y2, x1:x2] = image_np[y1:y2, x1:x2]  # keep original pixels only in bbox region
 
-    #         # Save the result
-    #         result_img = Image.fromarray(output)
-    #         save_path = os.path.join(os.path.dirname(__file__), "highlighted_traffic_light.png")
-    #         result_img.save(save_path)
-    #         print(f"Result saved to {save_path}")
-    #         break
+            # Save the result
+            result_img = Image.fromarray(output)
+            save_path = os.path.join(os.path.dirname(__file__), "highlighted_traffic_light.png")
+            result_img.save(save_path)
+            print(f"Cropped result saved to {save_path}")
+            # break
     
-    # # orange_lower = np.array([0,225,140])  # hue saturation value
-    # # orange_upper = np.array([30,300,300])
-    # output_bgr = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
-    # image_hsv = cv2.cvtColor(output_bgr, cv2.COLOR_BGR2HSV)
+            # # orange_lower = np.array([0,225,140])  # hue saturation value
+            # # orange_upper = np.array([30,300,300])
+            # output_bgr = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
+            # image_hsv = cv2.cvtColor(output_bgr, cv2.COLOR_BGR2HSV)
 
-    # img = output_bgr
+            # img = output_bgr
 
-    # # lower_red1 = np.array([0, 100, 100])
-    # # upper_red1 = np.array([10, 255, 255])
-    # # bounding_box = ((0,0),(0,0))
-    
-    # # image_hsv = cv2.cvtColor(output, cv2.COLOR_BGR2HSV)
-    
+            # lower_red1 = np.array([0, 10, 100])
+            # upper_red1 = np.array([10, 255, 255])
+            # # bounding_box = ((0,0),(0,0))
+            image = cv2.cvtColor(output, cv2.COLOR_RGB2BGR) # output # in rgb
+            # image = output
+            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+            save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_hsv.png") #{traffic_color}
+            cv2.imwrite(save_path, hsv)
+            # hsv = cv2.cvtColor(output, cv2.COLOR_RGB2HSV)
+
+            # Step 3: Define red ranges and create two masks
+            # if traffic_color == "red":
+            lower_red1 = np.array([0, 50, 75])
+            upper_red1 = np.array([10, 255, 255])
+            mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
+
+            lower_red2 = np.array([160, 50, 75])
+            upper_red2 = np.array([179, 255, 255])
+            mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+
+            red_mask = cv2.bitwise_or(mask1, mask2)
+            # elif traffic_color == "green":
+            lower_green = np.array([50, 30, 50])  # Lower bound for green
+            upper_green = np.array([70, 255, 255])  # Upper bound for green
+
+            # Create a mask for green color
+            green_mask = cv2.inRange(hsv, lower_green, upper_green)
+
+            red_count = cv2.countNonZero(red_mask)
+            green_count = cv2.countNonZero(green_mask)
+
+            def get_centroid(mask):
+                # Find moments of the mask to calculate centroid
+                moments = cv2.moments(mask)
+
+                # Calculate centroid (cx, cy) from moments
+                cx = int(moments['m10'] / moments['m00']) if moments['m00'] != 0 else 0
+                cy = int(moments['m01'] / moments['m00']) if moments['m00'] != 0 else 0
+                
+                return cx, cy
+                
+            def upper_lower_half(cy, y1, y2):
+                # Check if the centroid is in the upper third or lower third of the bounding box
+                bbox_height = y2 - y1
+                upper_half_limit = y1 + bbox_height // 2
+                lower_half_limit = y1 + 2 * bbox_height // 2
+
+                if cy < upper_half_limit:
+                    return 0 # upper
+                else: 
+                    return 1 # lower
+            # get centroid
+            red_cx, red_cy = get_centroid(red_mask)
+            red_where = upper_lower_half(red_cy, y1, y2) # 0 if upper, 1 if lower
+
+            green_cx, green_cy = get_centroid(green_mask)
+            green_where = upper_lower_half(green_cy, y1, y2) # 0 if upper, 1 if lower
+            
+            print
+
+            if red_count > green_count and red_where == 0:
+                traffic_color = "red"
+                total_mask = red_mask
+            elif green_count > red_count and green_where == 1:
+                traffic_color = "green"
+                total_mask = green_mask
+            else:
+                traffic_color = "unknown"
+            
+            print(f"Traffic Light State: {traffic_color}")
+            
+            # else:
+            # Step 4: Combine the two red masks
+            
+            save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_{traffic_color}_mask.png")
+            cv2.imwrite(save_path, total_mask)
+
+            # Step 5: Apply mask to the original image
+            color_filtered = cv2.bitwise_and(image, image, mask=total_mask)
+            
+            save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_{traffic_color}_filtered.png")
+            cv2.imwrite(save_path, color_filtered)
+            
+
+            cv2.rectangle(color_filtered, (x1, y1), (x2, y2), (255, 255, 255), 2)
+            save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_{traffic_color}_filtered_bbox.png")
+            cv2.imwrite(save_path, color_filtered)
+
+    # if red_filtered.shape[2] == 4:
+    #     # If it has 4 channels, strip the alpha channel
+    #     red_filtered = red_filtered[:, :, :3]  # Keep only the first 3 channels (RGB)
+    # bgr_image = cv2.cvtColor(red_filtered, cv2.COLOR_HSV2BGR)
+    # cv2.imwrite(save_path, bgr_image)  
+
     # # cv2.imshow("image", image_hsv)
     # # cv2.waitKey(0)
 
@@ -224,17 +313,21 @@ def demo():
     # mask2 = cv2.inRange(hsv_eq, lower_red2, upper_red2)
     # red_mask = cv2.bitwise_or(mask1, mask2)
 
+    # save_path = os.path.join(os.path.dirname(__file__), "hsv_redmask_traffic_light.png")
+    # cv2.imwrite(save_path, red_mask)
     # cv2.imshow("Red Traffic Light Mask", red_mask)
     # cv2.waitKey(0)
 
-    # # adjust brightness
+    # # # adjust brightness
     # h, s, v = cv2.split(image_hsv)
     # clahe = cv2.createCLAHE(clipLimit=2.03, tileGridSize=(8, 8))
     # v_eq = clahe.apply(v)
     # hsv_eq = cv2.merge([h, s, v_eq])
     # # image_print(hsv_eq)
     # # image_print(hsv_eq)
-    # image_orange = cv2.inRange(hsv_eq, lower_red1, upper_red1)
+    # image_red = cv2.inRange(hsv_eq, lower_red1, upper_red1)
+    # save_path = os.path.join(os.path.dirname(__file__), "hsv_red_traffic_light.png")
+    # cv2.imwrite(save_path, image_red)
     # # image_print(image_orange)
     # cv2.imshow("image_orange", image_orange)
     # cv2.waitKey(0)

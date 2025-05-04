@@ -315,7 +315,7 @@ class PurePursuit(Node):
                     msg.data = Drive.GOAL_REACHED.value
                     self.purepursuit_state_pub.publish(msg)
                     
-                    self.goal_reached = False
+                    self.goal_reached = True
                     self.stop = True
 
             # self.get_logger().info('np trajectory "%s"' % trajectory)
