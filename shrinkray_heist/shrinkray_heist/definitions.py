@@ -46,9 +46,10 @@ class TrafficSimulation(Enum):
     """
     Enum that defines the traffic simulation state.
     """
-    NO_TRAFFIC = 0
-    IN_TRAFFIC = 1
-    HANDLED_TRAFFIC = 2
+    NO_TRAFFIC = 0       # when the car is not near a traffic light
+    INCOMING_TRAFFIC = 1 # when the car is approaching a red light 
+    ONGOING_TRAFFIC = 2  # when the car is waiting for the traffic light to turn green
+    HANDLED_TRAFFIC = 3  # when the car has passed the traffic light
 
 class Drive(Enum):
     """
