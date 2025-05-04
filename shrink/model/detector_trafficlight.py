@@ -15,15 +15,28 @@ def _label_to_color(label):
 class Detector:
     def __init__(self, yolo_dir="/root/yolo", from_tensor_rt=True, threshold=0.5):
         # local import
-        from ultralytics import YOLO
-        cls = YOLO
+        # from ultralytics import YOLO
+        from ultralytics import YOLOE
+
+        # cls = YOLO
+        cls = YOLOE
         
         self.threshold = threshold
         self.yolo_dir = yolo_dir
         if from_tensor_rt:
             self.model = cls(f"{self.yolo_dir}/yolo11n.engine", task="detect")
         else:
-            self.model = cls(f"{self.yolo_dir}/yolo11n.pt", task="detect")
+            # self.model = cls(f"{self.yolo_dir}/yolo11n.pt", task="detect")
+            # self.model = cls(f"{self.yolo_dir}/yoloe-11s-seg-pf.pt", task="detect")
+            # self.model = cls(f"{self.yolo_dir}/yoloe-v8s-seg.pt") #, task="detect")
+            self.model = cls(f"{self.yolo_dir}/yoloe-11s-seg.pt", task="detect")
+
+            names = ["stop light", "amber light", "green light", "red light"]
+            self.model.set_classes(names, self.model.get_text_pe(names))
+
+
+            # model = YOLOE("yoloe-11l-seg.pt")
+
     
     def to(self, device):
         self.model.to(device)
@@ -129,6 +142,8 @@ def demo():
     import os
     model = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
     model.set_threshold(0.5)
+
+    
     
     img_path = f"{os.path.dirname(__file__)}/../../media/trafficlight_2.png" 
         
@@ -141,7 +156,7 @@ def demo():
         
     out = model.draw_box(original_image, predictions, draw_all=True)
     
-    save_path = f"{os.path.dirname(__file__)}/demo_output.png"
+    save_path = f"{os.path.dirname(__file__)}/demo_output6.png"
     out.save(save_path)
     print(f"Saved demo to {save_path}!")
 
@@ -220,69 +235,70 @@ def demo():
     # cv2.imshow("image_orange", image_orange)
     # cv2.waitKey(0)
 
-    kernel = np.ones((3,3), np.uint8)
-    kernel = np.ones((3,3), np.uint8)
-    for _ in range(20):
-        image_orange = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel)
-        image_orange = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel)
+        ######
+    # kernel = np.ones((3,3), np.uint8)
+    # kernel = np.ones((3,3), np.uint8)
+    # for _ in range(20):
+    #     image_orange = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel)
+    #     image_orange = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel)
 
-    # cv2.imshow("image_orange", image_orange)
+    # # cv2.imshow("image_orange", image_orange)
+    # # cv2.waitKey(0)
+
+    # # distance transform
+    # dist_transform = cv2.distanceTransform(image_orange, cv2.DIST_L2, 5)
+    # ret, sure_fg = cv2.threshold(dist_transform, 0.7 * dist_transform.max(), 255, 0)
+    # sure_fg = np.uint8(sure_fg)
+    # # image_print(sure_fg)
+    # # overlap
+    # # print(image_orange)
+    # unknown = cv2.subtract(image_orange, sure_fg)
+    # # image_print(unknown)
+    # # connected
+    # _, markers = cv2.connectedComponents(sure_fg)
+    # markers = markers + 1 
+    # markers[unknown == 255] = 0
+    # # image_print(sure_fg)
+    # # watershed
+    # markers = cv2.watershed(img, markers)
+    # img[markers == -1] = [255, 0, 0] 
+
+    # segmented_mask = np.zeros_like(image_orange)
+    # segmented_mask[markers > 1] = 255
+    # segmented_mask = np.zeros_like(image_orange)
+    # segmented_mask[markers > 1] = 255
+
+    # # image_print(segmented_mask)
+
+    # contours, _ = cv2.findContours(segmented_mask,  
+    # cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    # largest_contour = max(contours, key=cv2.contourArea)
+    # # print(contours[0].shape)
+    # cv2.drawContours(img, contours, -1, (0, 255, 0), 3) 
+    # # image_print(segmented_mask)
+    # # image_print(img)
+    # # image_print(img)
+    # # print(len(contours))
+    # x, y, w, h = cv2.boundingRect(largest_contour)
+    # center_x = x + w / 2
+    # center_y = y + h / 2
+
+    # # Make rectangel slightly larger (optimized for test cases)
+    # scale = 1.055
+    # w_new = int(w * scale)
+    # h_new = int(h * scale)
+    # x_new = int(center_x - w_new / 2)
+    # y_new = int(center_y - h_new / 2)
+    # x_new = max(x_new, 0)
+    # y_new = max(y_new, 0)
+    # if x_new + w_new > img.shape[1]:
+    #     w_new = img.shape[1] - x_new
+    # if y_new + h_new > img.shape[0]:
+    #     h_new = img.shape[0] - y_new
+
+    # cv2.rectangle(img, (x_new, y_new), (x_new + w_new, y_new + h_new), 128, 2)
+    # cv2.imshow("final", img)
     # cv2.waitKey(0)
-
-    # distance transform
-    dist_transform = cv2.distanceTransform(image_orange, cv2.DIST_L2, 5)
-    ret, sure_fg = cv2.threshold(dist_transform, 0.7 * dist_transform.max(), 255, 0)
-    sure_fg = np.uint8(sure_fg)
-    # image_print(sure_fg)
-    # overlap
-    # print(image_orange)
-    unknown = cv2.subtract(image_orange, sure_fg)
-    # image_print(unknown)
-    # connected
-    _, markers = cv2.connectedComponents(sure_fg)
-    markers = markers + 1 
-    markers[unknown == 255] = 0
-    # image_print(sure_fg)
-    # watershed
-    markers = cv2.watershed(img, markers)
-    img[markers == -1] = [255, 0, 0] 
-
-    segmented_mask = np.zeros_like(image_orange)
-    segmented_mask[markers > 1] = 255
-    segmented_mask = np.zeros_like(image_orange)
-    segmented_mask[markers > 1] = 255
-
-    # image_print(segmented_mask)
-
-    contours, _ = cv2.findContours(segmented_mask,  
-    cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    largest_contour = max(contours, key=cv2.contourArea)
-    # print(contours[0].shape)
-    cv2.drawContours(img, contours, -1, (0, 255, 0), 3) 
-    # image_print(segmented_mask)
-    # image_print(img)
-    # image_print(img)
-    # print(len(contours))
-    x, y, w, h = cv2.boundingRect(largest_contour)
-    center_x = x + w / 2
-    center_y = y + h / 2
-
-    # Make rectangel slightly larger (optimized for test cases)
-    scale = 1.055
-    w_new = int(w * scale)
-    h_new = int(h * scale)
-    x_new = int(center_x - w_new / 2)
-    y_new = int(center_y - h_new / 2)
-    x_new = max(x_new, 0)
-    y_new = max(y_new, 0)
-    if x_new + w_new > img.shape[1]:
-        w_new = img.shape[1] - x_new
-    if y_new + h_new > img.shape[0]:
-        h_new = img.shape[0] - y_new
-
-    cv2.rectangle(img, (x_new, y_new), (x_new + w_new, y_new + h_new), 128, 2)
-    cv2.imshow("final", img)
-    cv2.waitKey(0)
 
 	# image_print(img)
 	# bounding_box = ((x_new, y_new), (x_new + w_new, y_new + h_new))
