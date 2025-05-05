@@ -28,7 +28,7 @@ class DetectionNode(Node):
 
         # listen for state machine state
         self.state_sub = self.create_subscription(Int32, "/toggle_state", self.state_cb, 1)
-        self.trafficlight_detector_on = True # should be False by default
+        self.trafficlight_detector_on = False # should be False by default
         self.shrinkray_detector_on = False # should be False by default
         self.obj_detected_pub = self.create_publisher(Int32, "/detected_obj", 10)
         self.trafficlight_dist_pub = self.create_publisher(Float32, "/traffic_light", 10)
@@ -131,7 +131,7 @@ class DetectionNode(Node):
             for bbox, label in predictions:
                 # self.get_logger().info(f"Detected {label} at {bbox}")
 
-                if self.trafficlight_detector_on:
+                if self.trafficlight_detector_on and not self.shrinkray_detector_on:
                     # publish traffic light distance 
                     if label == 'traffic light':
                         # Get the bounding box coordinates 
@@ -162,7 +162,8 @@ class DetectionNode(Node):
                         self.get_logger().info("Published traffic light object detected msg /detected_obj")
                         # self.get_logger().info(f"Traffic light relative position: {rel_x}, {rel_y}")
                 
-                elif self.shrinkray_detector_on:
+                elif self.shrinkray_detector_on and not self.trafficlight_detector_on:
+                    self.get_logger().info(f"Detected {label} at {bbox}")
                     if label == 'banana':
                         # Get the bounding box coordinates 
                         self.shrinkray_bbox = [bbox[0], bbox[1], bbox[2], bbox[3]] # x1, y1, x2, y2 = shrinkray_bbox
@@ -176,7 +177,7 @@ class DetectionNode(Node):
                         if dist_to_shrinkray < 1.0: # in meters
                             self.get_logger().info("Arrived at shrink ray location, stopping")
                             # Save the image with the bounding box to directory
-                            save_path = f"{os.path.dirname(__file__)}/shrinkray_detected_1.png"
+                            save_path = f"{os.path.dirname(__file__)}/shrinkray_detected_.png"
                             out.save(save_path)
                             self.get_logger().info(f"Saved shrinkray image to {save_path}!")
                             
@@ -292,9 +293,9 @@ class DetectionNode(Node):
             # else:
             green_where = upper_lower_half(green_cy, y1, y2) # 0 if upper, 1 if lower
             
-            self.get_logger().info(f"Red centroid: {red_cx, red_cy}, Red where: {red_where}") #
-            self.get_logger().info(f"Green centroid: {green_cx, green_cy}, Green where: {green_where}")
-            self.get_logger().info(f"Red count: {red_count}, Green count: {green_count}")
+            # self.get_logger().info(f"Red centroid: {red_cx, red_cy}, Red where: {red_where}") #
+            # self.get_logger().info(f"Green centroid: {green_cx, green_cy}, Green where: {green_where}")
+            # self.get_logger().info(f"Red count: {red_count}, Green count: {green_count}")
         except:
             self.get_logger().info("Error in get_traffic_light_color")
             
