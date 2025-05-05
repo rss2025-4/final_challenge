@@ -43,6 +43,7 @@ class DetectionNode(Node):
 
         self.get_logger().info("Shrink Ray Detector Initialized")
         
+        self.debug = True
     def state_cb(self, msg):
         pass # for testing
 
@@ -106,7 +107,7 @@ class DetectionNode(Node):
         # Send to the controller
         drive_msg = AckermannDriveStamped()
         drive_msg.drive.steering_angle = steering_angle # rad
-        drive_msg.drive.speed = 0.5 # m/s set speed
+        drive_msg.drive.speed = 0.3 # m/s set speed
         self.get_logger().info(f"Steering angle: {steering_angle}")
         self.drive_pub.publish(drive_msg)
         self.get_logger().info("Published steering angle")
@@ -117,11 +118,15 @@ class DetectionNode(Node):
             return
 
         # Process image with CV Bridge
-        image = self.bridge.imgmsg_to_cv2(img_msg, "bgr8")
+        image = self.bridge.imgmsg_to_cv2(img_msg, "rgb8")
+        # save_path = os.path.join(os.path.dirname(__file__), f"ros_imagetocv2.png")
+        # # cv2.imwrite(save_path, image)
+        # rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # cv2.imwrite(save_path, rgb_image)
         # self.get_logger().info(f"CV BRIDGE Image: {image.shape}")
         
         try:
-            results = self.detector.predict(image)
+            results = self.detector.predict(image) #image
             predictions = results["predictions"]
             original_image = results["original_image"]
             # self.get_logger().info(f"original_image: {original_image.shape}")
@@ -139,15 +144,7 @@ class DetectionNode(Node):
                         bottom = bbox[3]+(bbox[3]-bbox[1]) #y2 + (y2-y1)
                         trafficlight_bbox = [bbox[0], bbox[1], bbox[2], bottom] # double the height since traffic light has stud underneath
                         # self.get_logger().info(f"Traffic light bounding box: {trafficlight_bbox}")
-                        rel_x,rel_y = self.get_relative_position(trafficlight_bbox)
-                        self.get_logger().info(f"Traffic light relative position: {rel_x}, {rel_y}")
                         
-                        # dist = np.sqrt(rel_x**2 + rel_y**2) # in meters
-                        dist_msg = Float32()
-                        dist_msg.data = rel_x # dist
-                        self.trafficlight_dist_pub.publish(dist_msg)
-                        self.get_logger().info(f"Published traffic light x dist msg /traffic_light: {rel_x}")
-
                         traffic_color = self.get_traffic_light_color(image, bbox)
                         self.get_logger().info(f"Traffic light color: {traffic_color}")
 
@@ -155,7 +152,17 @@ class DetectionNode(Node):
                         obj_detected_msg = Int32()
                         if traffic_color == "red":
                             obj_detected_msg.data = ObjectDetected.TRAFFIC_LIGHT_RED.value
-                        elif traffic_color == "green":
+                            
+                            rel_x,rel_y = self.get_relative_position(trafficlight_bbox)
+                            # self.get_logger().info(f"Traffic light relative position: {rel_x}, {rel_y}")
+                            
+                            # dist = np.sqrt(rel_x**2 + rel_y**2) # in meters
+                            dist_msg = Float32()
+                            dist_msg.data = rel_x # dist
+                            self.trafficlight_dist_pub.publish(dist_msg)
+                            self.get_logger().info(f"Published traffic light x dist msg /traffic_light: {rel_x}")
+
+                        else: #traffic_color == "green":
                             obj_detected_msg.data = ObjectDetected.TRAFFIC_LIGHT_GREEN.value
                         
                         self.obj_detected_pub.publish(obj_detected_msg) 
@@ -192,7 +199,7 @@ class DetectionNode(Node):
             out_np = np.array(out)
 
             # Convert OpenCV to ROS Image message
-            out_msg = self.bridge.cv2_to_imgmsg(out_np, "rgb8")
+            out_msg = self.bridge.cv2_to_imgmsg(out_np, "bgr8")
             self.yolo_pub.publish(out_msg)
 
             # self.get_logger().info("Published detected image to /yolo_img")
@@ -206,29 +213,20 @@ class DetectionNode(Node):
         return the traffic light of the object in the bounding box
         """
         x1, y1, x2, y2 = map(int, bbox)
-        # x1, y1, x2, y2 = bbox[0], bbox[1], bbox[2], bbox[3]
-        # self.get_logger().info(f"bbox: {x1, y1, x2, y2}")
-        # self.get_logger().info("Error in get_traffic_light_color, bbox not found")
-        
         
         # Copy image and blacken it
         image = np.array(image) # bgr
         output = np.zeros_like(image)
-        # self.get_logger().info(f"Image: {image.shape}")
-        # self.get_logger().info(f"Output: {output.shape}")
         
-        # try:
-            
         output[y1:y2, x1:x2] = image[y1:y2, x1:x2]
-        # except:
-        # self.get_logger().info("Error in image blackening")
+        
         image = output
-        # try:
-            # Convert from BGR to HSV
+
+        # Convert from BGR to HSV
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_hsv.png") #{traffic_color}
         cv2.imwrite(save_path, hsv)
-        # hsv = cv2.cvtColor(output, cv2.COLOR_RGB2HSV)
+        
         def get_centroid(mask):
             # Find moments of the mask to calculate centroid
             moments = cv2.moments(mask)
@@ -239,34 +237,18 @@ class DetectionNode(Node):
             
             return cx, cy
                 
-        # Step 3: Define red ranges and create two masks
-        # if traffic_color == "red":
-        lower_red1 = np.array([0, 50, 75])
+        # Define red ranges and create two masks
+        lower_red1 = np.array([0, 50, 150])
         upper_red1 = np.array([10, 255, 255])
         mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
 
-        lower_red2 = np.array([160, 50, 75])
+        lower_red2 = np.array([160, 50, 150])
         upper_red2 = np.array([179, 255, 255])
         mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
 
         red_mask = cv2.bitwise_or(mask1, mask2)
         red_count = cv2.countNonZero(red_mask)
         red_cx, red_cy = get_centroid(red_mask)
-
-        # elif traffic_color == "green":
-        lower_green = np.array([50, 30, 50])  # Lower bound for green
-        upper_green = np.array([70, 255, 255])  # Upper bound for green
-
-        # Create a mask for green color
-        green_mask = cv2.inRange(hsv, lower_green, upper_green)
-
-        
-        green_count = cv2.countNonZero(green_mask)
-        green_cx, green_cy = get_centroid(green_mask)
-        # except:
-            # self.get_logger().info("Error in get_traffic_light_color")
-            # return "unknown"
-
         
         def upper_lower_half(cy, y1, y2):
             # Check if the centroid is in the upper third or lower third of the bounding box
@@ -279,50 +261,30 @@ class DetectionNode(Node):
             else: 
                 return 1 # lower
         
-        # get centroid
-        try:
-            
-            # if red_cy == 0 and red_cx == 0:
-            #     red_where = 3 # no centroid
-            # else:
-            red_where = upper_lower_half(red_cy, y1, y2) # 0 if upper, 1 if lower
+        
+        red_where = upper_lower_half(red_cy, y1, y2) # 0 if upper, 1 if lower
 
-            
-            # if green_cy == 0 and green_cx == 0:
-            #     green_where = 3
-            # else:
-            green_where = upper_lower_half(green_cy, y1, y2) # 0 if upper, 1 if lower
-            
-            # self.get_logger().info(f"Red centroid: {red_cx, red_cy}, Red where: {red_where}") #
-            # self.get_logger().info(f"Green centroid: {green_cx, green_cy}, Green where: {green_where}")
-            # self.get_logger().info(f"Red count: {red_count}, Green count: {green_count}")
-        except:
-            self.get_logger().info("Error in get_traffic_light_color")
-            
-            
-        # self.logger().info(f"red where: {red_where}, green where: {green_where}")
-        if red_count > green_count and red_where == 0:
-            traffic_color = "red"
-            total_mask = red_mask
-        elif green_count > red_count and green_where == 1:
-            traffic_color = "green"
-            total_mask = green_mask
+
+        if red_count > 3 and red_where == 0:
+                traffic_color = "red"
+                total_mask = red_mask
         else:
-            traffic_color = "unknown"
-
-        save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_{traffic_color}_mask.png")
-        cv2.imwrite(save_path, total_mask)
-
-        # Step 5: Apply mask to the original image
-        color_filtered = cv2.bitwise_and(image, image, mask=total_mask)
+            return "not"
         
-        save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_{traffic_color}_filtered.png")
-        cv2.imwrite(save_path, color_filtered)
-        
+        if self.debug:
+            save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_{traffic_color}_mask.png")
+            cv2.imwrite(save_path, total_mask)
 
-        cv2.rectangle(color_filtered, (x1, y1), (x2, y2), (255, 255, 255), 2)
-        save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_{traffic_color}_filtered_bbox.png")
-        cv2.imwrite(save_path, color_filtered)
+            # Step 5: Apply mask to the original image
+            color_filtered = cv2.bitwise_and(image, image, mask=total_mask)
+            
+            save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_{traffic_color}_filtered.png")
+            cv2.imwrite(save_path, color_filtered)
+            
+
+            cv2.rectangle(color_filtered, (x1, y1), (x2, y2), (255, 255, 255), 2)
+            save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_{traffic_color}_filtered_bbox.png")
+            cv2.imwrite(save_path, color_filtered)
 
         return traffic_color
 
