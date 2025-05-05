@@ -127,6 +127,7 @@ class DetectionNode(Node):
         
         try:
             results = self.detector.predict(image) #image
+            
             predictions = results["predictions"]
             original_image = results["original_image"]
             # self.get_logger().info(f"original_image: {original_image.shape}")
