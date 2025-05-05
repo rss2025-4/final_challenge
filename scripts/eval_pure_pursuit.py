@@ -1,43 +1,61 @@
 import json
+import math
 import time
 from itertools import islice
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import cv2
+import jax
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from jax import Array, numpy as jnp
 from numpy.typing import ArrayLike
 from PIL import Image
+from scipy.ndimage import uniform_filter
 
 from final_challenge.alan import FrameData
+from final_challenge.alan.image import color_image, xy_line_to_xyplot_image
 from final_challenge.alan.rosbag import get_images, get_messages
 from final_challenge.alan.utils import cache, cast_unchecked_
 from final_challenge.homography import (
+    ArrowPlot,
     ImagPlot,
     Line,
     LinePlot,
+    Point,
     angle_bisector,
     ck_line,
     ck_point,
+    dual_l,
+    dual_p,
+    get_foot,
+    homography_image_rev,
     homography_line,
+    homography_point,
     line_direction,
     line_from_slope_intersect,
+    line_inf,
     line_intersect,
     line_through_points,
+    line_to_slope_intersect,
     line_x_equals,
     line_y_equals,
     matrix_rot,
     matrix_trans,
     matrix_uv_to_xy,
+    normalize,
+    parellel_line,
     point_coord,
     shift_line,
     xy_to_uv_line,
 )
-from libracecar.batched import batched
+from libracecar.batched import batched, batched_zip
 from libracecar.utils import debug_print, jit
+
+np.set_printoptions(precision=5, suppress=True)
+# jax.config.update("jax_enable_x64", True)
 
 see_meters = 4
 
@@ -55,16 +73,10 @@ def matrix_xy_to_xy_img_plot_eval():
     ) @ np.diag([400 / see_meters, 400 / see_meters, 1])
 
 
-def homography_image_for_eval(
-    image: Image.Image | np.ndarray, additional: np.ndarray | None = None
-) -> np.ndarray:
-    ans = matrix_uv_to_xy()
-    if additional is not None:
-        ans = additional @ ans
-
+def homography_image2(image: Image.Image | np.ndarray, matrix: np.ndarray) -> np.ndarray:
     return cv2.warpPerspective(
         np.array(image),
-        cast_unchecked_(matrix_xy_to_xy_img_plot_eval() @ ans),
+        cast_unchecked_(matrix),
         (800, 400),
     )
 
@@ -82,10 +94,32 @@ def fit_line(image: ArrayLike) -> Line:
     return (b, a, c)
 
 
-def viz_data():
+# def testfn():
+#     return solve_homography(batched.create(((1, 0), np.array((1, 0, 0)))))
+
+
+@jit
+def solve_homography(points: batched[tuple[Point, Point, ArrayLike]]) -> Array:
+
+    def inner(h_: Array):
+        h = h_.reshape(3, 3) + jnp.diag(jnp.ones(3))
+        eqns = points.tuple_map(
+            lambda x, y, w: jnp.array(w)
+            * jnp.cross(h @ ck_point(normalize(x)), ck_point(normalize(y)))
+        )
+        ans = eqns.uf.reshape(-1)
+        return ans, ans
+
+    M, b = jax.jacfwd(inner, has_aux=True)(jnp.zeros(9))
+
+    x, resid, rank, s = jnp.linalg.lstsq(M, -b, rcond=0.1)
+    return x.reshape(3, 3) + jnp.diag(jnp.ones(3))
+
+
+def main():
     bagpath = Path("/home/alan/6.4200/rosbags_5_3/out_bag3")
     annotated = Path(
-        "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_5_3_labeled_v1/bag3"
+        "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_5_3_labeled_v1/bag3_2"
     )
 
     msgs = get_messages(bagpath)
@@ -99,8 +133,14 @@ def viz_data():
     line1 = LinePlot(ax1)
     line2 = LinePlot(ax1)
 
-    plot2 = ImagPlot(ax2, xlim=(200, 600))
-    plot2_line = [LinePlot(ax2, linewidth=5) for _ in range(4)]
+    plot2 = ImagPlot(ax2, xlim=(200, 600), ylim=(450, 0))
+    plot2_line = [LinePlot(ax2, linewidth=5, color=(0, 0, 1)) for _ in range(4)]
+    plot2_line_truth = [LinePlot(ax2, linewidth=5, color="yellow", alpha=0.5) for _ in range(2)]
+
+    arrow_plot = ArrowPlot(ax2, linewidth=10, head_width=20, length_includes_head=True)
+    arrow_plot_drive = ArrowPlot(
+        ax2, linewidth=5, head_width=10, length_includes_head=True, color="green"
+    )
 
     prev_stamp = msgs[0].image_time
     start_t = time.time()
@@ -108,65 +148,132 @@ def viz_data():
     for i, msg in enumerate(msgs):
         frame = FrameData.load(annotated, msg.image_idx)
 
-        plot.set_imag(msg.image.image)
-        line1.set_line(xy_to_uv_line(shift_line(msg.line, -1)))
-        line2.set_line(xy_to_uv_line(shift_line(msg.line, -2)))
+        ######################################################
 
-        l1 = fit_line(homography_image_for_eval(frame.out_left_bool.astype(np.float32)))
-        l1 = homography_line(np.linalg.inv(matrix_xy_to_xy_img_plot_eval()), l1)
-
-        l2 = fit_line(homography_image_for_eval(frame.out_right_bool.astype(np.float32)))
-        l2 = homography_line(np.linalg.inv(matrix_xy_to_xy_img_plot_eval()), l2)
-
-        r1 = point_coord(line_intersect(l1, line_x_equals(0)))
-        r2 = point_coord(line_intersect(l2, line_x_equals(0)))
-
-        p1 = point_coord(line_intersect(l1, line_x_equals(1)))
-        p2 = point_coord(line_intersect(l2, line_x_equals(1)))
-
-        intersect = line_intersect(l1, l2)
-
-        ix, iy, iz = ck_point(intersect)
-        # iz /= 5
-        iz = 0
-        intersect_to = jnp.array((ix, iy, iz))
-
-        l1_to = line_through_points(r1, intersect_to)
-        l2_to = line_through_points(r2, intersect_to)
-
-        p1_to = point_coord(line_intersect(l1_to, line_through_points(p1, (0, 0))))
-        p2_to = point_coord(line_intersect(l2_to, line_through_points(p2, (0, 0))))
-
-        print("p1, p2", p1, p2)
-        print("p1_to, p2_to", p1_to, p2_to)
-
-        H, err = cv2.findHomography(
-            np.array([(0, 0), (0, 1), (0, -1), (0, 10), (0, -10), p1, p2]),
-            np.array([(0, 0), (0, 1), (0, -1), (0, 10), (0, -10), p1_to, p2_to]),
+        xy_image = np.array(
+            xy_line_to_xyplot_image(
+                jnp.array(msg.line), jnp.array([-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0])
+            )
         )
-        print("homography", H, err)
+        xy_image = (
+            uniform_filter(xy_image.astype(np.float32), size=7, mode="constant", cval=0.0) > 1e-6
+        )
+        overlay = homography_image_rev(np.array(color_image(xy_image, color=(0, 0, 255, 127))))
 
-        lmid_to = homography_line(H, angle_bisector(l1, l2))
+        plot.set_imag(
+            Image.alpha_composite(msg.image.image, Image.fromarray(overlay))
+        )  # line1.set_line(xy_to_uv_line(shift_line(msg.line, -1)))
+        # line2.set_line(xy_to_uv_line(shift_line(msg.line, -2)))
 
-        _, shift_y = point_coord(line_intersect(lmid_to, line_x_equals(0)))
-        shift_angx, shift_angy = line_direction(lmid_to)
-        H = np.array(
-            #
-            matrix_rot(-jnp.arctan2(shift_angy, shift_angx))
-            @ matrix_trans(dy=-shift_y)
-            @ H
+        ######################################################
+
+        matrix_for_fit_from_xy = matrix_xy_to_xy_img_plot_eval()
+
+        def _fit_mask(m: np.ndarray) -> Line:
+            l = fit_line(
+                homography_image2(
+                    (m > 0).astype(np.float32),
+                    matrix_for_fit_from_xy @ matrix_uv_to_xy(),
+                )
+            )
+            return homography_line(np.linalg.inv(matrix_for_fit_from_xy), l)
+
+        ls = [_fit_mask(m) for m in frame.out_masks]
+
+        ######################################################
+
+        slopes_intercepts = [line_to_slope_intersect(l) for l in ls]
+
+        slope = float(np.mean([s for s, _ in slopes_intercepts]))
+        intercept = float(np.mean([y0 for _, y0 in slopes_intercepts]))
+
+        tilt_rat = math.sqrt(1 + slope**2)
+
+        print("dist:", (slopes_intercepts[0][1] - slopes_intercepts[1][1]) / tilt_rat)
+        dist = 1.05
+
+        # print("slope, intercept", slope, intercept)
+
+        intercepts_offset = [0, -tilt_rat * dist, tilt_rat * dist]
+
+        lines_to = [line_from_slope_intersect(slope, intercept + y) for y in intercepts_offset]
+
+        perserve: list[tuple[Line, float]] = [
+            (line_x_equals(0), 1.0),
+            (line_x_equals(1), 1.0),
+            (line_x_equals(2), 1.0),
+            ((1.0, 1.0, 0.0), 1.0),
+            ((1.0, -1.0, 0.0), 1.0),
+        ]
+        # perserve: list[Line] = [(1.0, 1.0, 0.0), (1.0, -1.0, 0.0)]
+
+        lines = batched.create_stack(
+            [
+                *[(l, l_to, 2.0) for (l, l_to) in zip(ls[:2], lines_to[:2])],
+                *[(l, l_to, 0.8) for (l, l_to) in zip(ls[2:], lines_to[2:])],
+                *[(ck_line(x), ck_line(x), w) for x, w in perserve],
+            ]
         )
 
-        plot2.set_imag(homography_image_for_eval(frame.in_img, H))
+        shake_correction_dual = solve_homography(
+            lines.tuple_map(lambda x, y, w: (dual_l(x), dual_l(y), w))
+        )
+        # print("shake_correction_dual", shake_correction_dual)
+        shake_correction = np.linalg.inv(shake_correction_dual).T
+
+        ######################################################
+
+        shake_correction = np.diag(np.ones(3))
+
+        centering = np.array(
+            matrix_rot(-jnp.arctan(slope))
+            @ matrix_trans(dy=-(intercept + (intercepts_offset[0] + intercepts_offset[1]) / 2))
+        )
+
+        # for pl, l in zip(plot2_line_truth, lines_to[:2]):
+        #     pl.set_line(homography_line(matrix_xy_to_xy_img_plot_eval() @ centering, l))
+        for pl, l in zip(plot2_line_truth, ls[:2]):
+            pl.set_line(homography_line(matrix_xy_to_xy_img_plot_eval() @ centering, l))
+
+        plot2.set_imag(
+            homography_image2(
+                frame.in_img,
+                matrix_xy_to_xy_img_plot_eval() @ centering @ shake_correction @ matrix_uv_to_xy(),
+            )
+        )
 
         for l, s in zip(plot2_line, (0, -1, -2, -3)):
             l.set_line(
-                homography_line(matrix_xy_to_xy_img_plot_eval() @ H, shift_line(msg.line, s))
+                homography_line(
+                    matrix_xy_to_xy_img_plot_eval() @ centering @ shake_correction,
+                    shift_line(msg.line, s),
+                )
             )
 
-        time.sleep(max(0, (msg.image_time - prev_stamp) - (time.time() - start_t)) * 2)
+        sx, sy = point_coord(
+            homography_point(matrix_xy_to_xy_img_plot_eval() @ centering, (-0.5, 0))
+        )
+        ex, ey = point_coord(homography_point(matrix_xy_to_xy_img_plot_eval() @ centering, (0, 0)))
+        arrow_plot.set_arrow(sx, sy, ex - sx, ey - sy)
+
+        steering = (msg.drive.drive.steering_angle + 0.035) * 4
+        steering_x = 1 / math.sqrt(1 + steering**2)
+        steering_y = steering_x * steering
+
+        sx, sy = point_coord(homography_point(matrix_xy_to_xy_img_plot_eval() @ centering, (0, 0)))
+        ex, ey = point_coord(
+            homography_point(
+                matrix_xy_to_xy_img_plot_eval() @ centering,
+                (steering_x * 3, steering_y * 3),
+            )
+        )
+        arrow_plot_drive.set_arrow(sx, sy, ex - sx, ey - sy)
+
+        time.sleep(max(0, (msg.image_time - prev_stamp) * 3 - (time.time() - start_t)))
         prev_stamp = msg.image_time
         start_t = time.time()
+
+        plt.tight_layout()
 
         fig.canvas.draw()
         fig.canvas.flush_events()

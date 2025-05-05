@@ -66,7 +66,7 @@ def build_predictor():
 
 
 def main(predictor: SAM2VideoPredictor | None = None):
-    out_dir = Path(__file__).parent.parent / "data" / "johnson_track_rosbag_5_3_labeled_v1/bag3"
+    out_dir = Path(__file__).parent.parent / "data" / "johnson_track_rosbag_5_3_labeled_v1/bag3_2"
     # out_dir = Path(__file__).parent.parent / "data" / "johnson_track_rosbag_5_3_labeled_v1_test"
     out_dir.mkdir(parents=True, exist_ok=False)
     # out_dir.mkdir(parents=True, exist_ok=True)
@@ -77,8 +77,9 @@ def main(predictor: SAM2VideoPredictor | None = None):
     # it = islice(it, 1300, 1500)
     messages = list(
         get_images(bagpath)
-        # islice(get_images(bagpath), 0, 10),
-        # islice(get_images(bagpath), 330, 340),
+        # islice(get_images(bagpath), 460, 470),
+        # islice(get_images(bagpath), 450, 470),
+        # islice(get_images(bagpath), 500, 600),
         # islice(get_images(bagpath), 105, 106),
     )
     # messages = messages[:300]
@@ -107,30 +108,15 @@ def main(predictor: SAM2VideoPredictor | None = None):
         )
 
         prompts = [
-            # left
+            # # left
             (0, 0, np.array([[174, 263, 1]])),
-            # right
+            # # right
             (1, 0, np.array([[528, 209, 1]])),
-            (
-                1,
-                325,
-                np.array(
-                    [
-                        [542, 180, 1],
-                        [453, 155, 1],
-                    ]
-                ),
-            ),
-            (
-                1,
-                330,
-                np.array(
-                    [
-                        [392, 159, 1],
-                        [543, 197, 1],
-                    ]
-                ),
-            ),
+            (1, 325, np.array([[542, 180, 1], [453, 155, 1]])),
+            (1, 330, np.array([[392, 159, 1], [543, 197, 1]])),
+            # left left
+            (2, 0, np.array([[36, 193, 1]])),
+            (2, 450, np.array([[12, 196, 1], [223, 156, 1]])),
         ]
 
         for obj_id, ann_frame_idx, prompt in prompts:
@@ -185,7 +171,7 @@ def main(predictor: SAM2VideoPredictor | None = None):
 
 def example_plot():
     data_dir = Path(
-        "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_5_3_labeled_v1/bag3"
+        "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_5_3_labeled_v1/bag3_2"
         # "/home/alan/6.4200/final_challenge2025/data/johnson_track_rosbag_5_3_labeled_v1_test"
     )
 

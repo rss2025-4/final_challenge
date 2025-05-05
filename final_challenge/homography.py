@@ -20,6 +20,7 @@ import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.image import AxesImage
 from matplotlib.lines import AxLine
+from matplotlib.patches import FancyArrow
 from PIL import Image
 
 from .alan.utils import cache, cast_unchecked_
@@ -209,6 +210,13 @@ def line_from_slope_intersect(slope: ArrLike, intercept: ArrLike) -> Line:
     return ck_line((slope, -1.0, intercept))
 
 
+def line_to_slope_intersect(line: Line) -> tuple[float, float]:
+    # ax + by + c = 0
+    # y = (-a/b) x - c/b
+    a, b, c = ck_line(line)
+    return float(-a / b), float(-c / b)
+
+
 def matrix_rot(ang_rad: ArrLike) -> Arr:
     sin = jnp.sin(ang_rad)
     cos = jnp.cos(ang_rad)
@@ -351,20 +359,33 @@ class LinePlotXY(LinePlot):
 
 
 class ImagPlot:
-    def __init__(self, ax: Axes, *, xlim: tuple[int, int] | None = None, **kwargs):
+    def __init__(
+        self,
+        ax: Axes,
+        *,
+        xlim: tuple[int, int] | None = None,
+        ylim: tuple[int, int] | None = None,
+        **kwargs,
+    ):
         self.ax = ax
         self.image: Optional[AxesImage] = None
         self.kwargs = kwargs
         self.xlim = xlim
+        self.ylim = ylim
 
     def set_imag(self, image: Image.Image | np.ndarray):
         image_ = np.array(image)
         if self.image is None:
             self.image = self.ax.imshow(image_, **self.kwargs)
+
             if self.xlim is None:
                 self.xlim = (0, image_.shape[1])
             self.ax.set_xlim(self.xlim[0], self.xlim[1])
-            self.ax.set_ylim(image_.shape[0], 0)
+
+            if self.ylim is None:
+                self.ylim = (image_.shape[0], 0)
+            self.ax.set_ylim(self.ylim[0], self.ylim[1])
+
         else:
             self.image.set_data(image_)
 
@@ -415,3 +436,39 @@ def xy_plot_top_to_uv_line():
     return homography_line(
         matrix_xy_to_uv() @ np.linalg.inv(matrix_xy_to_xy_img()), (0.0, 1.0, 0.0)
     )
+
+
+class ArrowPlot:
+    def __init__(self, ax: Axes, **kwargs):
+        self.ax = ax
+        self.active: Optional[FancyArrow] = None
+        self.kwargs = kwargs
+
+    def set_arrow(self, x: ArrLike, y: ArrLike, dx: ArrLike, dy: ArrLike):
+        x, y, dx, dy = map(float, (x, y, dx, dy))
+
+        if self.active is None:
+            self.active = self.ax.arrow(x, y, dx, dy, **self.kwargs)
+        else:
+            self.active.set_data(x=x, y=y, dx=dx, dy=dy)
+
+
+def dual_p(p: Point) -> Line:
+    return ck_point(p)
+
+
+def dual_l(l: Line) -> Point:
+    return ck_line(l)
+
+
+def line_inf() -> Line:
+    return (0, 0, 1)
+
+
+def parellel_line(line: Line, point: Point) -> Line:
+    return line_through_points(line_intersect(line, line_inf()), point)
+
+
+def normalize(p: Point) -> Point:
+    p = ck_point(p)
+    return p / jnp.linalg.norm(p)

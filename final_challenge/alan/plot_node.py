@@ -5,9 +5,7 @@ from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import numpy as np
 from geometry_msgs.msg import Vector3
-from jax import Array
-from jax import numpy as jnp
-from jax import vmap
+from jax import Array, numpy as jnp, vmap
 from jax.typing import ArrayLike
 from nav_msgs.msg import Odometry
 from PIL import Image
@@ -162,5 +160,5 @@ class PlotNode(Node):
         # for p, l in zip(self.lines_plot, np.array(uv_lines)):
         #     p.set_line(l)
 
-        # for p, l in zip(self.lines_plot_xy, np.array(plot_xy_lines)):
-        #     p.set_line(l)
+        for p, s in zip(self.lines_plot_xy, self.cfg.shifts):
+            p.set_line(shift_line(line_xy, s))
