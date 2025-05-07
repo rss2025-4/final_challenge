@@ -21,22 +21,41 @@ from geometry_msgs.msg import Point
 # see README.md for coordinate frame description
 
 ######################################################
-## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
-PTS_IMAGE_PLANE = [[639.0, 200.0],
-                   [336.0, 177.0],
-                   [515.0, 176.0],
-                   [88.0, 199.0],] # dummy points
+# ## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
+# PTS_IMAGE_PLANE = [[639.0, 200.0],
+#                    [336.0, 177.0],
+#                    [515.0, 176.0],
+#                    [88.0, 199.0],] # dummy points
+# ######################################################
+
+# # PTS_GROUND_PLANE units are in inches
+# # car looks along positive x axis with positive y axis to left
+
+# ######################################################
+# ## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE in inches
+# PTS_GROUND_PLANE = [[50.25, -52],
+#                     [99.25, 0],
+#                     [99.25, -52],
+#                     [56, 42]] # dummy points
+PTS_IMAGE_PLANE = [[348.0, 189.0],
+                   [508.0, 182.0],
+                   [161.0, 213.0],
+                   [610.0, 253.0],
+                   [350.0, 216.0], 
+                   [164.0, 197.0]] # dummy points
 ######################################################
 
 # PTS_GROUND_PLANE units are in inches
 # car looks along positive x axis with positive y axis to left
 
 ######################################################
-## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE in inches
-PTS_GROUND_PLANE = [[50.25, -52],
-                    [99.25, 0],
-                    [99.25, -52],
-                    [56, 42]] # dummy points
+## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
+PTS_GROUND_PLANE = [[66.5, 0],
+                    [99, -44],
+                    [43, 24],
+                    [26, -20],
+                    [41,0],
+                    [45, 30]] # dummy points
 ######################################################
 
 METERS_PER_INCH = 0.0254

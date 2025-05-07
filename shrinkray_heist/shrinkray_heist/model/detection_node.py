@@ -15,6 +15,7 @@ from shrinkray_heist.definitions import  Target, TripSegment, ObjectDetected, St
 from shrinkray_heist.homography_transformer import HomographyTransformer
 
 
+
 class DetectionNode(Node):
     def __init__(self):
         super().__init__("detector_node")
@@ -28,7 +29,7 @@ class DetectionNode(Node):
 
         # listen for state machine state
         self.state_sub = self.create_subscription(Int32, "/toggle_state", self.state_cb, 1)
-        self.trafficlight_detector_on = True # should be False by default
+        self.trafficlight_detector_on = False # should be False by default
         self.shrinkray_detector_on = False # should be False by default
         self.obj_detected_pub = self.create_publisher(Int32, "/detected_obj", 10)
         self.trafficlight_dist_pub = self.create_publisher(Float32, "/traffic_light", 10)
@@ -37,6 +38,7 @@ class DetectionNode(Node):
         self.shrinkray_bbox = [0, 0, 0, 0]
         self.homography_transformer = HomographyTransformer() # instantiate homography transformer to get transform
         self.wheelbase_length = 0.33 # in meters
+        self.count = 0
         
         # self.drive_topic = self.get_parameter("drive_topic").get_parameter_value().string_value
         self.drive_pub = self.create_publisher(AckermannDriveStamped, "/vesc/high_level/input/nav_1", 10)
@@ -51,17 +53,17 @@ class DetectionNode(Node):
             self.trafficlight_detector_on = not self.trafficlight_detector_on
             
             if self.trafficlight_detector_on:
-                self.get_logger().info("Traffic Light Detector Activated")
+                self.get_logger().info("Detector: Traffic Light Detector Activated")
             else:
-                self.get_logger().info("Traffic Light Detector Deactivated")
+                self.get_logger().info("Detector: Traffic Light Detector Deactivated")
 
         elif msg.data == Target.DETECTOR_SHRINK_RAY.value:
             self.shrinkray_detector_on = not self.shrinkray_detector_on
             
             if self.shrinkray_detector_on:
-                self.get_logger().info("Shrink Ray Detector Activated")
+                self.get_logger().info("Detector: Shrink Ray Detector Activated")
             else:
-                self.get_logger().info("Shrink Ray Detector Deactivated")
+                self.get_logger().info("Detector: Shrink Ray Detector Deactivated")
         
         
     def get_relative_position(self, bbox):
@@ -118,9 +120,13 @@ class DetectionNode(Node):
             return
 
         # Process image with CV Bridge
-        image = self.bridge.imgmsg_to_cv2(img_msg, "rgb8")
-        # save_path = os.path.join(os.path.dirname(__file__), f"ros_imagetocv2.png")
-        # # cv2.imwrite(save_path, image)
+        image = self.bridge.imgmsg_to_cv2(img_msg, "bgr8")
+        # image_rgb = self.bridge.imgmsg_to_cv2(img_msg, "rgb8")
+        if self.count == 0:
+            save_path = os.path.join(os.path.dirname(__file__), f"ros_imagetocv2TEST.png")
+            cv2.imwrite(save_path, image)
+            
+        # # 
         # rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         # cv2.imwrite(save_path, rgb_image)
         # self.get_logger().info(f"CV BRIDGE Image: {image.shape}")
@@ -198,9 +204,16 @@ class DetectionNode(Node):
                         
             # Convert PIL Image to OpenCV (np array)
             out_np = np.array(out)
+            
+            if self.count == 0:
+                save_path = os.path.join(os.path.dirname(__file__), f"detect_output_cv2img.png")
+                cv2.imwrite(save_path, out_np)
+                self.count += 1
+            
 
             # Convert OpenCV to ROS Image message
-            out_msg = self.bridge.cv2_to_imgmsg(out_np, "bgr8")
+            # out_msg = self.bridge.cv2_to_imgmsg(out_np, "bgr8")
+            out_msg = self.bridge.cv2_to_imgmsg(out_np, "rgb8")
             self.yolo_pub.publish(out_msg)
 
             # self.get_logger().info("Published detected image to /yolo_img")
@@ -224,7 +237,8 @@ class DetectionNode(Node):
         image = output
 
         # Convert from BGR to HSV
-        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        # hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
         save_path = os.path.join(os.path.dirname(__file__), f"traffic_light_hsv.png") #{traffic_color}
         cv2.imwrite(save_path, hsv)
         

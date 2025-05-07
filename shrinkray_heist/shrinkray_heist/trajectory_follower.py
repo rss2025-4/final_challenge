@@ -70,20 +70,25 @@ class PurePursuit(Node):
         # listen for state machine state
         self.state_sub = self.create_subscription(Int32, "/toggle_state", self.state_cb, 1)
         self.purepursuit_on = True # default is on
-        self.stop = False # default is going to drive
+        # self.stop = False # default is going to drive
         self.goal_reached = False
+
+        self.get_logger().info("Pure Pursuit Initialized")
 
 
     def state_cb(self, msg):
-        pass # for testing
+        # pass # for testing
         if msg.data == Target.FOLLOWER.value:
+            self.get_logger().info("Follower: Received Target.FOLLOWER")
             self.purepursuit_on = not self.purepursuit_on
 
             if self.purepursuit_on:
-                self.get_logger().info("Pure Pursuit Activated")
-                self.stop = False
+                self.get_logger().info("Follower: Pure Pursuit Activated")
+                # self.stop = False
             else:
-                self.get_logger().info("Pure Pursuit Deactivated")
+                self.get_logger().info("Follower: Pure Pursuit Deactivated")
+        else:
+            self.get_logger().info("Follower: NOT Target.follower")
                 
 
     # def pose_callback(self, odometry_msg):
@@ -277,12 +282,12 @@ class PurePursuit(Node):
         drive_msg.drive.jerk = 0.0  # m/s^3
 
         if self.purepursuit_on: #only publish drive msg if pure pursuit is on 
-            if not self.stop:  
-                self.drive_pub.publish(drive_msg)
+            # if not self.stop:  
+            self.drive_pub.publish(drive_msg)
                 # self.get_logger().info('Published drive msg: "%s"' % drive_msg.drive.speed)
-            else: # stop (when goal is reached)
-                drive_msg.drive.speed = 0.0
-                self.drive_pub.publish(drive_msg)
+        else: # stop (when goal is reached)
+            drive_msg.drive.speed = 0.0
+            self.drive_pub.publish(drive_msg)
                 # self.get_logger().info('Published stop drive msg: "%s"' % drive_msg.drive.speed)
 
     def pose_callback(self, odometry_msg):
@@ -307,7 +312,7 @@ class PurePursuit(Node):
             last_point = np.array(trajectory[-1][:2])
             
             if np.linalg.norm(current_point - last_point) < 0.5:
-                if self.purepursuit_on:
+                if self.purepursuit_on and not self.goal_reached:
                     self.get_logger().info("Goal reached")
 
                     # Tell state node that goal is reached
@@ -316,7 +321,7 @@ class PurePursuit(Node):
                     self.purepursuit_state_pub.publish(msg)
                     
                     self.goal_reached = True
-                    self.stop = True
+                    # self.stop = True
 
             # self.get_logger().info('np trajectory "%s"' % trajectory)
             nearest_point, [p1_nearest, p2_nearest], index_p1, index_p2 = self.nearest_point(current_point, trajectory)

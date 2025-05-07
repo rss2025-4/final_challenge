@@ -57,7 +57,7 @@ class StatesNode(Node):
         self.traffic_state = TrafficSimulation.NO_TRAFFIC
         
         # Publishers 
-        self.state_pub = self.create_publisher(Int32, '/toggle_state', 1)
+        self.state_pub = self.create_publisher(Int32, '/toggle_state', 5)
         self.points_pub = self.create_publisher(PoseArray, '/planned_pts', 1) # publish the points we want to plan a path 
         self.start_pub = self.create_publisher(Marker, '/start_pose', 1)
         self.get_logger().info('State Node Initialized with State: "%s"' % self.trip_segment)
@@ -92,6 +92,7 @@ class StatesNode(Node):
     '''
     def reached_goal_cb(self, msg: Int32):
         self.get_logger().info("StatesNode: We have reached arrived at current goal point")
+        self.control_node(target=Target.DETECTOR_TRAFFIC_LIGHT) # turn off traffic light detection 
         if self.trip_segment == TripSegment.RAY_LOC1:
             self.get_logger().info("StatesNode: Reached RAY_LOC1")
             self.control_node(target=Target.FOLLOWER) # turn OFF PURE PURSUIT
