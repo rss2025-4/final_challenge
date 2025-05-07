@@ -55,7 +55,7 @@ class PurePursuit(Node):
         self.drive_pub = self.create_publisher(AckermannDriveStamped, self.drive_topic, 1)
 
         self.lookahead_publisher = self.create_publisher(Marker, "/lookahead_point", 1)
-        self.nearest_dist_pub = self.create_publisher(Float32, "/nearest_dist", 1)
+        self.nearest_dist_pub = self.create_publisher(Float32, "/nearest_dist", 10)
 
         self.min_dist = 0.0
 
@@ -65,10 +65,10 @@ class PurePursuit(Node):
 
         
         # for publishing to state node
-        self.purepursuit_state_pub = self.create_publisher(Int32, "/pursuit_state", 1)
+        self.purepursuit_state_pub = self.create_publisher(Int32, "/pursuit_state", 10)
 
         # listen for state machine state
-        self.state_sub = self.create_subscription(Int32, "/toggle_state", self.state_cb, 1)
+        self.state_sub = self.create_subscription(Int32, "/toggle_state", self.state_cb, 10)
         self.purepursuit_on = True # default is on
         # self.stop = False # default is going to drive
         self.goal_reached = False
