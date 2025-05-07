@@ -4,8 +4,7 @@ from typing import Any
 
 import equinox as eqx
 import jax
-from jax import Array
-from jax import numpy as jnp
+from jax import Array, numpy as jnp
 
 from final_challenge.homography import (
     Line,

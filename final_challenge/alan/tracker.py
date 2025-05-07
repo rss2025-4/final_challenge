@@ -5,8 +5,7 @@ from dataclasses import dataclass, field
 import jax
 import numpy as np
 import PIL.Image
-from jax import Array
-from jax import numpy as jnp
+from jax import Array, numpy as jnp
 from scipy.ndimage import uniform_filter
 from termcolor import colored
 

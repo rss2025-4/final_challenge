@@ -22,10 +22,10 @@ def main():
     np.set_printoptions(precision=5, suppress=True)
     # jax.config.update("jax_enable_x64", True)
 
-    # bag_dir = Path("/root/repos/rosbags_5_3")
-    # bag = "out_bag2"
     bag_dir = Path("/root/repos/rosbags_4_29")
     bag = "bag2"
+    # bag_dir = Path("/root/repos/rosbags_5_3")
+    # bag = "out_bag1"
 
     procs = proc_manager.new()
     procs.spin_thread()

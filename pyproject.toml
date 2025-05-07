@@ -81,6 +81,13 @@ pytest = "^8.3.5"
 
 [tool.black]
 line-length = 100
+exclude = '''
+/(
+      data
+    | paul
+    | shrinkray_heist
+)/
+'''
 
 [tool.isort]
 profile = "black"
@@ -88,6 +95,12 @@ combine_as_imports = true
 known_first_party = [
   #
   "libracecar",
+]
+skip = [
+  #
+  "data",
+  "final_challenge/paul",
+  "shrinkray_heist",
 ]
 
 [tool.pyright]

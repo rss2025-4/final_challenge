@@ -7,8 +7,7 @@ import numpy as np
 import PIL.Image
 from ackermann_msgs.msg import AckermannDrive, AckermannDriveStamped
 from geometry_msgs.msg import Twist, Vector3
-from jax import Array
-from jax import numpy as jnp
+from jax import Array, numpy as jnp
 from nav_msgs.msg import Odometry
 from rclpy import Context
 from rclpy.node import Node

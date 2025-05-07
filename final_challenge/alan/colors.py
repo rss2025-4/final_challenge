@@ -6,8 +6,7 @@ import equinox as eqx
 import jax
 import numpy as np
 import tqdm
-from jax import Array
-from jax import numpy as jnp
+from jax import Array, numpy as jnp
 from jax.typing import ArrayLike
 from PIL import Image
 

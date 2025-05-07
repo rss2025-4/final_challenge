@@ -162,3 +162,5 @@ class PlotNode(Node):
 
         for p, s in zip(self.lines_plot_xy, self.cfg.shifts):
             p.set_line(shift_line(line_xy, s))
+
+        plt.tight_layout()

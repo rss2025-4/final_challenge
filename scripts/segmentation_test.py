@@ -8,8 +8,7 @@ import jax
 import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
-from jax import Array
-from jax import numpy as jnp
+from jax import Array, numpy as jnp
 from jax.typing import ArrayLike
 from PIL import Image
 from scipy.ndimage import uniform_filter
