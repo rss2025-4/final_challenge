@@ -1,0 +1,64 @@
+[project]
+name = "final_challenge"
+version = "0.0.0"
+description = ""
+authors = []
+readme = "README.md"
+requires-python = ">=3.10, <3.11"
+dynamic = ["dependencies"]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[tool.poetry.dependencies]
+python = ">=3.10, <3.11"
+
+ipython = "^8"
+better-exceptions = "^0.3.3"
+
+opencv-python = "^4.11.0.86"
+matplotlib = "^3.10.1"
+rosbags = "^0.10.9"
+
+torch = [
+  { version = "^2.7.0", markers = "extra != 'gpu'", source = "pytorch-cpu" },
+  { version = "^2.7.0", markers = "extra == 'gpu'", source = "pypi" },
+]
+
+# torch = { version = "^2.7.0", source = "torch-cpu" }
+sam-2 = { git = "https://github.com/facebookresearch/sam2.git", markers = "extra == 'gpu'" }
+# sam-2 = { git = "https://github.com/zdata-inc/sam2_realtime.git" }
+
+[project.optional-dependencies]
+gpu = []
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+isort = "^6.0.1"
+basedpyright = "^1.29.1"
+autoflake = "^2.3.1"
+
+[tool.poetry.group.docs]
+optional = true
+[tool.poetry.group.docs.dependencies]
+sphinx = "^8"
+sphinx-rtd-theme = "^3.0.2"
+rstfmt = "^0.0.14"
+sphinxcontrib-restbuilder = "^0.3"
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+
+[tool.pyright]
+exclude = ["**/result*"]
+typeCheckingMode = "basic"
+reportPrivateImportUsage = false

@@ -29,7 +29,7 @@ class DetectionNode(Node):
 
         # listen for state machine state
         self.state_sub = self.create_subscription(Int32, "/toggle_state", self.state_cb, 10)
-        self.trafficlight_detector_on = False # should be False by default
+        self.trafficlight_detector_on = True # should be False by default
         self.shrinkray_detector_on = False # should be False by default
         self.obj_detected_pub = self.create_publisher(Int32, "/detected_obj", 10)
         self.trafficlight_dist_pub = self.create_publisher(Float32, "/traffic_light", 10)

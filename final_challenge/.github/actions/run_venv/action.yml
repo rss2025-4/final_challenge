@@ -1,0 +1,21 @@
+name: "action"
+
+inputs:
+  commands:
+    required: true
+  PROJECT_DIR:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        set +eux
+        source /etc/bash.bashrc
+        source ../../install/setup.bash
+        set -eux
+        source .venv/bin/activate
+        ${{ inputs.commands }}
+
+      working-directory: ${{ inputs.PROJECT_DIR }}
+      shell: bash

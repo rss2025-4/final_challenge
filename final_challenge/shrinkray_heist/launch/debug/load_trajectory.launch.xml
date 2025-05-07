@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="shrinkray_heist" exec="trajectory_loader" name="trajectory_loader">
+        <param name="trajectory" value="$HOME/lab6_trajectories/2025-04-30-20-02-08.traj"/>
+        <!-- <param name="trajectory" value="$(find-pkg-share path_planning)/example_trajectories/trajectory_2.traj"/> -->
+    </node>
+</launch>

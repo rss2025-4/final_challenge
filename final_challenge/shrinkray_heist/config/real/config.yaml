@@ -1,0 +1,19 @@
+trajectory_planner:
+  ros__parameters:
+    odom_topic: "/pf/pose/odom"
+    map_topic: "/map"
+    scan_topic: "/scan"
+    path_topic: "/planned_pts"
+    safety_buffer: 0.3
+trajectory_follower:
+  ros__parameters:
+    odom_topic: "/pf/pose/odom"
+    drive_topic: "/vesc/high_level/input/nav_1"
+safety_controller:
+  ros__parameters:
+    scan_topic: "/scan"
+    drive_topic: "/vesc/low_level/ackermann_cmd"
+    published_drive_topic: "/vesc/low_level/input/safety"
+detection_node:
+  ros__parameters:
+    drive_topic: "/vesc/high_level/input/nav_1"

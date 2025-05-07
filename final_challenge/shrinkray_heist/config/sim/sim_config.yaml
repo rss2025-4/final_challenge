@@ -1,0 +1,11 @@
+trajectory_planner:
+  ros__parameters:
+    odom_topic: "/odom"
+    map_topic: "/map"
+    scan_topic: "/scan"
+    path_topic: "/planned_pts"
+    safety_buffer: 0.3
+trajectory_follower:
+  ros__parameters:
+    odom_topic: "/odom"
+    drive_topic: "/drive"

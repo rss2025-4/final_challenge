@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="shrinkray_heist" exec="trajectory_follower" name="trajectory_follower">
+        <param name="odom_topic" value="/odom"/>
+        <param name="drive_topic" value="/drive"/>
+    </node>
+</launch>

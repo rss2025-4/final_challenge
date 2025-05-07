@@ -1,0 +1,24 @@
+<launch>
+    <node pkg="shrinkray_heist" exec="states_node" name="states_node" output="screen">
+        
+    </node>
+    <node pkg="shrinkray_heist" exec="trajectory_planner" name="trajectory_planner" output="screen">
+        <param from="$(find-pkg-share shrinkray_heist)/config/real/config.yaml"/>
+    </node>
+    <node pkg="shrinkray_heist" exec="trajectory_follower" name="trajectory_follower">
+        <param from="$(find-pkg-share shrinkray_heist)/config/real/config.yaml"/>
+    </node>
+    <!-- <node pkg="localization" exec="particle_filter" name="particle_filter" output="screen">
+        <param from="$(find-pkg-share shrinkray_heist)/config/real/pf_config.yaml"/>
+    </node> -->
+    <node pkg="safety_controller" exec="safety_controller" name="safety_controller" output="screen">
+        <param from="$(find-pkg-share shrinkray_heist)/config/real/config.yaml"/>
+    </node>
+    <node pkg="shrinkray_heist" exec="detection_node" name="detection_node" output="screen">
+        <param from="$(find-pkg-share shrinkray_heist)/config/real/config.yaml"/>
+    </node>
+    <node pkg="shrinkray_heist" exec="basement_point_publisher" name="basement_point_publisher" output="screen">
+        <!-- <param from="$(find-pkg-share shrinkray_heist)/config/real/config.yaml"/> -->
+    </node>
+    
+</launch>
