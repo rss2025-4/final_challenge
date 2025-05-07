@@ -117,7 +117,10 @@ class StatesNode(Node):
         
         # Represents the transition from travelling to the shrink ray location to next location
         # TripSegment.RAY_LOC1 ==> TripSegment.RAY_LOC2 or TripSegment.RAY_LOC2 ==> TripSegment.END
-        self.trip_segment += 1
+        if self.trip_segment == TripSegment.RAY_LOC1:
+            self.trip_segment = TripSegment.RAY_LOC2
+        elif self.trip_segment == TripSegment.RAY_LOC2:
+            self.trip_segment = TripSegment.END
         
         self.timer.cancel()     # It's good practice to cancel the timer once its task is done
         self.timer = None       # Optionally set self.timer to None to avoid dangling references
@@ -232,6 +235,7 @@ class StatesNode(Node):
             end_point =  (self.start.position.x, self.start.position.y)
         else:
             self.get_logger().warn("Invalid trip segment")
+            return
         # array = []
         pose_array = PoseArray()
         pose_array.header.frame_id = "map"
