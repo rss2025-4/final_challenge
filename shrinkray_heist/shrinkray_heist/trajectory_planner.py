@@ -31,7 +31,7 @@ class PathPlan(Node):
 
        
        
-        self.declare_parameter("safety_buffer", 0.6)
+        self.declare_parameter("safety_buffer", 0.3)
         self.declare_parameter("odom_topic", "default")
         self.declare_parameter("map_topic", "default")
         self.declare_parameter("path_topic", "default")
@@ -89,6 +89,8 @@ class PathPlan(Node):
         self.trajectory = LineTrajectory(node=self, viz_namespace="/planned_trajectory")
         
         
+        
+        
 
     def map_cb(self, msg):
 
@@ -100,6 +102,11 @@ class PathPlan(Node):
         self.get_logger().info("PathPlan: Got map")
         self.map_info = msg.info
         
+        # grid = np.array(msg.).reshape((height, width))
+        # # Create a binary map: mark as obstacle if occupancy > threshold OR if occupancy == -1 (unknown).
+        # binary_map = np.uint8((grid > 50) | (grid == -1))
+        # # map is predilated 
+        # self.dilated_map = binary_map 
 
         self.dilated_map = self.dilate_occupancy_map(
             occupancy_data=msg.data,
@@ -109,8 +116,31 @@ class PathPlan(Node):
             dilation_radius_meters=self.safety_buffer,
             occupancy_threshold=50,
         )
+        self.save_map_as_img("occupancy_map.png",  width=msg.info.width,
+            height=msg.info.height)
         # self.map *= 100
         self.convert_map_to_publisher_format()
+    def save_map_as_img(self, filename,width, height):
+        """
+        Save the map as an image file.
+        """
+        
+        if self.dilated_map is None:
+            self.get_logger().warn("No dilated map available to save")
+            return
+        self.get_logger().info(f"PathPlan: Saving map as {filename}, these are the unique values: {np.unique(self.dilated_map)}")
+        grid = self.dilated_map.reshape((height, width))
+        # Convert the map to a format suitable for saving as an image
+        binary_map = np.uint8(np.logical_not(grid))
+        
+
+        
+        img = (binary_map * 255).astype(np.uint8)
+
+        # Save the image
+        cv2.imwrite(filename, img)
+        self.get_logger().info(f"Map saved as {filename}")
+        
 
     def convert_map_to_publisher_format(self):
         # if self.debug:
