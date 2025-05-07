@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
+from typing import Any
 
 import jax
+import jsonpickle
 import numpy as np
 import PIL.Image
 from ackermann_msgs.msg import AckermannDrive, AckermannDriveStamped
@@ -19,6 +22,7 @@ from rclpy.qos import (
 )
 from scipy.ndimage import uniform_filter
 from sensor_msgs.msg import Image
+from std_msgs.msg import String
 from termcolor import colored
 from tf2_ros import (
     Node,
@@ -50,7 +54,7 @@ from .ros import ImageMsg
 @dataclass
 class TrackerConfig:
     #: list of parellel lines, in meters
-    shifts: list[float] = field(default_factory=lambda: [-2.0, -1.0, 0.0, 1.0, 2.0])
+    shifts: list[float] = field(default_factory=lambda: [-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0])
 
     #: initial y location; currently assuming heading exactly +x
     init_y: float = 0.5
@@ -99,18 +103,22 @@ class TrackerNode(Node):
         self.drive_pub = self.create_publisher(
             AckermannDriveStamped, "/vesc/high_level/input/nav_0", 1
         )
-        self.line_pub = self.create_publisher(Vector3, "/tracker_line", 1)
+        self.log_pub = self.create_publisher(
+            String,
+            "/tracker_log",
+            QoSProfile(
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=10,
+                durability=QoSDurabilityPolicy.VOLATILE,
+            ),
+        )
 
         ######################################################
 
         self._cur_twist = Twist()
         self._cur_time: float = -1.0
         self._pending_odoms: list[tuple[float, Odometry]] = []
-        self._pending_images: list[tuple[float, Image]] = []
-
-        # self._last_processed: type[Odometry] | type[Image] = Image
-        self._last_image_time: float = 0.0
-        self._last_odom_time: float = 0.0
 
         ######################################################
 
@@ -124,7 +132,7 @@ class TrackerNode(Node):
     # reorder messages we receieve that is out of order
     ######################################################
 
-    def __advance_time(self, new_time: float, warn_tag: str) -> None:
+    def __advance_time_one(self, new_time: float, warn_tag: str) -> None:
         delta = new_time - self._cur_time
         try:
             if delta < -1e-8:
@@ -147,93 +155,35 @@ class TrackerNode(Node):
         finally:
             self._cur_time = new_time
 
-    def __image_impl(self) -> None:
-        time, msg = self._pending_images.pop(0)
-        self.__advance_time(time, str(self.image_callback))
-        self.handle_image(msg)
-        self._last_image_time = time
+    def __advance_time(self, new_time: float) -> None:
 
-    def __odom_impl(self) -> None:
-        time, msg = self._pending_odoms.pop(0)
-        self.__advance_time(time, str(self.odom_callback))
-        self._cur_twist = msg.twist.twist
-        self._last_odom_time = time
+        while len(self._pending_odoms) > 0:
+            if self._pending_odoms[0][0] > new_time:
+                break
 
-    def __maybe_process_messages(self):
-        made_progress = False
-        while self.__maybe_process_messages1():
-            made_progress = True
-        if made_progress:
-            self.do_publish()
+            odom_time, odom_msg = self._pending_odoms.pop(0)
+            self.__advance_time_one(odom_time, "__advance_time_1")
+            self._cur_twist = odom_msg.twist.twist
 
-    def __maybe_process_messages1(self) -> bool:
-
-        if len(self._pending_odoms) > 0 and len(self._pending_images) > 0:
-            if self._pending_odoms[0][0] < self._pending_images[0][0]:
-                self.__odom_impl()
-                return True
-            else:
-                self.__image_impl()
-                return True
-
-        if len(self._pending_odoms) > 0:
-            msg_time = self._pending_odoms[0][0]
-            delta = msg_time - self._last_image_time
-            if delta < 1 / 15 - 0.003:
-                self.__odom_impl()
-                return True
-            if delta > 1 / 15 + 0.02:
-                print(
-                    colored(
-                        f"have {len(self._pending_odoms)} odom messages pending; still waiting for image",
-                        "red",
-                    )
-                )
-
-        if len(self._pending_images) > 0:
-            msg_time = self._pending_images[0][0]
-            delta = msg_time - self._last_odom_time
-            if delta < 1 / 50 - 0.001:
-                print(colored(f"on time!", "green"))
-                self.__image_impl()
-                return True
-            if delta > 1 / 50 + 0.001:
-                print(
-                    colored(
-                        f"have {len(self._pending_images)} image messages pending; still waiting for odom",
-                        "red",
-                    )
-                )
-
-        return False
+        self.__advance_time_one(new_time, "__advance_time_1")
 
     def odom_callback(self, msg: Odometry) -> None:
         # print("odom_callback!!", time_msg_to_float(msg.header.stamp))
         self._pending_odoms.append((time_msg_to_float(msg.header.stamp), msg))
 
-        self.__maybe_process_messages()
+        # self.__maybe_process_messages()
 
         if len(self._pending_odoms) > 50:
             _ = self._pending_odoms.pop(0)
 
+    @time_function
     def image_callback(self, msg: Image) -> None:
-        # print("image_callback!!", time_msg_to_float(msg.header.stamp))
-        self._pending_images.append((time_msg_to_float(msg.header.stamp), msg))
 
-        self.__maybe_process_messages()
+        self.__advance_time(time_msg_to_float(msg.header.stamp))
 
-        if len(self._pending_images) > 15:
-            _ = self._pending_images.pop(0)
+        self.handle_image(msg)
 
     ######################################################
-
-    def do_publish(self):
-        if len(self._pending_odoms) > 0:
-            x = self._pending_odoms[-1][0] - self._cur_time
-            print(f"at least {x} seconds behind")
-            # print(time_msg_to_float(self.get_clock().now().to_msg()) - self._cur_time)
-
-        self.publish_line()
 
     # @time_function
     def handle_twist(self, twist: Twist, duration: float):
@@ -245,8 +195,8 @@ class TrackerNode(Node):
 
         # print("twist.angular.z", twist.angular.z)
 
-        if twist.linear.x != 0:
-            print("ratio!!", twist.angular.z / twist.linear.x)
+        # if twist.linear.x != 0:
+        #     print("ratio!!", twist.angular.z / twist.linear.x)
 
         twist.angular.z += 0.16 * twist.linear.x
 
@@ -296,17 +246,20 @@ class TrackerNode(Node):
     def get_target_line(self):
         return shift_line(self.line_xy, self.cfg.get_target_y())
 
-    @time_function
+    # @time_function
     def handle_image(self, msg_ros: Image):
         self._image_count += 1
         # if self._image_count % 20 != 0:
+        #     self.publish_log("image")
         #     return
 
         msg = ImageMsg.parse(msg_ros)
 
-        self._handle_image(msg)
+        res = self._handle_image(msg)
 
         self.pure_pursuit(self.get_target_line())
+
+        self.publish_log("image", {"fit_scores": str(res)})
 
         # if self._counter % 2 == 0:
         # self.matplotlib_plot(msg)
@@ -316,15 +269,17 @@ class TrackerNode(Node):
         print()
         print()
 
-    @time_function
+    # @time_function
     def _handle_image(self, msg: ImageMsg):
 
         self.line_xy, res = update_with_image(
             self.line_xy, msg.image, self.color_filter, self.cfg.shifts
         )
 
-        print("res", res)
+        # print("res", res)
         jax.block_until_ready(self.line_xy)
+
+        return res
 
         # print("image cb: took", t.update())
 
@@ -333,10 +288,20 @@ class TrackerNode(Node):
         # if self._counter % 10 != 0:
         #     return
 
-    def publish_line(self):
-        x, y, z = jnp.array(self.line_xy).tolist()
-        msg = Vector3()
-        msg.x = x
-        msg.y = y
-        msg.z = z
-        self.line_pub.publish(msg)
+    def publish_log(self, tag: str, data: Any = None):
+        data = {
+            #
+            "python_time": time.time(),
+            "ros_clock": self.get_clock().now().nanoseconds,
+            "controller_time": self._cur_time,  # a float produced by time_msg_to_float
+            "_pending_odoms_times": [t for t, _ in self._pending_odoms],
+            #
+            "line_xy": tuple(np.array(self.line_xy).tolist()),
+            #
+            "tag": tag,
+            "data": data,
+        }
+
+        msg = String()
+        msg.data = jsonpickle.encode(data)
+        self.log_pub.publish(msg)

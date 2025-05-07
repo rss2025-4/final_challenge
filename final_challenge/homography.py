@@ -75,7 +75,9 @@ def matrix_uv_to_xy() -> np.ndarray:
 
     ans, err = cv2.findHomography(np_pts_image, np_pts_ground)
     logger.warning(f"matrix_uv_to_xy: findHomography: err={err}")
-    return np.array(ans)
+    ans = np.array(ans)
+
+    return np.array(matrix_trans(dx=0.2) @ ans)
 
 
 @cache

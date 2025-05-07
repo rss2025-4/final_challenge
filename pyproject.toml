@@ -22,6 +22,7 @@ python = ">=3.10, <3.11"
 better-exceptions = "^0.3.3"
 ipython = "^8"
 
+jsonpickle = "^4.0.5"
 matplotlib = "^3.10.1"
 numpy = "==1.*"
 opencv-python = "^4.11.0.86"
@@ -29,6 +30,7 @@ opencv-python = "^4.11.0.86"
 rosbags = { git = "https://github.com/rss2025-4/rosbags.git" }
 scikit-learn = "^1.6.1"
 scipy = "^1.15.2"
+tqdm = "^4.67.1"
 
 # neccessary for ros
 catkin-pkg = "^1.0.0"
@@ -47,7 +49,6 @@ equinox = { version = "^0.12.1", optional = true }
 # libracecar = { git = "https://github.com/rss2025-4/libracecar.git", optional = true }
 libracecar = { path = "/home/alan/6.4200/libracecar/", develop = true, optional = true }
 
-tqdm = "^4.67.1"
 
 [tool.poetry.extras]
 jax = [

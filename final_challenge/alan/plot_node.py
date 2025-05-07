@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import jsonpickle
 import matplotlib.pyplot as plt
 import numpy as np
 from geometry_msgs.msg import Vector3
@@ -11,15 +12,21 @@ from nav_msgs.msg import Odometry
 from PIL import Image
 from rclpy import Context
 from rclpy.node import Node
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 from scipy.ndimage import uniform_filter
 from sensor_msgs.msg import Image as RosImage
+from std_msgs.msg import String
 from tf2_ros import (
     Node,
 )
 
-from final_challenge.alan.image import draw_lines
-from final_challenge.alan.tracker import process_image
 from libracecar.batched import batched
+from libracecar.ros_utils import time_msg_to_float
 from libracecar.utils import jit, time_function, tree_select
 
 from ..homography import (
@@ -37,8 +44,10 @@ from ..homography import (
     xy_to_uv_line,
 )
 from .colors import load_color_filter
-from .image import color_image, xy_line_to_xyplot_image
+from .image import color_image, draw_lines, xy_line_to_xyplot_image
 from .ros import ImageMsg
+from .tracker import process_image
+from .utils import cast, cast_unchecked
 
 
 @dataclass
@@ -53,32 +62,36 @@ class PlotNode(Node):
 
         self.cfg = cfg
 
-        self.line_sub = self.create_subscription(
-            Vector3,
-            "/tracker_line",
-            self.line_callback,
-            5,
+        self.log_sub = self.create_subscription(
+            String,
+            "/tracker_log",
+            self.log_callback,
+            QoSProfile(
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=10,
+                durability=QoSDurabilityPolicy.VOLATILE,
+            ),
         )
 
         self.image_sub = self.create_subscription(
             RosImage,
             "/zed/zed_node/rgb/image_rect_color",
             self.image_callback,
-            5,
+            QoSProfile(
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=10,
+                durability=QoSDurabilityPolicy.VOLATILE,
+            ),
         )
 
-        self.odom_sub = self.create_subscription(
-            Odometry,
-            "/vesc/odom",
-            self.odom_callback,
-            5,
-        )
-
-        self.draw_timer = self.create_timer(1 / 15, self.draw_callback)
+        # self.draw_timer = self.create_timer(1 / 15, self.draw_callback)
 
         self.color_filter = jnp.array(load_color_filter())
 
-        self.last_image: Image.Image = Image.fromarray(np.zeros((360, 640, 4), dtype=np.uint8))
+        self.pending_logs: list[String] = []
+        self.pending_images: list[ImageMsg] = []
 
         plt.ion()
         self.fig = plt.figure()
@@ -108,33 +121,61 @@ class PlotNode(Node):
             for i, _ in enumerate(cfg.shifts)
         ]
 
-    @time_function
-    def draw_callback(self):
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
+        self._counter = 0
 
-    def odom_callback(self, msg: Odometry):
-        pass
+    # @time_function
+    # def draw_callback(self):
+    #     self.fig.canvas.draw()
+    #     self.fig.canvas.flush_events()
 
     def image_callback(self, msg_ros: RosImage):
-        # print("plot node: image_callback")
         msg = ImageMsg.parse(msg_ros)
-        self.last_image = msg.image
+        self.pending_images.append(msg)
 
-        # self.image_plot.set_imag(msg.image)
+    def log_callback(self, msg: String):
+        print("<<<<<<<<<<<<<<<<<\nlog_callback!!!")
+        self.pending_logs.append(msg)
 
-        # color_mask = color_counter.apply_filter(self.color_filter, msg.image)
+        if len(self.pending_logs) > 5:
+            self.log_callback_(self.pending_logs.pop(0))
 
-        # self.image_plot.set_imag(msg.image)
+            print(">>>>>>>>>>>>>>>>>")
+            print()
+            print()
 
-        # image_processed = process_image(np.array(msg.image), self.color_filter)
-
-        # self.image_plot_xy.set_imag(image_processed)
+    def get_image_for_time(self, t: float) -> Image.Image | None:
+        while len(self.pending_images) > 0:
+            image_time = self.pending_images[0].time
+            print("get_image_for_time", image_time, t)
+            if abs(image_time - t) <= 1e-4:
+                return self.pending_images.pop(0).image
+            elif image_time < t:
+                print("throwing out image")
+                _ = self.pending_images.pop(0)
+                continue
+            else:
+                return None
+        return None
 
     @time_function
-    def line_callback(self, msg: Vector3):
+    def log_callback_(self, msg: String):
 
-        line_xy = (float(msg.x), float(msg.y), float(msg.z))
+        data = cast_unchecked[dict]()(jsonpickle.decode(msg.data))
+
+        # print("data", data)
+
+        image = self.get_image_for_time(time_msg_to_float(data["controller_time"]))
+        if image is None:
+            return
+
+        self._counter += 1
+        # if self._counter % 2 == 0:
+        #     return
+
+        print("got image")
+
+        line_xy = data["line_xy"]
+        assert isinstance(line_xy, tuple)
 
         xy_image = np.array(xy_line_to_xyplot_image(line_xy, jnp.array(self.cfg.shifts)))
 
@@ -143,7 +184,7 @@ class PlotNode(Node):
         )
         # self.image_plot_xy.set_imag(xy_image)
 
-        image_processed = process_image(np.array(self.last_image), self.color_filter)
+        image_processed = process_image(np.array(image), self.color_filter)
         self.image_plot_xy.set_imag(image_processed)
 
         overlay = homography_image_rev(np.array(color_image(xy_image)))
@@ -151,7 +192,7 @@ class PlotNode(Node):
 
         # color_image(xy_image)
 
-        self.image_plot.set_imag(Image.alpha_composite(self.last_image, Image.fromarray(overlay)))
+        self.image_plot.set_imag(Image.alpha_composite(image, Image.fromarray(overlay)))
 
         # xy_image
 
@@ -164,3 +205,6 @@ class PlotNode(Node):
             p.set_line(shift_line(line_xy, s))
 
         plt.tight_layout()
+
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()

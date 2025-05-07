@@ -5,6 +5,8 @@ from builtin_interfaces.msg import Time
 from PIL import Image
 from sensor_msgs.msg import Image as RosImage
 
+from libracecar.ros_utils import time_msg_to_float
+
 
 @dataclass
 class ImageMsg:
@@ -13,7 +15,7 @@ class ImageMsg:
 
     @property
     def time(self):
-        return self.stamp.sec + self.stamp.nanosec * 1e-9
+        return time_msg_to_float(self.stamp)
 
     @staticmethod
     def parse(msg: RosImage):
