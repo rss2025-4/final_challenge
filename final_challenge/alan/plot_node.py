@@ -146,7 +146,7 @@ class PlotNode(Node):
     def get_image_for_time(self, t: float) -> Image.Image | None:
         while len(self.pending_images) > 0:
             image_time = self.pending_images[0].time
-            print("get_image_for_time", image_time, t)
+            # print("get_image_for_time", image_time, t)
             if abs(image_time - t) <= 1e-4:
                 return self.pending_images.pop(0).image
             elif image_time < t:
@@ -157,10 +157,24 @@ class PlotNode(Node):
                 return None
         return None
 
-    @time_function
+    # @time_function
+    def log_callback_controller(self, data):
+        print("drive:", data["data"]["control_ang"])
+
+    # @time_function
     def log_callback_(self, msg: String):
 
         data = cast_unchecked[dict]()(jsonpickle.decode(msg.data))
+
+        if data["tag"] == "image":
+            self.log_callback_image(data)
+        elif data["tag"] == "controller":
+            self.log_callback_controller(data)
+        else:
+            assert False, data["tag"]
+
+    @time_function
+    def log_callback_image(self, data: dict):
 
         # print("data", data)
 
@@ -172,9 +186,10 @@ class PlotNode(Node):
         # if self._counter % 2 == 0:
         #     return
 
-        print("got image")
+        # print("got image")
 
-        line_xy = data["line_xy"]
+        # line_xy = data["line_xy"]
+        line_xy = data["forecast_line_xy"][1]
         assert isinstance(line_xy, tuple)
 
         xy_image = np.array(xy_line_to_xyplot_image(line_xy, jnp.array(self.cfg.shifts)))

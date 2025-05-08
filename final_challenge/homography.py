@@ -474,3 +474,7 @@ def parellel_line(line: Line, point: Point) -> Line:
 def normalize(p: Point) -> Point:
     p = ck_point(p)
     return p / jnp.linalg.norm(p)
+
+
+def line_to_tuple(l: Line) -> tuple[float, float, float]:
+    return tuple(np.array(l).tolist())

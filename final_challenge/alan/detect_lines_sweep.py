@@ -18,7 +18,6 @@ from libracecar.utils import jit, pformat_repr, tree_select
 
 class score_line_res(eqx.Module):
     hits: Array
-    total: Array
 
     extra: Any = None
 
@@ -40,20 +39,13 @@ def _score_line(weights: Array, weights_mask: Array, line: Array) -> score_line_
         y = (-a / b) * x - (c / b)
         y_round = y.astype(jnp.int32)
         return tree_select(
-            (
-                (0 < y)
-                & (y < weights.shape[1])
-                & (weights_mask.at[x, y_round].get(mode="promise_in_bounds"))
-            ),
-            on_true=(
-                weights.at[x, y_round].get(mode="promise_in_bounds"),
-                1.0,
-            ),
-            on_false=(0.0, 0.0),
+            (0 < y) & (y < weights.shape[1]),
+            on_true=weights.at[x, y_round].get(mode="promise_in_bounds"),
+            on_false=0.0,
         )
 
-    hits, total = jax.vmap(inner)(jnp.arange(len(weights)))
-    return score_line_res(jnp.sum(hits), jnp.sum(total))
+    hits = jax.vmap(inner)(jnp.arange(len(weights)))
+    return score_line_res(jnp.sum(hits))
 
 
 def _get_max(values: Array, keys: Array):
@@ -84,7 +76,7 @@ class ScoreCtx(eqx.Module):
         s2 = _score_line(weights.T, self.weights_mask.T, jnp.array([a, b, c]))
 
         # return s1, s2
-        return score_line_res(s1.hits + s2.hits, s1.total + s2.total, (s1, s2))
+        return score_line_res(s1.hits + s2.hits, (s1, s2))
 
 
 @jit
@@ -129,8 +121,10 @@ def update_line(
 
             per_lane_res = batched.create(shifts, (len(shifts),)).map(per_lane)
 
+            is_center = (jnp.abs(a_rad) < 1e-4) & (jnp.abs(s1) < 1e-4)
+
             tot = per_lane_res.sum().unwrap()
-            return tot.hits / (tot.total + 10), (try_this, per_lane_res)
+            return tot.hits + is_center * 10, (try_this, per_lane_res)
 
         return try_shifts.map(try_one_shift).max(lambda item: item[0])
 

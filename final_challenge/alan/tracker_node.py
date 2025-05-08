@@ -41,6 +41,7 @@ from ..homography import (
     homography_line,
     homography_mask,
     line_direction,
+    line_to_tuple,
     line_y_equals,
     matrix_rot,
     matrix_trans,
@@ -138,6 +139,8 @@ class TrackerNode(Node):
 
         self.controller_cache = cached_controller.load()
 
+        self.controller_cb = self.create_timer(1 / 50, self.controller_timer_callback)
+
     ######################################################
     # reorder messages we receieve that is out of order
     ######################################################
@@ -160,7 +163,11 @@ class TrackerNode(Node):
                 print(colored(f"warning: ({warn_tag}) {delta:.2f}s with no messages", "red"))
 
             # print(f"applying twist with duration {delta}")
-            self.handle_twist(self._cur_twist, min(delta, 0.5))
+            self.line_xy = self.handle_twist(
+                self.line_xy,
+                self._cur_twist,
+                min(delta, 0.5),
+            )
 
         finally:
             self._cur_time = new_time
@@ -196,26 +203,64 @@ class TrackerNode(Node):
     ######################################################
 
     # @time_function
-    def handle_twist(self, twist: Twist, duration: float):
+    def handle_twist(self, prev_line: Line, twist: Twist, duration: float) -> Line:
 
         assert twist.linear.y == 0.0
-        if self.cfg.invert_odom:
-            twist.linear.x = -twist.linear.x
-            twist.angular.z = -twist.angular.z
+        linear_x = twist.linear.x
+        angular_z = twist.angular.z
 
-        # print("twist.angular.z", twist.angular.z)
+        if self.cfg.invert_odom:
+            linear_x = -linear_x
+            angular_z = -angular_z
 
         # if twist.linear.x != 0:
-        #     print("ratio!!", twist.angular.z / twist.linear.x)
+        #     print("ratio!!", angular_z / linear_x)
 
-        twist.angular.z += 0.16 * twist.linear.x
+        angular_z += 0.155 * linear_x
 
-        translation = matrix_trans(-twist.linear.x * duration)
-        rotation = matrix_rot(-twist.angular.z * duration)
+        translation = matrix_trans(-linear_x * duration)
+        rotation = matrix_rot(-angular_z * duration)
 
-        self.line_xy = homography_line(rotation @ translation, self.line_xy)
+        return homography_line(rotation @ translation, prev_line)
 
-    def controller(self, target_line: Line):
+    def controller_timer_callback(self):
+        self.controller()
+
+    def get_forecast_delta(self) -> float | None:
+        delta = time_msg_to_float(self.get_clock().now().to_msg()) - self._cur_time
+
+        if delta > 1:
+            # probably replaying a rosbag
+
+            if len(self._pending_odoms) > 0:
+                delta = self._pending_odoms[-1][0] - self._cur_time
+            else:
+                return None
+
+        if delta > 0:
+            return delta
+
+        return None
+
+    def forecast_line_xy(self) -> tuple[float | None, Line]:
+        forecast_line_xy = self.line_xy
+
+        delta = self.get_forecast_delta()
+        # print("forecast(2):", delta)
+        if delta is not None:
+            forecast_line_xy = self.handle_twist(
+                forecast_line_xy,
+                self._cur_twist,
+                min(delta, 0.5),
+            )
+
+        return delta, forecast_line_xy
+
+    def controller(self):
+
+        forecast_delta, forecast_line_xy = self.forecast_line_xy()
+
+        target_line = shift_line(forecast_line_xy, self.cfg.get_target_y())
 
         x, y = np.array(point_coord(get_foot((0, 0), target_line)))
 
@@ -227,11 +272,14 @@ class TrackerNode(Node):
 
         line_ang = -np.arctan2(ly, lx)
 
-        print("dist, line_ang", dist, line_ang)
+        # print("dist, line_ang", dist, line_ang)
 
         control_ang = self.controller_cache.get(dist, line_ang)
 
+        # print("control_ang", control_ang)
+
         drive_cmd = AckermannDriveStamped()
+        drive_cmd.header.stamp = self.get_clock().now().to_msg()
 
         drive = AckermannDrive()
 
@@ -247,13 +295,19 @@ class TrackerNode(Node):
 
         self.drive_pub.publish(drive_cmd)
 
-    def get_target_line(self):
-        return shift_line(self.line_xy, self.cfg.get_target_y())
+        self.publish_log(
+            "controller",
+            {
+                "target_line": line_to_tuple(target_line),
+                "forecast_line_used": (forecast_delta, line_to_tuple(forecast_line_xy)),
+                "control_ang": control_ang,
+            },
+        )
 
     # @time_function
     def handle_image(self, msg_ros: Image):
         self._image_count += 1
-        # if self._image_count % 20 != 0:
+        # if self._image_count % 10 != 0:
         #     self.publish_log("image")
         #     return
 
@@ -261,7 +315,7 @@ class TrackerNode(Node):
 
         res = self._handle_image(msg)
 
-        self.controller(self.get_target_line())
+        self.controller()
 
         self.publish_log("image", {"fit_scores": str(res)})
 
@@ -285,14 +339,8 @@ class TrackerNode(Node):
 
         return res
 
-        # print("image cb: took", t.update())
-
-        # target_line = shift_line(self.line_xy, self.cfg.get_target_y())
-
-        # if self._counter % 10 != 0:
-        #     return
-
     def publish_log(self, tag: str, data: Any = None):
+        fd, fl = self.forecast_line_xy()
         data = {
             #
             "python_time": time.time(),
@@ -300,7 +348,8 @@ class TrackerNode(Node):
             "controller_time": self._cur_time,  # a float produced by time_msg_to_float
             "_pending_odoms_times": [t for t, _ in self._pending_odoms],
             #
-            "line_xy": tuple(np.array(self.line_xy).tolist()),
+            "line_xy": line_to_tuple(self.line_xy),
+            "forecast_line_xy": (fd, line_to_tuple(fl)),
             #
             "tag": tag,
             "data": data,

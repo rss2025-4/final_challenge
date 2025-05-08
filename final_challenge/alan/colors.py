@@ -114,6 +114,8 @@ def compute_color_filter():
         dat_5_3 / "bag1/bag1_part3",
         dat_5_3 / "bag1/bag1_part4",
         dat_5_3 / "bag2/bag2_part1",
+        dat_5_3 / "bag2/bag2_part1",
+        dat_5_3 / "bag2/bag2_part1",
     ]
     for data_dir in data_dirs_v2:
         for frame in tqdm.tqdm(FrameDataV2.load_all(data_dir)):
