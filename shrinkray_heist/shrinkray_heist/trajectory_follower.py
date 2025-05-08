@@ -33,7 +33,7 @@ class PurePursuit(Node):
         # print(f"odom_topic: {self.odom_topic}")
         # print(f"drive_topic: {self.drive_topic}")
 
-        self.speed = 0.5  # ADJUST SPEED m/s#
+        self.speed = 0.3  # ADJUST SPEED m/s#
         self.lookahead = 0.7 # ADJUST LOOKAHEAD m -- NEEDS TO BE TUNED IN REAL LIFE 
         self.steering_angle = 0.0
         # FOR VARIABLE LOOKAHEAD (MAYBE NOT NEEDED FOR FINAL RACE THOUGH)
@@ -94,7 +94,7 @@ class PurePursuit(Node):
     def stopalert_cb(self, msg):
         if self.purepursuit_on and msg.data == "STOP":
             # back up 
-            self.get_logger().info("Follower: Received stop alert msg")
+            # self.get_logger().info("Follower: Received stop alert msg")
 
             # Declare msg
             drive_msg = AckermannDriveStamped()

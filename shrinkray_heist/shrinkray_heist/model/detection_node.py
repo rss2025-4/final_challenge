@@ -30,6 +30,7 @@ class DetectionNode(Node):
         # listen for state machine state
         self.state_sub = self.create_subscription(Int32, "/toggle_state", self.state_cb, 10)
         self.trafficlight_detector_on = False # should be False by default
+        self.trafficlight_detector_green_on = False
         self.shrinkray_detector_on = False # should be False by default
         self.obj_detected_pub = self.create_publisher(Int32, "/detected_obj", 10)
         self.trafficlight_dist_pub = self.create_publisher(Float32, "/traffic_light", 10)
@@ -65,12 +66,14 @@ class DetectionNode(Node):
                 self.get_logger().info("Detector: Traffic Light Red Detector Activated")
             else:
                 self.get_logger().info("Detector: Traffic Light Red Detector Deactivated")
+        
         elif msg.data == Target.DETECTOR_TRAFFIC_LIGHT_GREEN.value:
             self.trafficlight_detector_green_on = not self.trafficlight_detector_green_on
             if self.trafficlight_detector_green_on:
                 self.get_logger().info("Detector: Traffic Light Green Detector Activated")
             else:
                 self.get_logger().info("Detector: Traffic Light Green Detector Deactivated")
+        
         elif msg.data == Target.DETECTOR_SHRINK_RAY.value:
             self.shrinkray_detector_on = not self.shrinkray_detector_on
             
@@ -246,12 +249,12 @@ class DetectionNode(Node):
         # output = np.zeros_like(image)
         # output[120:330, :] = image[120:240, :]
         # image = output
-        output = image.copy()
-        height = output.shape[0]
+        # output = image.copy()
+        # height = output.shape[0]
 
-        # Blacken the top third
-        output[:height // 4, :] = 0 
-        image = output
+        # # Blacken the top third
+        # output[:height // 4, :] = 0 
+        # image = output
         # image_rgb = self.bridge.imgmsg_to_cv2(img_msg, "rgb8")
         if self.count == 0:
             save_path = os.path.join(os.path.dirname(__file__), f"ros_imagetocv2TEST.png")
@@ -306,8 +309,9 @@ class DetectionNode(Node):
                         
                         if not self.trafficlight_detector_green_on: # save last red bounding box
                             self.red_trafficlight_bbox = bbox #[bbox[0], bbox[1], bbox[2], bbox[3]] # x1, y1, x2, y2 = trafficlight_bbox
-                        else: # if detecting green light, use the last red light bbox
+                        elif self.trafficlight_detector_green_on: # if detecting green light, use the last red light bbox
                             bbox = self.red_trafficlight_bbox
+                            self.get_logger().info(f"Using last red light bbox: {self.red_trafficlight_bbox}")
                             
                         bottom = bbox[3]+(bbox[3]-bbox[1]) #y2 + (y2-y1)
                         trafficlight_bbox = [bbox[0], bbox[1], bbox[2], bottom] # double the height since traffic light has stud underneath
@@ -329,12 +333,15 @@ class DetectionNode(Node):
                             dist_msg.data = rel_x # dist
                             self.trafficlight_dist_pub.publish(dist_msg)
                             self.get_logger().info(f"Published traffic light x dist msg /traffic_light: {rel_x}")
+                            
+                            self.obj_detected_pub.publish(obj_detected_msg) 
+                            self.get_logger().info("Published traffic light object detected msg /detected_obj")
 
-                        else: #traffic_color == "green":
+                        elif self.trafficlight_detector_green_on and traffic_color != "red": #traffic_color == "green":
                             obj_detected_msg.data = ObjectDetected.TRAFFIC_LIGHT_GREEN.value
                         
-                        self.obj_detected_pub.publish(obj_detected_msg) 
-                        self.get_logger().info("Published traffic light object detected msg /detected_obj")
+                            self.obj_detected_pub.publish(obj_detected_msg) 
+                            self.get_logger().info("Published traffic light object detected msg /detected_obj")
                         # self.get_logger().info(f"Traffic light relative position: {rel_x}, {rel_y}")
                 
                 elif self.shrinkray_detector_on and not self.trafficlight_detector_on:
