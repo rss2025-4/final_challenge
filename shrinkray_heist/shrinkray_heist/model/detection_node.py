@@ -21,7 +21,7 @@ class DetectionNode(Node):
         super().__init__("detector_node")
         # self.detector = Detector() # ON REAL RACECAR
         self.detector = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
-        self.detector.set_threshold(0.5)
+        self.detector.set_threshold(0.1)
         self.yolo_pub = self.create_publisher(Image, "/yolo_img", 10)
         self.image_sub = self.create_subscription(Image, "/zed/zed_node/rgb/image_rect_color", self.img_cb, 1)
         self.bridge = CvBridge()
@@ -41,7 +41,7 @@ class DetectionNode(Node):
         self.count = 0
         
         # self.drive_topic = self.get_parameter("drive_topic").get_parameter_value().string_value
-        self.drive_pub = self.create_publisher(AckermannDriveStamped, "/vesc/high_level/input/nav_1", 10)
+        self.drive_pub = self.create_publisher(AckermannDriveStamped, "/vesc/high_level/input/nav_0", 10)
 
         self.get_logger().info("Shrink Ray Detector Initialized")
         

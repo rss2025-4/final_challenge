@@ -311,7 +311,7 @@ class PurePursuit(Node):
             # check if reached last point
             last_point = np.array(trajectory[-1][:2])
             
-            if np.linalg.norm(current_point - last_point) < 0.5:
+            if np.linalg.norm(current_point - last_point) < 0.75: # larger tolerance?
                 if self.purepursuit_on and not self.goal_reached:
                     self.get_logger().info("Goal reached")
 
