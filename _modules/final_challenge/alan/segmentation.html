@@ -98,13 +98,18 @@
     <span class="c1">#: array same shape as image;</span>
     <span class="c1">#: &gt;0 can be interpreted as being part of the left lane boundary;</span>
     <span class="c1">#: &lt;0 otherwise. higher means more confident that the pixel is in the region.</span>
-    <span class="n">out_left</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-
-    <span class="c1">#: see :attr:`FrameData.out_left`</span>
-    <span class="n">out_right</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">out_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
 
     <span class="c1">#: debug image with stuff drawn on it</span>
     <span class="n">viz_img</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">out_left</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_masks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">out_right</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_masks</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
 <div class="viewcode-block" id="FrameData.load">
 <a class="viewcode-back" href="../../../index.html#final_challenge.alan.segmentation.FrameData.load">[docs]</a>
@@ -124,11 +129,18 @@
 <span class="sd">            frame = FrameData.load(Path(&quot;/where/you/unzipped/data&quot;), 10)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">outs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;out_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">_obj</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">.npy&quot;</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">outs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+
         <span class="k">return</span> <span class="n">FrameData</span><span class="p">(</span>
             <span class="n">in_img</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;in_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">),</span>
             <span class="n">time</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;in_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">_meta.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">())[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span>
-            <span class="n">out_left</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;out_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">_obj0.npy&quot;</span><span class="p">),</span>
-            <span class="n">out_right</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;out_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">_obj1.npy&quot;</span><span class="p">),</span>
+            <span class="n">out_masks</span><span class="o">=</span><span class="n">outs</span><span class="p">,</span>
             <span class="n">viz_img</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;out_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">_viz.png&quot;</span><span class="p">),</span>
         <span class="p">)</span></div>
 
@@ -171,6 +183,69 @@
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;in_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                 <span class="k">yield</span> <span class="n">FrameData</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FrameDataV2">
+<a class="viewcode-back" href="../../../alan.html#final_challenge.alan.segmentation.FrameDataV2">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FrameDataV2</span><span class="p">:</span>
+
+    <span class="c1">#: image from ros message</span>
+    <span class="n">in_img</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span>
+    <span class="c1">#: time stamp in the ros message</span>
+    <span class="n">time</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="n">out_mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+
+    <span class="c1">#: debug image with stuff drawn on it</span>
+    <span class="n">viz_img</span><span class="p">:</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span>
+
+<div class="viewcode-block" id="FrameDataV2.load">
+<a class="viewcode-back" href="../../../alan.html#final_challenge.alan.segmentation.FrameDataV2.load">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">data_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">FrameDataV2</span><span class="p">(</span>
+            <span class="n">in_img</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;in_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">),</span>
+            <span class="n">time</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;in_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">_meta.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">())[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span>
+            <span class="n">out_mask</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;out_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">_mask.npy&quot;</span><span class="p">),</span>
+            <span class="n">viz_img</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;out_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">_viz.png&quot;</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FrameDataV2.count">
+<a class="viewcode-back" href="../../../alan.html#final_challenge.alan.segmentation.FrameDataV2.count">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count</span><span class="p">(</span><span class="n">data_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;in_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">i</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_img</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">width</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">height</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<div class="viewcode-block" id="FrameDataV2.load_all">
+<a class="viewcode-back" href="../../../alan.html#final_challenge.alan.segmentation.FrameDataV2.load_all">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_all</span><span class="p">(</span><span class="n">data_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">FrameDataV2</span><span class="p">]:</span>
+        <span class="k">assert</span> <span class="n">data_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;in_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">yield</span> <span class="n">FrameDataV2</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span></div>
 </div>

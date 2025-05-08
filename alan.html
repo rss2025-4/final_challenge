@@ -62,24 +62,15 @@
 <li class="toctree-l3"><a class="reference internal" href="#final_challenge.alan.utils.cache"><code class="docutils literal notranslate"><span class="pre">cache()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-final_challenge.alan.rosbag">final_challenge.alan.rosbag</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#final_challenge.alan.rosbag.BagImage"><code class="docutils literal notranslate"><span class="pre">BagImage</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.rosbag.BagImage.image"><code class="docutils literal notranslate"><span class="pre">BagImage.image</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.rosbag.BagImage.stamp"><code class="docutils literal notranslate"><span class="pre">BagImage.stamp</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.rosbag.BagImage.time"><code class="docutils literal notranslate"><span class="pre">BagImage.time</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.rosbag.BagImage.__init__"><code class="docutils literal notranslate"><span class="pre">BagImage.__init__()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#final_challenge.alan.rosbag.get_images"><code class="docutils literal notranslate"><span class="pre">get_images()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#final-challenge-alan-rosbag">final_challenge.alan.rosbag</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-final_challenge.alan.segmentation">final_challenge.alan.segmentation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData"><code class="docutils literal notranslate"><span class="pre">FrameData</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.in_img"><code class="docutils literal notranslate"><span class="pre">FrameData.in_img</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.time"><code class="docutils literal notranslate"><span class="pre">FrameData.time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.out_masks"><code class="docutils literal notranslate"><span class="pre">FrameData.out_masks</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.viz_img"><code class="docutils literal notranslate"><span class="pre">FrameData.viz_img</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.out_left"><code class="docutils literal notranslate"><span class="pre">FrameData.out_left</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.out_right"><code class="docutils literal notranslate"><span class="pre">FrameData.out_right</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.viz_img"><code class="docutils literal notranslate"><span class="pre">FrameData.viz_img</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.load"><code class="docutils literal notranslate"><span class="pre">FrameData.load()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.count"><code class="docutils literal notranslate"><span class="pre">FrameData.count()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.size"><code class="docutils literal notranslate"><span class="pre">FrameData.size</span></code></a></li>
@@ -89,6 +80,20 @@
 <li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.out_right_bool"><code class="docutils literal notranslate"><span class="pre">FrameData.out_right_bool</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.load_all"><code class="docutils literal notranslate"><span class="pre">FrameData.load_all()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.__init__"><code class="docutils literal notranslate"><span class="pre">FrameData.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2"><code class="docutils literal notranslate"><span class="pre">FrameDataV2</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2.in_img"><code class="docutils literal notranslate"><span class="pre">FrameDataV2.in_img</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2.time"><code class="docutils literal notranslate"><span class="pre">FrameDataV2.time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2.out_mask"><code class="docutils literal notranslate"><span class="pre">FrameDataV2.out_mask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2.viz_img"><code class="docutils literal notranslate"><span class="pre">FrameDataV2.viz_img</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2.load"><code class="docutils literal notranslate"><span class="pre">FrameDataV2.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2.count"><code class="docutils literal notranslate"><span class="pre">FrameDataV2.count()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2.size"><code class="docutils literal notranslate"><span class="pre">FrameDataV2.size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2.width"><code class="docutils literal notranslate"><span class="pre">FrameDataV2.width</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2.height"><code class="docutils literal notranslate"><span class="pre">FrameDataV2.height</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2.load_all"><code class="docutils literal notranslate"><span class="pre">FrameDataV2.load_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2.__init__"><code class="docutils literal notranslate"><span class="pre">FrameDataV2.__init__()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -182,39 +187,8 @@
 <dd></dd></dl>
 
 </section>
-<section id="module-final_challenge.alan.rosbag">
-<span id="final-challenge-alan-rosbag"></span><h1>final_challenge.alan.rosbag<a class="headerlink" href="#module-final_challenge.alan.rosbag" title="Link to this heading"></a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="final_challenge.alan.rosbag.BagImage">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">final_challenge.alan.rosbag.</span></span><span class="sig-name descname"><span class="pre">BagImage</span></span><a class="reference internal" href="_modules/final_challenge/alan/rosbag.html#BagImage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.alan.rosbag.BagImage" title="Link to this definition"></a></dt>
-<dd><p>BagImage(image: PIL.Image.Image, stamp: rosbags.typesys.stores.empty.builtin_interfaces__msg__Time)</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="final_challenge.alan.rosbag.BagImage.image">
-<span class="sig-name descname"><span class="pre">image</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.2.1)"><span class="pre">Image</span></a></em><a class="headerlink" href="#final_challenge.alan.rosbag.BagImage.image" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="final_challenge.alan.rosbag.BagImage.stamp">
-<span class="sig-name descname"><span class="pre">stamp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">builtin_interfaces__msg__Time</span></em><a class="headerlink" href="#final_challenge.alan.rosbag.BagImage.stamp" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="final_challenge.alan.rosbag.BagImage.time">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">time</span></span><a class="headerlink" href="#final_challenge.alan.rosbag.BagImage.time" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="final_challenge.alan.rosbag.BagImage.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.2.1)"><span class="pre">Image</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">stamp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">builtin_interfaces__msg__Time</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#final_challenge.alan.rosbag.BagImage.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="final_challenge.alan.rosbag.get_images">
-<span class="sig-prename descclassname"><span class="pre">final_challenge.alan.rosbag.</span></span><span class="sig-name descname"><span class="pre">get_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bagpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">topic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'/zed/zed_node/rgb/image_rect_color'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><span class="pre">Iterable</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#final_challenge.alan.rosbag.BagImage" title="final_challenge.alan.rosbag.BagImage"><span class="pre">BagImage</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/final_challenge/alan/rosbag.html#get_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.alan.rosbag.get_images" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
+<section id="final-challenge-alan-rosbag">
+<h1>final_challenge.alan.rosbag<a class="headerlink" href="#final-challenge-alan-rosbag" title="Link to this heading"></a></h1>
 </section>
 <section id="module-final_challenge.alan.segmentation">
 <span id="final-challenge-alan-segmentation"></span><h1>final_challenge.alan.segmentation<a class="headerlink" href="#module-final_challenge.alan.segmentation" title="Link to this heading"></a></h1>
@@ -235,17 +209,11 @@
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameData.out_left">
-<span class="sig-name descname"><span class="pre">out_left</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#final_challenge.alan.segmentation.FrameData.out_left" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameData.out_masks">
+<span class="sig-name descname"><span class="pre">out_masks</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#final_challenge.alan.segmentation.FrameData.out_masks" title="Link to this definition"></a></dt>
 <dd><p>array same shape as image;
 &gt;0 can be interpreted as being part of the left lane boundary;
 &lt;0 otherwise. higher means more confident that the pixel is in the region.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameData.out_right">
-<span class="sig-name descname"><span class="pre">out_right</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#final_challenge.alan.segmentation.FrameData.out_right" title="Link to this definition"></a></dt>
-<dd><p>see <a class="reference internal" href="#final_challenge.alan.segmentation.FrameData.out_left" title="final_challenge.alan.segmentation.FrameData.out_left"><code class="xref py py-attr docutils literal notranslate"><span class="pre">FrameData.out_left</span></code></a></p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -253,6 +221,16 @@
 <span class="sig-name descname"><span class="pre">viz_img</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.2.1)"><span class="pre">Image</span></a></em><a class="headerlink" href="#final_challenge.alan.segmentation.FrameData.viz_img" title="Link to this definition"></a></dt>
 <dd><p>debug image with stuff drawn on it</p>
 </dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameData.out_left">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">out_left</span></span><a class="headerlink" href="#final_challenge.alan.segmentation.FrameData.out_left" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameData.out_right">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">out_right</span></span><a class="headerlink" href="#final_challenge.alan.segmentation.FrameData.out_right" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameData.load">
@@ -305,7 +283,71 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameData.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_img</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.2.1)"><span class="pre">Image</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_left</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_right</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz_img</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.2.1)"><span class="pre">Image</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#final_challenge.alan.segmentation.FrameData.__init__" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_img</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.2.1)"><span class="pre">Image</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz_img</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.2.1)"><span class="pre">Image</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#final_challenge.alan.segmentation.FrameData.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">final_challenge.alan.segmentation.</span></span><span class="sig-name descname"><span class="pre">FrameDataV2</span></span><a class="reference internal" href="_modules/final_challenge/alan/segmentation.html#FrameDataV2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2" title="Link to this definition"></a></dt>
+<dd><p>FrameDataV2(in_img: ‘Image.Image’, time: ‘float’, out_mask: ‘np.ndarray’, viz_img: ‘Image.Image’)</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2.in_img">
+<span class="sig-name descname"><span class="pre">in_img</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.2.1)"><span class="pre">Image</span></a></em><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2.in_img" title="Link to this definition"></a></dt>
+<dd><p>image from ros message</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2.time">
+<span class="sig-name descname"><span class="pre">time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></em><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2.time" title="Link to this definition"></a></dt>
+<dd><p>time stamp in the ros message</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2.out_mask">
+<span class="sig-name descname"><span class="pre">out_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></em><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2.out_mask" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2.viz_img">
+<span class="sig-name descname"><span class="pre">viz_img</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.2.1)"><span class="pre">Image</span></a></em><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2.viz_img" title="Link to this definition"></a></dt>
+<dd><p>debug image with stuff drawn on it</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2.load">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/final_challenge/alan/segmentation.html#FrameDataV2.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2.load" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2.count">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></span><a class="reference internal" href="_modules/final_challenge/alan/segmentation.html#FrameDataV2.count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2.count" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2.size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2.size" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2.width">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">width</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></em><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2.width" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2.height">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">height</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></em><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2.height" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2.load_all">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.13)"><span class="pre">Path</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.13)"><span class="pre">Iterable</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#final_challenge.alan.segmentation.FrameDataV2" title="final_challenge.alan.segmentation.FrameDataV2"><span class="pre">FrameDataV2</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/final_challenge/alan/segmentation.html#FrameDataV2.load_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2.load_all" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="final_challenge.alan.segmentation.FrameDataV2.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_img</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.2.1)"><span class="pre">Image</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz_img</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.2.1)"><span class="pre">Image</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#final_challenge.alan.segmentation.FrameDataV2.__init__" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
