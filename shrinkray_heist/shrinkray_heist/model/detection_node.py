@@ -21,7 +21,7 @@ class DetectionNode(Node):
         super().__init__("detector_node")
         # self.detector = Detector() # ON REAL RACECAR
         self.detector = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
-        self.detector.set_threshold(0.2)
+        self.detector.set_threshold(0.3)
         self.yolo_pub = self.create_publisher(Image, "/yolo_img", 10)
         self.image_sub = self.create_subscription(Image, "/zed/zed_node/rgb/image_rect_color", self.img_cb, 1)
         self.bridge = CvBridge()
@@ -51,21 +51,22 @@ class DetectionNode(Node):
         self.shrinkray_active_start_time = 0
         self.sequence_start_time = 0
         self.scan_step = 0
-        self.angle = 0.0
-        self.direction = 1 # 1 for right, -1 for left
+        self.scan_speed = 0.3
+        self.scan_angle = 0.5
 
         self.debug = True
     def state_cb(self, msg):
         pass # for testing
 
-        if msg.data == Target.DETECTOR_TRAFFIC_LIGHT.value:
+        if msg.data == Target.DETECTOR_TRAFFIC_LIGHT_RED.value:
             self.trafficlight_detector_on = not self.trafficlight_detector_on
             
             if self.trafficlight_detector_on:
-                self.get_logger().info("Detector: Traffic Light Detector Activated")
+                self.get_logger().info("Detector: Traffic Light Red Detector Activated")
             else:
-                self.get_logger().info("Detector: Traffic Light Detector Deactivated")
-
+                self.get_logger().info("Detector: Traffic Light Red Detector Deactivated")
+        # elif msg.data == Target.DETECTOR_TRAFFIC_LIGHT_GREEN.value:
+        #     self.trafficlight_detector_green_on = not
         elif msg.data == Target.DETECTOR_SHRINK_RAY.value:
             self.shrinkray_detector_on = not self.shrinkray_detector_on
             
@@ -168,8 +169,6 @@ class DetectionNode(Node):
         self.get_logger().info("Repeated scan maneuver completed.")
 
     def execute_sequence(self):
-        # if not self.scan_sequence_started:
-        #     return
         
         now = self.get_clock().now().nanoseconds / 1e9  # current time in seconds
         elapsed = now - self.sequence_start_time
@@ -178,11 +177,13 @@ class DetectionNode(Node):
         durations = [3.0, 2.0, 3.0, 1.0 , 3.0, 2.0, 3.0, 2.0]
                 # steps 0, 1, 2, 3, 4
         msg = AckermannDriveStamped()
+        self.scan_speed = 0.3
+        self.scan_angle = 0.5
 
         if self.scan_step == 0:
-            # Step 0: Back up
-            msg.drive.speed = -0.3
-            msg.drive.steering_angle = -0.5
+            # Step 0: Back up left
+            msg.drive.speed = -self.scan_speed
+            msg.drive.steering_angle = -self.scan_angle
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
         elif self.scan_step == 1: # pause!
             msg.drive.speed = 0.0
@@ -190,9 +191,9 @@ class DetectionNode(Node):
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
 
         elif self.scan_step == 2:
-            # Step 1: Move forward
-            msg.drive.speed = 0.3
-            msg.drive.steering_angle = -0.5 #self.angle
+            # Step 2: Move forward right
+            msg.drive.speed = self.scan_speed
+            msg.drive.steering_angle = -self.scan_angle #self.angle
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
         elif self.scan_step == 3: # pause!
             msg.drive.speed = 0.0
@@ -200,17 +201,17 @@ class DetectionNode(Node):
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
 
         elif self.scan_step == 4:
-            # Step 0: Back up
-            msg.drive.speed = -0.3
-            msg.drive.steering_angle = 0.5
+            # Step 4: Back up right
+            msg.drive.speed = -self.scan_speed
+            msg.drive.steering_angle = self.scan_angle
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
         elif self.scan_step == 5: # pause!
             msg.drive.speed = 0.0
             msg.drive.steering_angle = 0.0 #self.angle
         elif self.scan_step == 6:
-            # Step 1: Move forward
-            msg.drive.speed = 0.3
-            msg.drive.steering_angle = 0.5 #self.angle
+            # Step 1: Move forward left
+            msg.drive.speed = self.scan_speed
+            msg.drive.steering_angle = self.scan_angle #self.angle
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
         elif self.scan_step == 7: # pause!
             # Step 2: Turn slightly while moving forward
@@ -220,8 +221,6 @@ class DetectionNode(Node):
 
         self.drive_pub.publish(msg)
 
-        
-
         if elapsed >= durations[self.scan_step] and self.scan_step < (len(durations)-1):
             # Move to the next step after the duration
             self.scan_step += 1
@@ -229,21 +228,9 @@ class DetectionNode(Node):
             return "looking"
 
         if self.scan_step == len(durations)-1:
-            self.get_logger().info("Sequence complete, uh, no banana then?")
+            self.get_logger().info("Sequence complete, uh no banana then?")
             return "no_banana"
-        # else:
-        #     return "looking"
-            # if self.scan_step == (len(durations)-1):
-                # Reset for next cycle
-                # self.scan_step = 0
-                # self.angle += self.direction * 0.1
-                # if abs(self.angle) > 0.3:
-                #     self.direction *= -1
-                #     self.angle += self.direction * 0.1  # Adjust within range
-                
-            # Call again for the next step if active
-            # if self.scan_sequence_started:
-            #     self.execute_sequence()
+        
 
     def img_cb(self, img_msg):
         if not self.trafficlight_detector_on and not self.shrinkray_detector_on:
@@ -273,29 +260,27 @@ class DetectionNode(Node):
 
         # Record how long shrink ray has been on for 
         now = self.get_clock().now().nanoseconds / 1e9
-        if self.shrinkray_detector_on and not self.trafficlight_detector_on and ((now - self.shrinkray_active_start_time) > 5): # if no banana detected for 5 seconds, start scan sequence
+        shrinkray_active_duration = now - self.shrinkray_active_start_time
+        if self.shrinkray_detector_on and not self.trafficlight_detector_on and (shrinkray_active_duration > 5): # if no banana detected for 5 seconds, start scan sequence
             self.get_logger().info("No banana detected for 5 seconds, starting scan sequence")
             
             if not self.scan_sequence_started: # so that start time set once
                 self.sequence_start_time = self.get_clock().now().nanoseconds / 1e9
                 self.scan_sequence_started = True
-            
-            # self.scan_step += 1
-              # Current time in seconds
-            scan_state = self.execute_sequence()
+                self.get_logger().info("Scan sequence started")
+
+            scan_state = self.execute_sequence() # "looking", but if at last scan_step, then "no_banana"
             if scan_state == "no_banana":
                 
                 self.get_logger().info("Scan sequence complete, no banana detected")
         
-            # self.scan_sequence_started = True
-            # drive_msg = AckermannDriveStamped()
-            # drive_msg.drive.steering_angle = 0.2
-            # drive_msg.drive.speed = -0.3
-            # self.drive_pub.publish(drive_msg)
-            
-            # self.scan_sequence()
-            
-            self.get_logger().info("Scan sequence started")
+        # Time out, if no banana detected for 60 seconds, move onto next goal
+        if self.shrinkray_detector_on and not self.trafficlight_detector_on and (shrinkray_active_duration > 60):
+            # for states, pretend we found the shrink ray in order to move on
+            obj_detected_msg = Int32()
+            obj_detected_msg.data = ObjectDetected.SHRINK_RAY.value
+            self.obj_detected_pub.publish(obj_detected_msg) 
+            self.get_logger().info(f"No shrink ray object, move on. Published at /detected_obj")
 
         try:
             results = self.detector.predict(image) #image
@@ -314,6 +299,8 @@ class DetectionNode(Node):
                     if label == 'traffic light':
                         # Get the bounding box coordinates 
                         #double bounding box since traffic light twice height than actual (due to stud)
+                        
+                       # if not self.tra
                         bottom = bbox[3]+(bbox[3]-bbox[1]) #y2 + (y2-y1)
                         trafficlight_bbox = [bbox[0], bbox[1], bbox[2], bottom] # double the height since traffic light has stud underneath
                         # self.get_logger().info(f"Traffic light bounding box: {trafficlight_bbox}")
@@ -361,7 +348,7 @@ class DetectionNode(Node):
                             # Save the image with the bounding box to directory
                             save_path = f"{os.path.dirname(__file__)}/shrinkray_detected_{self.shrinkray_count}.png"
                             self.shrinkray_count += 1
-                            
+
                             out.save(save_path)
                             self.get_logger().info(f"Saved shrinkray image to {save_path}!")
                             
@@ -378,6 +365,8 @@ class DetectionNode(Node):
             if self.count == 0:
                 save_path = os.path.join(os.path.dirname(__file__), f"detect_output_cv2img.png")
                 cv2.imwrite(save_path, out_np)
+                # cv2.imwrite(save_path, cv2.cvtColor(out_np, cv2.COLOR_RGB2BGR))
+
                 self.count += 1
             
 
