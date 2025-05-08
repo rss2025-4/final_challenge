@@ -88,11 +88,14 @@ class PathPlan(Node):
 
         self.trajectory = LineTrajectory(node=self, viz_namespace="/planned_trajectory")
         
+        self.init_map()
         
+    def init_map(self):
         
         
 
     def map_cb(self, msg):
+        pass
 
         map = msg.data
         self.get_logger().info(f"PathPlan: ORIGINAL Map data length: {msg.info.height}x {msg.info.width}")
@@ -120,6 +123,8 @@ class PathPlan(Node):
             height=msg.info.height)
         # self.map *= 100
         self.convert_map_to_publisher_format()
+        
+    def load_map_from_img(self.filename,width,height)
     def save_map_as_img(self, filename,width, height):
         """
         Save the map as an image file.
