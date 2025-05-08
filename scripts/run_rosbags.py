@@ -34,8 +34,7 @@ def main():
     # procs.popen(["emacs"])
 
     tracker_cfg = TrackerConfig(
-        init_y=-2.5,
-        shifts=[3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0],
+        init_y=-2.5 * TrackerConfig.LANE_WIDTH,
     )
     plot_cfg = PlotConfig(shifts=tracker_cfg.shifts)
 

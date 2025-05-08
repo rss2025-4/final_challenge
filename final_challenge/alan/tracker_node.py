@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, ClassVar
 
 import jax
 import jsonpickle
@@ -28,6 +28,7 @@ from tf2_ros import (
     Node,
 )
 
+from final_challenge.alan.controller import cached_controller
 from final_challenge.alan.tracker import update_with_image
 from libracecar.ros_utils import time_msg_to_float
 from libracecar.utils import time_function
@@ -39,6 +40,7 @@ from ..homography import (
     homography_image,
     homography_line,
     homography_mask,
+    line_direction,
     line_y_equals,
     matrix_rot,
     matrix_trans,
@@ -53,11 +55,15 @@ from .ros import ImageMsg
 
 @dataclass
 class TrackerConfig:
+    LANE_WIDTH: ClassVar[float] = 1.05
+
     #: list of parellel lines, in meters
-    shifts: list[float] = field(default_factory=lambda: [-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0])
+    shifts: list[float] = field(
+        default_factory=lambda: [x * TrackerConfig.LANE_WIDTH for x in range(3, -4, -1)],
+    )
 
     #: initial y location; currently assuming heading exactly +x
-    init_y: float = 0.5
+    init_y: float = 0.0
 
     target_y: float | None = None
 
@@ -127,6 +133,10 @@ class TrackerNode(Node):
         self.color_filter = jnp.array(load_color_filter())
 
         self._image_count = 0
+
+        ######################################################
+
+        self.controller_cache = cached_controller.load()
 
     ######################################################
     # reorder messages we receieve that is out of order
@@ -205,35 +215,29 @@ class TrackerNode(Node):
 
         self.line_xy = homography_line(rotation @ translation, self.line_xy)
 
-    def pure_pursuit(self, target_line: Line):
+    def controller(self, target_line: Line):
+
         x, y = np.array(point_coord(get_foot((0, 0), target_line)))
 
-        print("foot", x, y)
+        # print("foot", x, y)
 
-        dist = np.linalg.norm([x, y])
+        dist = float(np.linalg.norm([x, y]))
 
-        lookahead = 10
+        lx, ly = np.array(line_direction(target_line))
 
-        forward_dist = lookahead**2 - dist**2
-        if forward_dist < 0:
-            print("forward_dist negative", forward_dist)
-            return
-        forward_dist = np.sqrt(forward_dist)
+        line_ang = -np.arctan2(ly, lx)
 
-        forward_dir = np.array([-y, x])
-        forward_dir = forward_dir / np.linalg.norm(forward_dir)
-        if forward_dir[0] < 0:
-            forward_dir = -forward_dir
+        print("dist, line_ang", dist, line_ang)
 
-        forward_point = np.array([x, y]) + forward_dist * forward_dir
-        print("forward_point", forward_point)
+        control_ang = self.controller_cache.get(dist, line_ang)
 
         drive_cmd = AckermannDriveStamped()
 
         drive = AckermannDrive()
-        drive.steering_angle = forward_point[1] / forward_point[0] / 6 - 0.035
 
+        drive.steering_angle = control_ang - 0.035
         # drive.steering_angle = -0.04
+
         drive.speed = 4.0
         # drive.speed = 0.5
         # drive.steering_angle = 0.0
@@ -257,7 +261,7 @@ class TrackerNode(Node):
 
         res = self._handle_image(msg)
 
-        self.pure_pursuit(self.get_target_line())
+        self.controller(self.get_target_line())
 
         self.publish_log("image", {"fit_scores": str(res)})
 
