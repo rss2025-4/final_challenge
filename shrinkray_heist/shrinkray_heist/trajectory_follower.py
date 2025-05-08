@@ -35,7 +35,7 @@ class PurePursuit(Node):
 
         self.speed = 0.5  # ADJUST SPEED m/s#
         self.lookahead = 0.7 # ADJUST LOOKAHEAD m -- NEEDS TO BE TUNED IN REAL LIFE 
-
+        self.steering_angle = 0.0
         # FOR VARIABLE LOOKAHEAD (MAYBE NOT NEEDED FOR FINAL RACE THOUGH)
         # self.max_speed = self.speed + 1.0
 
@@ -53,7 +53,7 @@ class PurePursuit(Node):
 
         self.odom_sub = self.create_subscription(Odometry, self.odom_topic, self.pose_callback, 10)
         self.drive_pub = self.create_publisher(AckermannDriveStamped, self.drive_topic, 1)
-
+        self.back_drive_pub = self.create_publisher(AckermannDriveStamped, "/vesc/low_level/input/safety", 1)
         self.lookahead_publisher = self.create_publisher(Marker, "/lookahead_point", 1)
         self.nearest_dist_pub = self.create_publisher(Float32, "/nearest_dist", 10)
 
@@ -73,6 +73,7 @@ class PurePursuit(Node):
         # self.stop = False # default is going to drive
         self.goal_reached = False
 
+        self.alert_sub = self.create_subscription(String, "/alert", self.stopalert_cb, 10)
         self.get_logger().info("Pure Pursuit Initialized")
 
 
@@ -90,6 +91,26 @@ class PurePursuit(Node):
         else:
             self.get_logger().info("Follower: NOT Target.follower")
                 
+    def stopalert_cb(self, msg):
+        if self.purepursuit_on and msg.data == "STOP":
+            # back up 
+            self.get_logger().info("Follower: Received stop alert msg")
+
+            # Declare msg
+            drive_msg = AckermannDriveStamped()
+
+            curr_time = self.get_clock().now()
+
+            # assign values
+            drive_msg.header.stamp = curr_time.to_msg()
+            drive_msg.header.frame_id = "base_link"
+            drive_msg.drive.steering_angle = -self.steering_angle  # rad
+            drive_msg.drive.steering_angle_velocity = 0.0  # rad/s
+            drive_msg.drive.speed = -0.3  # m/s
+            drive_msg.drive.acceleration = 0.0  # m/s^2
+            drive_msg.drive.jerk = 0.0  # m/s^3
+
+            self.back_drive_pub.publish(drive_msg)
 
     # def pose_callback(self, odometry_msg):
     #     "For sim testing with safety controller"
@@ -258,7 +279,7 @@ class PurePursuit(Node):
         # self.get_logger().info('curvature "%s"' % curvature)
 
         # Calculate the steering angle
-        steering_angle = np.arctan2(curvature * self.wheelbase_length, 1)
+        self.steering_angle = np.arctan2(curvature * self.wheelbase_length, 1)
         # self.get_logger().info('steering angle "%s"' % steering_angle)
 
         # Restrict steering_angle (see if needed?)
@@ -275,7 +296,7 @@ class PurePursuit(Node):
         # assign values
         drive_msg.header.stamp = curr_time.to_msg()
         drive_msg.header.frame_id = "base_link"
-        drive_msg.drive.steering_angle = steering_angle  # rad
+        drive_msg.drive.steering_angle = self.steering_angle  # rad
         drive_msg.drive.steering_angle_velocity = 0.0  # rad/s
         drive_msg.drive.speed = speed  # m/s
         drive_msg.drive.acceleration = 0.0  # m/s^2
