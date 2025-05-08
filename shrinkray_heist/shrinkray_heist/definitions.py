@@ -12,7 +12,10 @@ class TripSegment(Enum):
     END = 3
     
     # this is for the way back 
-    
+
+class Direction(Enum):
+    WAY_THERE = 0
+    WAY_BACK = 0
 
 class ObjectDetected(Enum):
     """
@@ -38,9 +41,10 @@ class Target(Enum):
     Enum that defines which node the state machine node is controlling.
     """
     DETECTOR_TRAFFIC_LIGHT = 0
-    DETECTOR_SHRINK_RAY = 1
-    PLANNER = 2
-    FOLLOWER = 3
+    DETECTOR_TRAFFIC_LIGHT_GREEN = 1
+    DETECTOR_SHRINK_RAY = 2
+    PLANNER = 3
+    FOLLOWER = 4
     
 class TrafficSimulation(Enum):
     """

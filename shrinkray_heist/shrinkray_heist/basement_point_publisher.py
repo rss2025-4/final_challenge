@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 
-from geometry_msgs.msg import Point, PointStamped, Pose, PoseArray
+from geometry_msgs.msg import Point, PointStamped, Pose, PoseStamped, PoseArray
 
 class BasementPointPublisher(Node):
     '''
@@ -14,6 +14,7 @@ class BasementPointPublisher(Node):
         super().__init__("BasementPointPub")
         self.publisher = self.create_publisher(PoseArray, "/shrinkray_part", 1)
         self.subscriber = self.create_subscription(PointStamped, "/clicked_point", self.callback, 1)
+        self.goal_subscriber = self.create_subscription(PoseStamped, "/goal_pose", self.goal_pose_callback, 1)
 
         self.array = []
 
@@ -22,6 +23,14 @@ class BasementPointPublisher(Node):
     def callback(self, point_msg: PointStamped):
         x,y = point_msg.point.x, point_msg.point.y
         self.get_logger().info(f"Received point: {x}, {y}")
+        self.array.append(Pose(position=Point(x=x, y=y, z=0.0)))
+        
+        if len(self.array) == 2:
+            self.publish()
+    
+    def goal_pose_callback(self, pose_msg: PoseStamped):
+        x,y = pose_msg.pose.position.x, pose_msg.pose.position.y
+        self.get_logger().info(f"Received goal pose point: {x}, {y}")
         self.array.append(Pose(position=Point(x=x, y=y, z=0.0)))
         
         if len(self.array) == 2:

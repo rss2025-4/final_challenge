@@ -11,6 +11,7 @@
     <!-- <node pkg="localization" exec="particle_filter" name="particle_filter" output="screen">
         <param from="$(find-pkg-share shrinkray_heist)/config/real/pf_config.yaml"/>
     </node> -->
+    
     <node pkg="safety_controller" exec="safety_controller" name="safety_controller" output="screen">
         <param from="$(find-pkg-share shrinkray_heist)/config/real/config.yaml"/>
     </node>
@@ -22,3 +23,4 @@
     </node>
     
 </launch>
+

@@ -21,6 +21,10 @@ from .eval_utils import InjectedConfig
 from .helper import grid_to_world, world_to_grid
 from .utils import LineTrajectory
 
+def _color_converter(value):
+    if value == -1:
+        return 0xcd / 0xff
+    return (100 - value) / 100.0
 
 class PathPlan(Node):
     """Listens for path points published by the state node and uses it to plan a path
@@ -31,7 +35,7 @@ class PathPlan(Node):
 
        
        
-        self.declare_parameter("safety_buffer", 0.6)
+        self.declare_parameter("safety_buffer", 0.3)
         self.declare_parameter("odom_topic", "default")
         self.declare_parameter("map_topic", "default")
         self.declare_parameter("path_topic", "default")
@@ -82,35 +86,108 @@ class PathPlan(Node):
 
         # NOTE toggle this to True to enable debug mode (i.e. add additional logging)
         self.debug = False
+        self.external_map = True
         
         self.map = None
         self.dilated_map = None
 
         self.trajectory = LineTrajectory(node=self, viz_namespace="/planned_trajectory")
         
+    
+    def init_map(self):
+        
+        if self.external_map:
+            
+            image = cv2.imread("flipped_occupany_map_conservative.png", cv2.IMREAD_GRAYSCALE)
+            newmap = np.array(image).astype(np.uint8)
+            newmap = np.flipud(newmap)
+            shift = lambda x: x / 255
+            newmap = shift(newmap)
+            newmap = np.logical_not(newmap)
+            
+            self.dilated_map = newmap.astype(np.int8)
+            
+            
+            # newmap = newmap.reshape((self.map_info.height, self.map_info.width))
+            self.get_logger().info(f"PathPlan: Unique values for NEW loaded map: {np.unique(newmap)}")
+            self.get_logger().info(f"PathPlan: NEW loaded dimensions: np.shape {newmap.shape}")
+            self.convert_map_to_publisher_format()
+            
+            
+        
+        
         
 
     def map_cb(self, msg):
-
+        
         map = msg.data
         self.get_logger().info(f"PathPlan: ORIGINAL Map data length: {msg.info.height}x {msg.info.width}")
         self.map = np.array(map).reshape((msg.info.height, msg.info.width))
         
         self.get_logger().info(f"PathPlan: Unique values: {np.unique(map)}")
+        self.get_logger().info(f"PathPlan: ORIGINAL DILATED MAP data type {self.map.dtype}")
         self.get_logger().info("PathPlan: Got map")
         self.map_info = msg.info
         
-
-        self.dilated_map = self.dilate_occupancy_map(
-            occupancy_data=msg.data,
-            width=msg.info.width,
-            height=msg.info.height,
-            resolution=msg.info.resolution,
-            dilation_radius_meters=self.safety_buffer,
-            occupancy_threshold=50,
-        )
+        # grid = np.array(msg.).reshape((height, width))
+        # # Create a binary map: mark as obstacle if occupancy > threshold OR if occupancy == -1 (unknown).
+        # binary_map = np.uint8((grid > 50) | (grid == -1))
+        # # map is predilated 
+        # self.dilated_map = binary_map 
+        if self.external_map:
+            self.init_map()
+            dilated_map = self.dilate_occupancy_map(
+                occupancy_data=msg.data,
+                width=msg.info.width,
+                height=msg.info.height,
+                resolution=msg.info.resolution,
+                dilation_radius_meters=self.safety_buffer,
+                occupancy_threshold=50,
+                )
+            
+            
+                
+        # pass
+        else:
+            self.dilated_map = self.dilate_occupancy_map(
+                occupancy_data=msg.data,
+                width=msg.info.width,
+                height=msg.info.height,
+                resolution=msg.info.resolution,
+                dilation_radius_meters=self.safety_buffer,
+                occupancy_threshold=50,
+            )
+            self.get_logger().info(f"PathPlan: ORIGINAL DILATED MAP dimensions: np.shape {self.dilated_map.shape}")
+            self.get_logger().info(f"PathPlan: ORIGINAL DILATED MAP unique values: np.shape {np.unique(self.dilated_map)}")
+            self.get_logger().info(f"PathPlan: ORIGINAL DILATED MAP data type {self.dilated_map.dtype}")
+            self.convert_map_to_publisher_format()
+        self.save_map_as_img("old_occupancy_map.png",  width=msg.info.width,
+                height=msg.info.height)
         # self.map *= 100
-        self.convert_map_to_publisher_format()
+        
+        
+    
+    def save_map_as_img(self, filename,width, height):
+        """
+        Save the map as an image file.
+        """
+        
+        if self.dilated_map is None:
+            self.get_logger().warn("No dilated map available to save")
+            return
+        self.get_logger().info(f"PathPlan: Saving map as {filename}, these are the unique values: {np.unique(self.dilated_map)}")
+        grid = self.dilated_map.reshape((height, width))
+        # Convert the map to a format suitable for saving as an image
+        binary_map = np.uint8(np.logical_not(grid))
+        
+
+        
+        img = (binary_map * 255).astype(np.uint8)
+
+        # Save the image
+        cv2.imwrite(filename, img)
+        self.get_logger().info(f"Map saved as {filename}")
+        
 
     def convert_map_to_publisher_format(self):
         # if self.debug:
@@ -169,45 +246,7 @@ class PathPlan(Node):
             f"Performed dilation with kernel size {kernel_size} (cells); effective margin ≈ {(kernel_size-1)/2 * resolution:.2f} m"
         )
         return dilated
-    def dilate_obstacles(self, occupancy_data, width, height, resolution, dilation_radius_meters, occupancy_threshold=0):
-        """
-        Preprocess the occupancy grid by performing morphological dilation to "inflate" obstacles.
-
-        Any cell with a value greater than occupancy_threshold or with a value of -1 (unknown)
-        is considered an obstacle.
-
-        Args:
-            occupancy_data: The flat occupancy grid data (list or numpy array).
-            width: Grid width.
-            height: Grid height.
-            resolution: Map resolution (meters per cell).
-            dilation_radius_meters: Desired safety buffer in meters.
-            occupancy_threshold: Cells with a value greater than this threshold are obstacles.
-
-        Returns:
-            A dilated binary numpy array where obstacles (including their safety margin) are marked as 1.
-        """
-        
-        grid = np.array(occupancy_data).reshape((height, width))
-        # Create a binary map: mark as obstacle if occupancy > threshold OR if occupancy == -1 (unknown).
-        binary_map = np.uint8((grid > occupancy_threshold) | (grid == -1))
-
-        # Calculate the number of cells required to cover the dilation radius.
-        # Here, we force the effective half-width to be at least ceil(dilation_radius_meters/resolution)
-        safety_margin_cells = int(np.ceil(dilation_radius_meters / resolution))
-        # Kernel size is set such that half the kernel is at least safety_margin_cells.
-        kernel_size = 2 * safety_margin_cells - 1
-        # Create an elliptical (disk) structuring element.
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
-
-        # Perform the dilation.
-        dilated = cv2.dilate(binary_map, kernel, iterations=1)
-
-        self.get_logger().info(
-            f"Performed dilation with kernel size {kernel_size} (cells); effective margin ≈ {(kernel_size-1)/2 * resolution:.2f} m"
-        )
-        return dilated
-
+    
     def is_collision_free(self, x1, y1, x2, y2, num_points=20):
         """
         Check if the straight-line path between (x1, y1) and (x2, y2) is collision free,
