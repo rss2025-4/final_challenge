@@ -179,6 +179,7 @@ class StatesNode(Node):
             self.at_stopping_point = True
             self.state = State.WAITING
             self.traffic_state = TrafficSimulation.ONGOING_TRAFFIC
+            self.control_node(target=Target.DETECTOR_TRAFFIC_LIGHT_GREEN) # turn off the detector
         
     def points_cb(self, msg: PoseArray):
         self.get_logger().info("StatesNode: Received basement points")

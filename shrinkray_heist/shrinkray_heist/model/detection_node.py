@@ -58,15 +58,19 @@ class DetectionNode(Node):
     def state_cb(self, msg):
         pass # for testing
 
-        if msg.data == Target.DETECTOR_TRAFFIC_LIGHT_RED.value:
+        if msg.data == Target.DETECTOR_TRAFFIC_LIGHT.value:
             self.trafficlight_detector_on = not self.trafficlight_detector_on
             
             if self.trafficlight_detector_on:
                 self.get_logger().info("Detector: Traffic Light Red Detector Activated")
             else:
                 self.get_logger().info("Detector: Traffic Light Red Detector Deactivated")
-        # elif msg.data == Target.DETECTOR_TRAFFIC_LIGHT_GREEN.value:
-        #     self.trafficlight_detector_green_on = not
+        elif msg.data == Target.DETECTOR_TRAFFIC_LIGHT_GREEN.value:
+            self.trafficlight_detector_green_on = not self.trafficlight_detector_green_on
+            if self.trafficlight_detector_green_on:
+                self.get_logger().info("Detector: Traffic Light Green Detector Activated")
+            else:
+                self.get_logger().info("Detector: Traffic Light Green Detector Deactivated")
         elif msg.data == Target.DETECTOR_SHRINK_RAY.value:
             self.shrinkray_detector_on = not self.shrinkray_detector_on
             
@@ -300,7 +304,11 @@ class DetectionNode(Node):
                         # Get the bounding box coordinates 
                         #double bounding box since traffic light twice height than actual (due to stud)
                         
-                       # if not self.tra
+                        if not self.trafficlight_detector_green_on: # save last red bounding box
+                            self.red_trafficlight_bbox = bbox #[bbox[0], bbox[1], bbox[2], bbox[3]] # x1, y1, x2, y2 = trafficlight_bbox
+                        else: # if detecting green light, use the last red light bbox
+                            bbox = self.red_trafficlight_bbox
+                            
                         bottom = bbox[3]+(bbox[3]-bbox[1]) #y2 + (y2-y1)
                         trafficlight_bbox = [bbox[0], bbox[1], bbox[2], bottom] # double the height since traffic light has stud underneath
                         # self.get_logger().info(f"Traffic light bounding box: {trafficlight_bbox}")
