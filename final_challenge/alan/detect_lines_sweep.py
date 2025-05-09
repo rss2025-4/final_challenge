@@ -6,14 +6,15 @@ import equinox as eqx
 import jax
 from jax import Array, numpy as jnp
 
-from final_challenge.homography import (
+from libracecar.batched import batched
+from libracecar.utils import jit, pformat_repr, tree_select
+
+from ..homography import (
     Line,
     homography_line,
     matrix_rot,
     shift_line,
 )
-from libracecar.batched import batched
-from libracecar.utils import jit, pformat_repr, tree_select
 
 
 class score_line_res(eqx.Module):

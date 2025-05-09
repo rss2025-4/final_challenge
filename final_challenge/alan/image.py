@@ -4,14 +4,15 @@ import numpy as np
 from jax import Array, numpy as jnp
 from jax.typing import ArrayLike
 
-from final_challenge.homography import (
+from libracecar.batched import batched
+from libracecar.utils import cast, jit, tree_select
+
+from ..homography import (
     Line,
     homography_line,
     matrix_xy_to_xy_img,
     shift_line,
 )
-from libracecar.batched import batched
-from libracecar.utils import cast, jit, tree_select
 
 
 def _get_line(

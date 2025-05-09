@@ -26,8 +26,6 @@ from tf2_ros import (
     Node,
 )
 
-from final_challenge.alan.controller import cached_controller
-from final_challenge.alan.tracker import update_with_image
 from libracecar.ros_utils import time_msg_to_float
 from libracecar.utils import time_function
 
@@ -46,7 +44,9 @@ from ..homography import (
     shift_line,
 )
 from .colors import load_color_filter
+from .controller import cached_controller
 from .ros import ImageMsg
+from .tracker import update_with_image
 
 
 @dataclass
@@ -63,16 +63,11 @@ class TrackerConfig:
 
     target_y: float | None = None
 
-    base_frame: str = "base_link"
-
     odom_sub_topic: str = "/vesc/odom"
 
-    visualization_topic: str = "/visualization"
+    log_topic: str = "/tracker_log"
 
-    time_overwrite: bool = False
     invert_odom: bool = True
-
-    matplotlib: bool = False
 
     def get_target_y(self) -> float:
         if self.target_y is None:
@@ -107,7 +102,7 @@ class TrackerNode(Node):
         )
         self.log_pub = self.create_publisher(
             String,
-            "/tracker_log",
+            self.cfg.log_topic,
             QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
                 history=QoSHistoryPolicy.KEEP_LAST,
@@ -279,8 +274,6 @@ class TrackerNode(Node):
 
         drive.steering_angle = control_ang - 0.035
         # drive.steering_angle = -0.04
-
-        min(4.0, 5.0 - 10 * abs(control_ang))
 
         drive.speed = min(4.0, 5.0 - 10 * abs(control_ang))
 

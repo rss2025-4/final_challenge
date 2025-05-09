@@ -10,10 +10,10 @@ from jax import Array, numpy as jnp
 from jax.typing import ArrayLike
 from PIL import Image
 
-from final_challenge.alan import FrameData
-from final_challenge.alan.segmentation import FrameDataV2
-from final_challenge.homography import homography_image
 from libracecar.utils import jit, tree_at_
+
+from ..homography import homography_image
+from .segmentation import FrameData, FrameDataV2
 
 
 class color_counter(eqx.Module):
