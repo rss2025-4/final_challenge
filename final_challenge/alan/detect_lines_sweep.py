@@ -7,12 +7,14 @@ import jax
 from jax import Array, numpy as jnp
 
 from libracecar.batched import batched
-from libracecar.utils import jit, pformat_repr, tree_select
+from libracecar.utils import fval, jit, pformat_repr, tree_select
 
 from ..homography import (
     Line,
+    ck_line,
     homography_line,
     matrix_rot,
+    normalize_line,
     shift_line,
 )
 
@@ -25,7 +27,7 @@ class score_line_res(eqx.Module):
     __repr__ = pformat_repr
 
 
-def _score_line(weights: Array, weights_mask: Array, line: Array) -> score_line_res:
+def _score_line(weights: Array, line: Array) -> score_line_res:
     # ax + by + c = 0
     # y = -(a/b) x - (c/b)
 
@@ -33,8 +35,6 @@ def _score_line(weights: Array, weights_mask: Array, line: Array) -> score_line_
     b = tree_select(jnp.abs(b) < 1e-6, on_true=1e-6, on_false=b)
 
     assert len(weights.shape) == 2
-    assert weights.shape == weights_mask.shape
-    print("weights_mask", weights_mask.dtype)
 
     def inner(x: Array):
         y = (-a / b) * x - (c / b)
@@ -60,9 +60,6 @@ class ScoreCtx(eqx.Module):
     #: higher means positions in the image where lines are supposed to show up
     weights: Array
 
-    #: boolean array, False ==> weights is ignored
-    weights_mask: Array
-
     #: homography matrix from xy coordinates to the `weights` image
     homography: Array
 
@@ -73,17 +70,50 @@ class ScoreCtx(eqx.Module):
         a, b, c = jnp.array(xy_line_pixels)
         weights = self.weights.astype(jnp.float32)
 
-        s1 = _score_line(weights, self.weights_mask, jnp.array([b, a, c]))
-        s2 = _score_line(weights.T, self.weights_mask.T, jnp.array([a, b, c]))
+        s1 = _score_line(weights, jnp.array([b, a, c]))
+        s2 = _score_line(weights.T, jnp.array([a, b, c]))
 
         # return s1, s2
         return score_line_res(s1.hits + s2.hits, (s1, s2))
 
 
 @jit
+def update_line_one(ctx: ScoreCtx, xy_line: Line) -> tuple[Line, score_line_res]:
+    xy_line = xy_line / jnp.linalg.norm(xy_line)
+
+    n_try = 21
+    try_rotations = batched.create(jnp.linspace(-0.2, 0.2, num=n_try), (n_try,))
+    try_shifts = batched.create(jnp.linspace(-0.2, 0.2, num=n_try), (n_try,))
+
+    def try_one_rot(a_rad: Array):
+        line_rot = homography_line(matrix_rot(a_rad), xy_line)
+
+        def try_one_shift(shift: Array) -> tuple[Array, tuple[Line, score_line_res]]:
+            try_this = shift_line(line_rot, shift)
+            ans = ctx.score(try_this)
+
+            is_center = (jnp.abs(a_rad) < 1e-4) & (jnp.abs(shift) < 1e-4)
+            return ans.hits + is_center * 5, (try_this, ans)
+
+        return try_shifts.map(try_one_shift).max(lambda item: item[0])
+
+    _best_score, (line, per_lane_res) = try_rotations.map(try_one_rot).max(lambda item: item[0])
+
+    return line, per_lane_res
+
+
+@jit
+def weighted_average(lines: batched[tuple[Line, fval]]) -> Line:
+
+    tot, tot_w = lines.tuple_map(lambda l, w: (ck_line(normalize_line(l)) * w, w)).sum().uf
+
+    return tot / tot_w
+
+
+@jit
 def update_line(
     ctx: ScoreCtx, xy_line: Line, shifts: Array
-) -> tuple[Line, batched[score_line_res]]:
+) -> tuple[Line, batched[tuple[Line, score_line_res]]]:
     """
     update a line using picture `weights`.
 
@@ -102,33 +132,15 @@ def update_line(
         line_result: for each shift, how well that line shows up in the image
     """
 
-    xy_line = xy_line / jnp.linalg.norm(xy_line)
+    xy_line = ck_line(xy_line / jnp.linalg.norm(xy_line))
 
-    n_try = 21
-    try_rotations = batched.create(jnp.linspace(-0.2, 0.2, num=n_try), (n_try,))
-    try_shifts = batched.create(jnp.linspace(-0.2, 0.2, num=n_try), (n_try,))
+    def handle_one(shift: Array):
+        line, res = update_line_one(ctx, shift_line(xy_line, shift))
+        return (shift_line(line, -shift), res.hits), (line, res)
 
-    def try_one_rot(a_rad: Array):
-        line_rot = homography_line(matrix_rot(a_rad), xy_line)
+    weighted_lines, res = batched.create_array(shifts).map(handle_one).split_tuple()
+    ans = weighted_average(
+        batched.concat([weighted_lines, batched.create((xy_line, jnp.array(10.0))).reshape(-1)])
+    )
 
-        def try_one_shift(s1: Array) -> tuple[Array, tuple[Line, batched[score_line_res]]]:
-            # returns (score, (line, per_lane_results))
-            try_this = shift_line(line_rot, s1)
-
-            def per_lane(s2: Array) -> score_line_res:
-                # returns (hits, total) for one white line
-                line_rot_shift = shift_line(try_this, s2)
-                return ctx.score(line_rot_shift)
-
-            per_lane_res = batched.create(shifts, (len(shifts),)).map(per_lane)
-
-            is_center = (jnp.abs(a_rad) < 1e-4) & (jnp.abs(s1) < 1e-4)
-
-            tot = per_lane_res.sum().unwrap()
-            return tot.hits, (try_this, per_lane_res)
-
-        return try_shifts.map(try_one_shift).max(lambda item: item[0])
-
-    _best_score, (line, per_lane_res) = try_rotations.map(try_one_rot).max(lambda item: item[0])
-
-    return line, per_lane_res
+    return ans, res

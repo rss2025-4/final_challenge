@@ -28,7 +28,7 @@ def main():
     # bag = "out_bag1"
     # bag = "out_bag2"
     bag_dir = Path("/root/repos/rosbags_5_8")
-    bag = "bag2"
+    bag = "bag1"
 
     procs = proc_manager.new()
     procs.spin_thread()
@@ -37,7 +37,7 @@ def main():
     # procs.popen(["emacs"])
 
     tracker_cfg = TrackerConfig(
-        init_y=-2.5 * TrackerConfig.LANE_WIDTH,
+        init_y=2.5 * TrackerConfig.LANE_WIDTH,
         log_topic="/tracker_log_post",
     )
     plot_cfg = PlotConfig(

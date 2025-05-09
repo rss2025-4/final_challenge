@@ -314,6 +314,7 @@ class TrackerNode(Node):
         msg = ImageMsg.parse(msg_ros)
 
         res = self._handle_image(msg)
+        # print("res", res)
 
         self.controller()
 

@@ -32,12 +32,11 @@ def process_image(image: np.ndarray | PIL.Image.Image, color_filter: Array) -> n
 
 def update_with_image(
     line_xy: Line, image: PIL.Image.Image, color_filter: Array, shifts: list[float]
-) -> tuple[Line, batched[score_line_res]]:
+) -> tuple[Line, batched[tuple[Line, score_line_res]]]:
     weights = process_image(image, color_filter)
     line_xy, res = update_line(
         ScoreCtx(
             weights=jnp.array(weights),
-            weights_mask=jnp.array(homography_mask((image.height, image.width))),
             homography=jnp.array(matrix_xy_to_xy_img()),
         ),
         line_xy,

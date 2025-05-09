@@ -187,8 +187,8 @@ class PlotNode(Node):
 
         # print("got image")
 
-        # line_xy = data["line_xy"]
-        line_xy = data["forecast_line_xy"][1]
+        line_xy = data["line_xy"]
+        # line_xy = data["forecast_line_xy"][1]
         assert isinstance(line_xy, tuple)
 
         xy_image = np.array(xy_line_to_xyplot_image(line_xy, jnp.array(self.cfg.shifts)))

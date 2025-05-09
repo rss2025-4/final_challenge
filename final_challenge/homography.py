@@ -483,5 +483,10 @@ def normalize(p: Point) -> Point:
     return p / jnp.linalg.norm(p)
 
 
+def normalize_line(l: Line) -> Line:
+    l = ck_line(l)
+    return l / jnp.linalg.norm(l)
+
+
 def line_to_tuple(l: Line) -> tuple[float, float, float]:
     return tuple(np.array(l).tolist())
