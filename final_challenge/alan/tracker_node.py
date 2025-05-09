@@ -27,7 +27,7 @@ from tf2_ros import (
 )
 
 from libracecar.ros_utils import time_msg_to_float
-from libracecar.utils import time_function
+from libracecar.utils import jit, time_function, timer
 
 from ..homography import (
     Line,
@@ -169,10 +169,11 @@ class TrackerNode(Node):
                 break
 
             odom_time, odom_msg = self._pending_odoms.pop(0)
-            self.__advance_time_one(odom_time, "__advance_time_1")
+            if odom_time < self._cur_time:
+                self.__advance_time_one(odom_time, "__advance_time_1")
             self._cur_twist = odom_msg.twist.twist
 
-        self.__advance_time_one(new_time, "__advance_time_1")
+        self.__advance_time_one(new_time, "__advance_time_2")
 
     def odom_callback(self, msg: Odometry) -> None:
         # print("odom_callback!!", time_msg_to_float(msg.header.stamp))
@@ -246,23 +247,32 @@ class TrackerNode(Node):
 
         return delta, forecast_line_xy
 
+    @staticmethod
+    @jit
+    def get_drive_ang(forecast_line_xy: Line, target_y: float):
+
+        target_line = shift_line(forecast_line_xy, target_y)
+
+        lx, ly = line_direction(target_line)
+        line_ang = jnp.arctan2(ly, lx)
+
+        foot_rot = homography_point(matrix_rot(-line_ang), get_foot((0, 0), target_line))
+
+        return target_line, line_ang, foot_rot
+
+    @time_function
     def controller(self):
 
         forecast_delta, forecast_line_xy = self.forecast_line_xy()
 
-        target_line = shift_line(forecast_line_xy, self.cfg.get_target_y())
-
-        lx, ly = np.array(line_direction(target_line))
-        line_ang = np.arctan2(ly, lx)
-
-        foot_rot = homography_point(
-            matrix_rot(-line_ang), point_coord(get_foot((0, 0), target_line))
+        target_line, line_ang, foot_rot = TrackerNode.get_drive_ang(
+            forecast_line_xy, self.cfg.get_target_y()
         )
 
         _x_zero, dist = np.array(point_coord(foot_rot))
-        # print("x_zero", x_zero)
+        # print("x_zero", _x_zero)
 
-        control_ang = self.controller_cache.get(-dist, -line_ang)
+        control_ang = self.controller_cache.get(-dist, -float(line_ang))
 
         print("dist, line_ang", dist, line_ang)
         print("control_ang", control_ang)

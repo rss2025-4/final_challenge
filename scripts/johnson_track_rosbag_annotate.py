@@ -20,13 +20,13 @@ from final_challenge.alan.sam2_video_predictor_example import (
 )
 from final_challenge.alan.utils import cast_unchecked_
 
-bagpath = Path("/home/alan/6.4200/rosbags_5_3/out_bag3")
+bagpath = Path("/home/alan/6.4200/rosbags_5_8/bag3")
 
 
 def viz_data():
     it = iter(get_images(bagpath))
 
-    it = islice(it, 330, 331)
+    # it = islice(it, 330, 331)
 
     first = next(it)
 
@@ -36,6 +36,11 @@ def viz_data():
     plot = ax.imshow(first.image)
 
     prev_stamp = first.time
+
+    for _ in range(10):
+        time.sleep(0.5)
+        fig.canvas.draw()
+        fig.canvas.flush_events()
 
     for i, msg in enumerate(it):
         start_t = time.time()

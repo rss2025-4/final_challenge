@@ -28,13 +28,17 @@ from .alan.utils import cache, cast_unchecked_
 try:
     from jax import Array, numpy as jnp
 
+    from libracecar.utils import jit
+
     Arr = Union[Array, np.ndarray]
     ArrLike = Union[Array, np.ndarray, float]
+
 except ModuleNotFoundError:
     jnp = np
     if not TYPE_CHECKING:
         Arr = np.ndarray
         ArrLike = Union[np.ndarray, float]
+        jit = lambda x: x
 
 
 logger = logging.getLogger(__name__)
@@ -172,6 +176,7 @@ def uv_to_xy_point(point: Point) -> Point:
     return homography_point(matrix_uv_to_xy(), point)
 
 
+@jit
 def homography_line(matrix: Arr, line: Line) -> Line:
     # <prev, line> == 0
     # <=>
@@ -219,6 +224,7 @@ def line_to_slope_intersect(line: Line) -> tuple[float, float]:
     return float(-a / b), float(-c / b)
 
 
+@jit
 def matrix_rot(ang_rad: ArrLike) -> Arr:
     sin = jnp.sin(ang_rad)
     cos = jnp.cos(ang_rad)
@@ -232,6 +238,7 @@ def matrix_rot(ang_rad: ArrLike) -> Arr:
     )
 
 
+@jit
 def matrix_trans(dx: ArrLike = 0.0, dy: ArrLike = 0.0) -> Arr:
     return jnp.array(
         [

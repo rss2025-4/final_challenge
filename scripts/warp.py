@@ -16,7 +16,7 @@ np.set_printoptions(precision=7, suppress=True)
 
 
 def plot_data():
-    bagpath = Path("/home/alan/6.4200/rosbags_5_1/out_bag2")
+    bagpath = Path("/home/alan/6.4200/rosbags_5_8/bag1")
     messages = get_images(bagpath)
 
     plt.ion()

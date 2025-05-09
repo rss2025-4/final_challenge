@@ -46,6 +46,8 @@ class PlotConfig:
     #: list of parellel lines, in meters
     shifts: list[float]
 
+    log_topic: str = "/tracker_log"
+
 
 class PlotNode(Node):
     def __init__(self, *, cfg: PlotConfig, context: Context | None = None):
@@ -55,7 +57,7 @@ class PlotNode(Node):
 
         self.log_sub = self.create_subscription(
             String,
-            "/tracker_log",
+            self.cfg.log_topic,
             self.log_callback,
             QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -169,18 +171,24 @@ class PlotNode(Node):
 
         # print("data", data)
 
+        pt = data["python_time"]
+        print("ros_clock", data["ros_clock"] * 1e-9 - pt)
+        print("controller_time", data["controller_time"] - pt)
+        print("_pending_odoms_times", [x - pt for x in data["_pending_odoms_times"]])
+
         image = self.get_image_for_time(time_msg_to_float(data["controller_time"]))
         if image is None:
             return
 
         self._counter += 1
-        if self._counter % 2 == 0:
-            return
+        if self.cfg.log_topic == "/tracker_log":
+            if self._counter % 2 == 0:
+                return
 
         # print("got image")
 
-        line_xy = data["line_xy"]
-        # line_xy = data["forecast_line_xy"][1]
+        # line_xy = data["line_xy"]
+        line_xy = data["forecast_line_xy"][1]
         assert isinstance(line_xy, tuple)
 
         xy_image = np.array(xy_line_to_xyplot_image(line_xy, jnp.array(self.cfg.shifts)))
