@@ -35,7 +35,7 @@ class PurePursuit(Node):
         # print(f"odom_topic: {self.odom_topic}")
         # print(f"drive_topic: {self.drive_topic}")
 
-        self.speed = 0.3  # ADJUST SPEED m/s#
+        self.speed = 0.4  # ADJUST SPEED m/s#
         self.lookahead = 0.8 # ADJUST LOOKAHEAD m -- NEEDS TO BE TUNED IN REAL LIFE 
         self.steering_angle = 0.0
         # FOR VARIABLE LOOKAHEAD (MAYBE NOT NEEDED FOR FINAL RACE THOUGH)
@@ -289,7 +289,7 @@ class PurePursuit(Node):
         heading_error = normalize_angle(angle_to_lookahead - heading)
         backup_steering = 0.4 if heading_error > 0 else -0.4
         
-        if abs(heading_error) < 0.075:
+        if abs(heading_error) <0.15:
             self.send_drive_command(-0.3, 0.0)
             time.sleep(1.0)
             self.get_logger().info("Goal reached")
@@ -335,9 +335,9 @@ class PurePursuit(Node):
 
         # Get the angle to the lookahead point
         angle_to_lookahead = np.arctan2(lookahead_point[1] - current_pose[1], lookahead_point[0] - current_pose[0])
-        if self.dist_to_last_point < 0.75: # less than 0.75 m to last point, want to orient with goal pose
-            # try to orient to goal 
-            angle_to_lookahead = angle_to_lookahead-self.curr_goal_pose[2] # fake angle to lookahead, actualy 
+        # if self.dist_to_last_point < 0.75: # less than 0.75 m to last point, want to orient with goal pose
+        #     # try to orient to goal 
+        #     angle_to_lookahead = angle_to_lookahead-self.curr_goal_pose[2] # fake angle to lookahead, actualy 
             
         # self.get_logger().info('angle_to_lookahead "%s"' % angle_to_lookahead)
 

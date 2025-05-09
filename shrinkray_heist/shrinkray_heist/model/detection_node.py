@@ -25,6 +25,10 @@ class DetectionNode(Node):
         self.get_logger().info(f"curr date t{curr_datetime}")
         self.detector = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
         self.detector.set_threshold(0.3)
+
+        self.banana_detector = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
+        self.banana_detector.set_threshold(0.55)
+
         self.yolo_pub = self.create_publisher(Image, "/yolo_img", 10)
         self.image_sub = self.create_subscription(Image, "/zed/zed_node/rgb/image_rect_color", self.img_cb, 1)
         self.bridge = CvBridge()
@@ -184,46 +188,51 @@ class DetectionNode(Node):
         elapsed = now - self.sequence_start_time
 
         # Duration for each step in seconds
-        durations = [3.0, 2.0, 3.0, 1.0 , 3.0, 2.0, 3.0, 2.0]
+        durations = [2.0, 3.0, 2.0, 3.0, 1.0 , 3.0, 2.0, 3.0, 2.0]
                 # steps 0, 1, 2, 3, 4
         msg = AckermannDriveStamped()
         self.scan_speed = 0.3
         self.scan_angle = 0.5
+        if self.scan_step == 0: # pause!
+            # Step 1: Move forward slighlty
+            msg.drive.speed = 0.3 #-0.3
+            msg.drive.steering_angle = 0.0 #-self.angle
+            self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
 
-        if self.scan_step == 0:
+        elif self.scan_step == 1:
             # Step 0: Back up left
             msg.drive.speed = -self.scan_speed
             msg.drive.steering_angle = -self.scan_angle
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
-        elif self.scan_step == 1: # pause!
+        elif self.scan_step == 2: # pause!
             msg.drive.speed = 0.0
             msg.drive.steering_angle = 0.0 #self.angle
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
 
-        elif self.scan_step == 2:
+        elif self.scan_step == 3:
             # Step 2: Move forward right
             msg.drive.speed = self.scan_speed
             msg.drive.steering_angle = -self.scan_angle #self.angle
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
-        elif self.scan_step == 3: # pause!
+        elif self.scan_step == 4: # pause!
             msg.drive.speed = 0.0
             msg.drive.steering_angle = 0.0 #self.angle
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
 
-        elif self.scan_step == 4:
+        elif self.scan_step == 5:
             # Step 4: Back up right
             msg.drive.speed = -self.scan_speed
             msg.drive.steering_angle = self.scan_angle
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
-        elif self.scan_step == 5: # pause!
+        elif self.scan_step == 6: # pause!
             msg.drive.speed = 0.0
             msg.drive.steering_angle = 0.0 #self.angle
-        elif self.scan_step == 6:
+        elif self.scan_step == 7:
             # Step 1: Move forward left
             msg.drive.speed = self.scan_speed
             msg.drive.steering_angle = self.scan_angle #self.angle
             self.get_logger().info(f"Step: {self.scan_step}, Scan Sequence: Moving with speed: {msg.drive.speed}, angle: {msg.drive.steering_angle}")
-        elif self.scan_step == 7: # pause!
+        elif self.scan_step == 8: # pause!
             # Step 2: Turn slightly while moving forward
             msg.drive.speed = 0.0 #-0.3
             msg.drive.steering_angle = 0.0 #-self.angle
@@ -293,12 +302,19 @@ class DetectionNode(Node):
             self.get_logger().info(f"No shrink ray object, move on. Published at /detected_obj")
 
         try:
-            results = self.detector.predict(image) #image
+            # use different detectors for different bananas
+            if self.shrinkray_detector_on and not self.trafficlight_detector_on:
+                results = self.banana_detector.predict(image)
+                predictions = results["predictions"]
+                original_image = results["original_image"]
+                out = self.detector.draw_box(original_image, predictions, draw_all=True)
+            else:
+                results = self.detector.predict(image) #image
             
-            predictions = results["predictions"]
-            original_image = results["original_image"]
-            # self.get_logger().info(f"original_image: {original_image.shape}")
-            out = self.detector.draw_box(original_image, predictions, draw_all=True)
+                predictions = results["predictions"]
+                original_image = results["original_image"]
+                # self.get_logger().info(f"original_image: {original_image.shape}")
+                out = self.detector.draw_box(original_image, predictions, draw_all=True)
 
             # Save PIL Image to file
             for bbox, label in predictions:

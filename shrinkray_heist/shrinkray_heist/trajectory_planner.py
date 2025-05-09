@@ -96,8 +96,8 @@ class PathPlan(Node):
         if self.external_map:
             
             # image = cv2.imread("flipped_occupany_map_conservative.png", cv2.IMREAD_GRAYSCALE)
-            image = cv2.imread("dilated_occupancy_map_pop.png", cv2.IMREAD_GRAYSCALE)
-            self.get_logger().info("dilated_occupancy_map_pop")
+            image = cv2.imread("flipped_final_map.png", cv2.IMREAD_GRAYSCALE)
+            self.get_logger().info("flipped_final_map")
             newmap = np.array(image).astype(np.uint8)
             newmap = np.flipud(newmap)
             shift = lambda x: x / 255

@@ -197,7 +197,7 @@ class StatesNode(Node):
         if self.debug: 
             self.get_logger().info(f"StatesNode: Received points: {self.goal_points}")
         
-         # !! not sure if this is the right place to do this
+        # !! not sure if this is the right place to do this
         self.trajectory.clear()
         self.trajectory.fromPoseArray(msg)
         self.trajectory.publish_viz(duration=0.0)

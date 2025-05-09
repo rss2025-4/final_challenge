@@ -14,7 +14,7 @@ class BasementPointPublisher(Node):
         super().__init__("BasementPointPub")
         self.publisher = self.create_publisher(PoseArray, "/shrinkray_part", 1)
         self.subscriber = self.create_subscription(PointStamped, "/clicked_point", self.callback, 1)
-        self.goal_subscriber = self.create_subscription(PoseStamped, "/goal_pose", self.goal_pose_callback, 1)
+        self.goal_subscriber = self.create_subscription(PoseStamped, "/goal_pose", self.goal_pose_callback, 5)
 
         self.array = []
 
