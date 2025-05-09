@@ -40,6 +40,7 @@ from ..homography import (
     homography_image,
     homography_line,
     homography_mask,
+    homography_point,
     line_direction,
     line_to_tuple,
     line_y_equals,
@@ -262,19 +263,17 @@ class TrackerNode(Node):
 
         target_line = shift_line(forecast_line_xy, self.cfg.get_target_y())
 
-        x, y = np.array(point_coord(get_foot((0, 0), target_line)))
-
-        # print("foot", x, y)
-
-        dist = float(np.linalg.norm([x, y]))
-
         lx, ly = np.array(line_direction(target_line))
+        line_ang = np.arctan2(ly, lx)
 
-        line_ang = -np.arctan2(ly, lx)
+        foot_rot = homography_point(
+            matrix_rot(-line_ang), point_coord(get_foot((0, 0), target_line))
+        )
 
-        # print("dist, line_ang", dist, line_ang)
+        _x_zero, dist = np.array(point_coord(foot_rot))
+        # print("x_zero", x_zero)
 
-        control_ang = self.controller_cache.get(dist, line_ang)
+        control_ang = self.controller_cache.get(-dist, -line_ang)
 
         # print("control_ang", control_ang)
 
