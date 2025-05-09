@@ -3,7 +3,7 @@ import rclpy
 import time
 
 from ackermann_msgs.msg import AckermannDriveStamped
-from geometry_msgs.msg import Point, PoseArray, PoseWithCovarianceStamped, PoseStamped
+from geometry_msgs.msg import Point, PoseArray, PoseWithCovarianceStamped, PoseStamped, Pose
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from std_msgs.msg import Float32, String, Int32
@@ -36,7 +36,7 @@ class PurePursuit(Node):
         # print(f"drive_topic: {self.drive_topic}")
 
         self.speed = 0.3  # ADJUST SPEED m/s#
-        self.lookahead = 0.7 # ADJUST LOOKAHEAD m -- NEEDS TO BE TUNED IN REAL LIFE 
+        self.lookahead = 0.8 # ADJUST LOOKAHEAD m -- NEEDS TO BE TUNED IN REAL LIFE 
         self.steering_angle = 0.0
         # FOR VARIABLE LOOKAHEAD (MAYBE NOT NEEDED FOR FINAL RACE THOUGH)
         # self.max_speed = self.speed + 1.0
@@ -86,7 +86,7 @@ class PurePursuit(Node):
 
         # TODO add topic
         # for orientation of goal pose (listen from states)
-        self.goal_sub = self.create_subscription(PoseStamped, "/curr_goal_pose", self.curr_goal_pose_cb, 10)
+        self.goal_sub = self.create_subscription(Pose, "/curr_goal_pose", self.curr_goal_pose_cb, 10)
         self.curr_goal_pose = np.array([0.0, 0.0, 0.0])  # x, y, theta
         
         self.get_logger().info("Pure Pursuit Initialized")
@@ -109,14 +109,15 @@ class PurePursuit(Node):
     def curr_goal_pose_cb(self, msg):
         z_rotation = euler_from_quaternion(
             [
-                msg.pose.orientation.x,
-                msg.pose.orientation.y,
-                msg.pose.orientation.z,
-                msg.pose.orientation.w,
+                msg.orientation.x,
+                msg.orientation.y,
+                msg.orientation.z,
+                msg.orientation.w,
             ]
         )[2]
-        self.curr_goal_pose = np.array([msg.pose.position.x, msg.pose.position.y, z_rotation])
-        self.get_logger().info('Current goal pose "%s"' % self.curr_goal_pose)    
+        self.curr_goal_pose = np.array([msg.position.x, msg.position.y, z_rotation])
+        self.get_logger().info('Current goal pose "%s"' % self.curr_goal_pose) 
+           
     def stopalert_cb(self, msg):
         if self.purepursuit_on and msg.data == "STOP":
             # back up 
@@ -430,16 +431,17 @@ class PurePursuit(Node):
                 # self.goal_heading = self.curr_goal_pose[2] # rotation, not quat
 
                 if self.purepursuit_on and not self.goal_reached:
-                    # self.initiate_back_up = True
-                    self.get_logger().info("Goal reached")
-
-                    # Tell state node that goal is reached
-                    msg = Int32()
-                    msg.data = Drive.GOAL_REACHED.value
-                    self.purepursuit_state_pub.publish(msg)
+                    self.initiate_back_up = True
                     
-                    self.goal_reached = True
-                    ## self.stop = True
+                    # # NO BACK AND FORTH
+                    # self.get_logger().info("Goal reached")
+
+                    # # Tell state node that goal is reached
+                    # msg = Int32()
+                    # msg.data = Drive.GOAL_REACHED.value
+                    # self.purepursuit_state_pub.publish(msg)
+                    
+                    # self.goal_reached = True
 
             # self.get_logger().info('np trajectory "%s"' % trajectory)
             nearest_point, [p1_nearest, p2_nearest], index_p1, index_p2 = self.nearest_point(current_point, trajectory)
@@ -454,17 +456,19 @@ class PurePursuit(Node):
             )
 
             self.visualize_lookahead(lookahead_point)
-            self.drive(current_pose, lookahead_point) # ORIGINAL
+            
+            # NO ALIGNING
+            # self.drive(current_pose, lookahead_point) # ORIGINAL
 
             # FOR ALIGNING WITH GOAL
-            # if self.initiate_back_up:
-            #     if self.backup_start_time is None:
-            #         self.backup_start_time = self.get_clock().now().nanoseconds / 1e9
-            #     self.drivetoorientation(current_pose)
-            # else:
-            #     self.drive(current_pose, lookahead_point)
+            if self.initiate_back_up:
+                if self.backup_start_time is None:
+                    self.backup_start_time = self.get_clock().now().nanoseconds / 1e9
+                self.drivetoorientation(current_pose)
+            else:
+                self.drive(current_pose, lookahead_point)
+
             # self.get_logger().info('Pose callback')
-            # raise NotImplementedError
 
     def trajectory_callback(self, msg):
         self.get_logger().info(f"Receiving new trajectory {len(msg.poses)} points")

@@ -6,7 +6,7 @@ from sensor_msgs.msg import Image
 # from .detector import Detector
 # from tf_transformations import euler_from_quaternion
 
-from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, PoseArray, Point, PointStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, PoseArray, Point, PointStamped, PoseStamped
 from ackermann_msgs.msg import AckermannDriveStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
@@ -21,7 +21,6 @@ from .utils import LineTrajectory
 """
 High level node to control other nodes
 """
-# TODO make sure all the state msgs i access using Enum.Object.value
 
 class StatesNode(Node):
     def __init__(self):
@@ -55,17 +54,19 @@ class StatesNode(Node):
         self.at_stopping_point = False
         self.traffic_state = TrafficSimulation.NO_TRAFFIC
         self.direction = Direction.WAY_THERE
+        self.goal_pose_array = []
         
         
         # Publishers 
         self.state_pub = self.create_publisher(Int32, '/toggle_state', 5)
-        self.points_pub = self.create_publisher(PoseArray, '/planned_pts', 1) # publish the points we want to plan a path 
+        self.points_pub = self.create_publisher(PoseArray, '/planned_pts', 1) # publish the points to plan a path 
         self.start_pub = self.create_publisher(Marker, '/start_pose', 1)
         self.get_logger().info('State Node Initialized with State: "%s"' % self.trip_segment)
+        self.curr_goal_pose_pub = self.create_publisher(Pose, "/curr_goal_pose",1)
         # self.traffic_stop_drive_pub = self.create_publisher(AckermannDriveStamped, "/vesc/high_level/input/nav_0", 10)
 
         self.trajectory = LineTrajectory(node=self, viz_namespace="/planned_trajectory")
-    
+       
     
     def start_pose_cb(self, pose):
         self.start = pose.pose.pose
@@ -86,7 +87,7 @@ class StatesNode(Node):
         self.get_logger().info("StatesNode: Received trajectory, turning on traffic light detector")
         self.state = State.FOLLOWING
         self.control_node(target=Target.DETECTOR_TRAFFIC_LIGHT) # turn on traffic light detection since we are following
-            
+
         
         
        
@@ -184,8 +185,12 @@ class StatesNode(Node):
     def points_cb(self, msg: PoseArray):
         self.get_logger().info("StatesNode: Received basement points")
         
+        #adelene adds goal pose array for traj foll
+       
         # iterate through the poses in the PoseArray
         for pose in msg.poses:
+            self.goal_pose_array.append(Pose(position=pose.position, orientation=pose.orientation))
+
             x, y = pose.position.x, pose.position.y
             self.get_logger().info(f"StatesNode: Received point: {x}, {y}")
             self.goal_points.append((x,y))
@@ -231,13 +236,17 @@ class StatesNode(Node):
             self.get_logger().info("StatesNode: Requesting path for RAY_LOC1")
             start_point = (self.start.position.x, self.start.position.y)
             end_point = self.goal_points[0]
+            goal_pose = self.goal_pose_array[0]
+            # self.curr_goal_pose_pub.publish()
         elif self.trip_segment == TripSegment.RAY_LOC2:
             self.get_logger().info("StatesNode: Requesting path for RAY_LOC2")
             start_point = self.current_point
             end_point = self.goal_points[1]
+            goal_pose = self.goal_pose_array[1]
         elif self.trip_segment == TripSegment.START:
             start_point = self.current_point
             end_point =  (self.start.position.x, self.start.position.y)
+            goal_pose = self.start
         else:
             self.get_logger().warn("Invalid trip segment")
             return
@@ -253,7 +262,9 @@ class StatesNode(Node):
         self.points_pub.publish(pose_array)
 
         self.state = State.PLANNING
-        
+        self.curr_goal_pose_pub.publish(goal_pose)
+    
+    
     def publish_pts(self, array):
         # Publish PoseArray
         pose_array = PoseArray()

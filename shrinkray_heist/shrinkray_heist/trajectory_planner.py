@@ -21,10 +21,7 @@ from .eval_utils import InjectedConfig
 from .helper import grid_to_world, world_to_grid
 from .utils import LineTrajectory
 
-def _color_converter(value):
-    if value == -1:
-        return 0xcd / 0xff
-    return (100 - value) / 100.0
+
 
 class PathPlan(Node):
     """Listens for path points published by the state node and uses it to plan a path
@@ -98,7 +95,9 @@ class PathPlan(Node):
         
         if self.external_map:
             
-            image = cv2.imread("flipped_occupany_map_conservative.png", cv2.IMREAD_GRAYSCALE)
+            # image = cv2.imread("flipped_occupany_map_conservative.png", cv2.IMREAD_GRAYSCALE)
+            image = cv2.imread("dilated_occupancy_map_pop.png", cv2.IMREAD_GRAYSCALE)
+            self.get_logger().info("dilated_occupancy_map_pop")
             newmap = np.array(image).astype(np.uint8)
             newmap = np.flipud(newmap)
             shift = lambda x: x / 255

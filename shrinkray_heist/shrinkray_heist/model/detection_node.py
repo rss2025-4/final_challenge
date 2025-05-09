@@ -15,11 +15,14 @@ from shrinkray_heist.definitions import  Target, TripSegment, ObjectDetected, St
 from shrinkray_heist.homography_transformer import HomographyTransformer
 
 import time
+from datetime import datetime 
 
 class DetectionNode(Node):
     def __init__(self):
         super().__init__("detector_node")
         # self.detector = Detector() # ON REAL RACECAR
+        curr_datetime = datetime.now().strftime('%Y-%m-%d %H-%M-%S') 
+        self.get_logger().info(f"curr date t{curr_datetime}")
         self.detector = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
         self.detector.set_threshold(0.3)
         self.yolo_pub = self.create_publisher(Image, "/yolo_img", 10)
@@ -249,11 +252,10 @@ class DetectionNode(Node):
         ## output = np.zeros_like(image)
         # output[120:330, :] = image[120:240, :]
         ## image = output
-        
-        # output = image.copy()
-        # height = output.shape[0]
 
         # # Blacken the top third
+        # output = image.copy()
+        # height = output.shape[0]
         # output[:height // 4, :] = 0 
         # image = output
         # image_rgb = self.bridge.imgmsg_to_cv2(img_msg, "rgb8")
@@ -269,8 +271,8 @@ class DetectionNode(Node):
         # Record how long shrink ray has been on for 
         now = self.get_clock().now().nanoseconds / 1e9
         shrinkray_active_duration = now - self.shrinkray_active_start_time
-        if self.shrinkray_detector_on and not self.trafficlight_detector_on and (shrinkray_active_duration > 5): # if no banana detected for 5 seconds, start scan sequence
-            self.get_logger().info("No banana detected for 5 seconds, starting scan sequence")
+        if self.shrinkray_detector_on and not self.trafficlight_detector_on and (shrinkray_active_duration > 10) and (shrinkray_active_duration < 30 ): # if no banana detected for 5 seconds, start scan sequence
+            self.get_logger().info("No banana detected for 5 seconds, in scan sequence")
             
             if not self.scan_sequence_started: # so that start time set once
                 self.sequence_start_time = self.get_clock().now().nanoseconds / 1e9
@@ -283,7 +285,7 @@ class DetectionNode(Node):
                 self.get_logger().info("Scan sequence complete, no banana detected")
         
         # Time out, if no banana detected for 60 seconds, move onto next goal
-        if self.shrinkray_detector_on and not self.trafficlight_detector_on and (shrinkray_active_duration > 60):
+        if self.shrinkray_detector_on and not self.trafficlight_detector_on and (shrinkray_active_duration > 30):
             # for states, pretend we found the shrink ray in order to move on
             obj_detected_msg = Int32()
             obj_detected_msg.data = ObjectDetected.SHRINK_RAY.value
@@ -362,7 +364,10 @@ class DetectionNode(Node):
                         if dist_to_shrinkray < 1.0: # in meters
                             self.get_logger().info("Arrived at shrink ray location, stopping")
                             # Save the image with the bounding box to directory
-                            save_path = f"{os.path.dirname(__file__)}/shrinkray_detected_{self.shrinkray_count}.png"
+                            #get time
+                            curr_datetime = datetime.now().strftime('%Y-%m-%d %H-%M-%S') 
+
+                            save_path = f"{os.path.dirname(__file__)}/shrinkray_detected_{self.shrinkray_count}_{curr_datetime}.png"
                             self.shrinkray_count += 1
 
                             out.save(save_path)
