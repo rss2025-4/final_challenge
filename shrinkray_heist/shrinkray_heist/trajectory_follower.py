@@ -1,5 +1,7 @@
 import numpy as np
 import rclpy
+import time
+
 from ackermann_msgs.msg import AckermannDriveStamped
 from geometry_msgs.msg import Point, PoseArray, PoseWithCovarianceStamped, PoseStamped
 from nav_msgs.msg import Odometry
@@ -73,6 +75,12 @@ class PurePursuit(Node):
         # self.stop = False # default is going to drive
         self.goal_reached = False
         self.dist_to_last_point = 0.0
+
+        # for back up and aligning with goal
+        self.initiate_back_up = False
+        self.backup_start_time = None
+        self.backup_state = 0
+
 
         self.alert_sub = self.create_subscription(String, "/alert", self.stopalert_cb, 10)
 
@@ -254,7 +262,59 @@ class PurePursuit(Node):
             self.goal_point = trajectory[last_index][:2]
 
         return self.goal_point
+    def drivetoorientation(self, current_pose):
+        
+        heading = current_pose[2] 
+        # if self.dist_to_last_point < 0.75: # less than 0.75 m to last point, want to orient with goal pose
+        angle_to_lookahead = self.curr_goal_pose[2] 
+        self.get_logger().info("initiate back up")
+        
+        # Step 1: Back up at an angle (steer left while reversing)
+        # back up at an angle that will 
+        def normalize_angle(angle):
+            return (angle + np.pi) % (2 * np.pi) - np.pi
+        now = self.get_clock().now().nanoseconds / 1e9
+        elapsed = now - self.backup_start_time
+        heading_error = normalize_angle(angle_to_lookahead - heading)
+        backup_steering = 0.4 if heading_error > 0 else -0.4
+        
+        if abs(heading_error) < 0.075:
+            self.send_drive_command(-0.3, 0.0)
+            time.sleep(1.0)
+            self.get_logger().info("Goal reached")
+            self.get_logger().info("Goal reached")
 
+            # Tell state node that goal is reached
+            msg = Int32()
+            msg.data = Drive.GOAL_REACHED.value
+            self.purepursuit_state_pub.publish(msg)
+            
+            self.goal_reached = True
+            
+            # reset variables
+            self.initiate_back_up = False
+            self.backup_state = 0
+            self.backup_start_time = None
+        
+        if self.backup_state == 0:
+            self.send_drive_command(-0.3, backup_steering)  # Reverse at an angle
+            if elapsed > 1.0:
+                self.backup_state = 1
+                self.backup_start_time = now
+        elif self.backup_state == 1:
+            self.send_drive_command(-0.3, -backup_steering)
+            if elapsed > 1.0:
+                self.backup_state = 2
+                self.backup_start_time = now
+        elif self.backup_state == 2:    
+            self.send_drive_command(0.3, backup_steering)
+            if elapsed > 1.0:
+                self.backup_state = 3
+                self.backup_start_time = now
+        elif self.backup_state == 3:
+            self.send_drive_command(0.0, 0.0)
+            if elapsed > 1.0:
+                self.backup_state = 0
     def drive(self, current_pose, lookahead_point):
 
         # Pure pursuit (note angles in map frame)
@@ -354,21 +414,22 @@ class PurePursuit(Node):
             # check if reached last point
             last_point = np.array(trajectory[-1][:2])
             self.dist_to_last_point = np.linalg.norm(current_point - last_point)
-            if self.dist_to_last_point < 0.75: # larger tolerance?
+            if self.dist_to_last_point < 0.25: # larger tolerance?
                 # # try to orient to goal 
                 # self.curr_heading = z_rotation # rotation, not quat
                 # self.goal_heading = self.curr_goal_pose[2] # rotation, not quat
 
                 if self.purepursuit_on and not self.goal_reached:
-                    self.get_logger().info("Goal reached")
+                    self.initiate_back_up = True
+                    # self.get_logger().info("Goal reached")
 
-                    # Tell state node that goal is reached
-                    msg = Int32()
-                    msg.data = Drive.GOAL_REACHED.value
-                    self.purepursuit_state_pub.publish(msg)
+                    # # Tell state node that goal is reached
+                    # msg = Int32()
+                    # msg.data = Drive.GOAL_REACHED.value
+                    # self.purepursuit_state_pub.publish(msg)
                     
-                    self.goal_reached = True
-                    # self.stop = True
+                    # self.goal_reached = True
+                    ## self.stop = True
 
             # self.get_logger().info('np trajectory "%s"' % trajectory)
             nearest_point, [p1_nearest, p2_nearest], index_p1, index_p2 = self.nearest_point(current_point, trajectory)
@@ -383,7 +444,15 @@ class PurePursuit(Node):
             )
 
             self.visualize_lookahead(lookahead_point)
-            self.drive(current_pose, lookahead_point)
+            # self.drive(current_pose, lookahead_point) # ORIGINAL
+
+            # FOR ALIGNING WITH GOAL
+            if self.initiate_back_up:
+                if self.backup_start_time is None:
+                    self.backup_start_time = self.get_clock().now().nanoseconds / 1e9
+                self.drivetoorientation(current_pose)
+            else:
+                self.drive(current_pose, lookahead_point)
             # self.get_logger().info('Pose callback')
             # raise NotImplementedError
 
