@@ -103,7 +103,7 @@ def update_line(
 
     xy_line = xy_line / jnp.linalg.norm(xy_line)
 
-    n_try = 41
+    n_try = 21
     try_rotations = batched.create(jnp.linspace(-0.2, 0.2, num=n_try), (n_try,))
     try_shifts = batched.create(jnp.linspace(-0.2, 0.2, num=n_try), (n_try,))
 
@@ -124,7 +124,7 @@ def update_line(
             is_center = (jnp.abs(a_rad) < 1e-4) & (jnp.abs(s1) < 1e-4)
 
             tot = per_lane_res.sum().unwrap()
-            return tot.hits + is_center * 10, (try_this, per_lane_res)
+            return tot.hits, (try_this, per_lane_res)
 
         return try_shifts.map(try_one_shift).max(lambda item: item[0])
 

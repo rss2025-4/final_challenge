@@ -136,7 +136,7 @@ class PlotNode(Node):
         print("<<<<<<<<<<<<<<<<<\nlog_callback!!!")
         self.pending_logs.append(msg)
 
-        if len(self.pending_logs) > 5:
+        if len(self.pending_logs) > 20:
             self.log_callback_(self.pending_logs.pop(0))
 
             print(">>>>>>>>>>>>>>>>>")
@@ -150,7 +150,7 @@ class PlotNode(Node):
             if abs(image_time - t) <= 1e-4:
                 return self.pending_images.pop(0).image
             elif image_time < t:
-                print("throwing out image")
+                print("throwing out image", image_time, t)
                 _ = self.pending_images.pop(0)
                 continue
             else:
@@ -183,13 +183,13 @@ class PlotNode(Node):
             return
 
         self._counter += 1
-        # if self._counter % 2 == 0:
-        #     return
+        if self._counter % 2 == 0:
+            return
 
         # print("got image")
 
-        # line_xy = data["line_xy"]
-        line_xy = data["forecast_line_xy"][1]
+        line_xy = data["line_xy"]
+        # line_xy = data["forecast_line_xy"][1]
         assert isinstance(line_xy, tuple)
 
         xy_image = np.array(xy_line_to_xyplot_image(line_xy, jnp.array(self.cfg.shifts)))

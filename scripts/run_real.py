@@ -16,7 +16,7 @@ np.set_printoptions(precision=5, suppress=True)
 
 def main():
     tracker_cfg = TrackerConfig(
-        init_y=1.5 * TrackerConfig.LANE_WIDTH,
+        init_y=-2.5 * TrackerConfig.LANE_WIDTH,
     )
     rclpy.init()
     pc = TrackerNode(cfg=tracker_cfg)

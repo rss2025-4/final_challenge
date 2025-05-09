@@ -16,5 +16,5 @@ ros2 bag record -o "$1" \
 	/vesc/odom \
 	/vesc/high_level/input/nav_0 \
 	/vesc/sensors/imu \
-	/tracker_line \
+	/tracker_log \
 	/zed/zed_node/rgb/image_rect_color

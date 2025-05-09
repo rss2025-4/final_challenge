@@ -61,7 +61,9 @@ class TrackerConfig:
 
     #: list of parellel lines, in meters
     shifts: list[float] = field(
-        default_factory=lambda: [x * TrackerConfig.LANE_WIDTH for x in range(3, -4, -1)],
+        default_factory=lambda: [
+            x * TrackerConfig.LANE_WIDTH for x in range(3, -4, -1)
+        ],
     )
 
     #: initial y location; currently assuming heading exactly +x
@@ -140,7 +142,7 @@ class TrackerNode(Node):
 
         self.controller_cache = cached_controller.load()
 
-        self.controller_cb = self.create_timer(1 / 50, self.controller_timer_callback)
+        # self.controller_cb = self.create_timer(1 / 50, self.controller_timer_callback)
 
     ######################################################
     # reorder messages we receieve that is out of order
@@ -161,7 +163,11 @@ class TrackerNode(Node):
                 return
 
             if delta > 0.5:
-                print(colored(f"warning: ({warn_tag}) {delta:.2f}s with no messages", "red"))
+                print(
+                    colored(
+                        f"warning: ({warn_tag}) {delta:.2f}s with no messages", "red"
+                    )
+                )
 
             # print(f"applying twist with duration {delta}")
             self.line_xy = self.handle_twist(
@@ -275,7 +281,8 @@ class TrackerNode(Node):
 
         control_ang = self.controller_cache.get(-dist, -line_ang)
 
-        # print("control_ang", control_ang)
+        print("dist, line_ang", dist, line_ang)
+        print("control_ang", control_ang)
 
         drive_cmd = AckermannDriveStamped()
         drive_cmd.header.stamp = self.get_clock().now().to_msg()
