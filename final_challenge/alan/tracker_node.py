@@ -286,10 +286,9 @@ class TrackerNode(Node):
         drive.steering_angle = control_ang - 0.035
         # drive.steering_angle = -0.04
 
-        if abs(control_ang) <= 0.1:
-            drive.speed = 4.0
-        else:
-            drive.speed = 2.0
+        min(4.0, 5.0 - 10 * abs(control_ang))
+
+        drive.speed = min(4.0, 5.0 - 10 * abs(control_ang))
 
         # drive.speed = 0.5
         # drive.steering_angle = 0.0

@@ -51,7 +51,7 @@ class compute_score(eqx.Module):
         loss_points = points.map(lambda x: huber_loss(x.tran.y)).sum().unwrap()
         # return loss_points
 
-        loss_final = -final_point.tran.x * 10
+        loss_final = -final_point.tran.x * 4
 
         # loss_turns = (
         #     batched_zip(p.parts[:-1], p.parts[1:])
