@@ -45,6 +45,7 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">final_challenge2025 documentation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">things homography</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.jit"><code class="docutils literal notranslate"><span class="pre">jit()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.matrix_uv_to_xy"><code class="docutils literal notranslate"><span class="pre">matrix_uv_to_xy()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.matrix_xy_to_uv"><code class="docutils literal notranslate"><span class="pre">matrix_xy_to_uv()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.Point"><code class="docutils literal notranslate"><span class="pre">Point</span></code></a></li>
@@ -107,6 +108,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.line_inf"><code class="docutils literal notranslate"><span class="pre">line_inf()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.parellel_line"><code class="docutils literal notranslate"><span class="pre">parellel_line()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final_challenge.homography.line_to_tuple"><code class="docutils literal notranslate"><span class="pre">line_to_tuple()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="internal.html">internal stuff</a></li>
@@ -143,6 +145,11 @@
 <p>The top left pixel is the origin, u axis increases to right, and v axis
 increases down.</p>
 <p>“xy” is of the ground, in meters</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.jit">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">jit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#final_challenge.homography.jit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="final_challenge.homography.matrix_uv_to_xy">
 <span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">matrix_uv_to_xy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><span class="pre">ndarray</span></a></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#matrix_uv_to_xy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.matrix_uv_to_xy" title="Link to this definition"></a></dt>
@@ -430,6 +437,11 @@ use <a class="reference internal" href="#final_challenge.homography.point_coord"
 <dl class="py function">
 <dt class="sig sig-object py" id="final_challenge.homography.normalize">
 <span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Point</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Point</span></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.normalize" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="final_challenge.homography.line_to_tuple">
+<span class="sig-prename descclassname"><span class="pre">final_challenge.homography.</span></span><span class="sig-name descname"><span class="pre">line_to_tuple</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Line</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/final_challenge/homography.html#line_to_tuple"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#final_challenge.homography.line_to_tuple" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </section>

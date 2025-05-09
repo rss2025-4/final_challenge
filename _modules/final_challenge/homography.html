@@ -100,13 +100,17 @@
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
 
+    <span class="kn">from</span><span class="w"> </span><span class="nn">libracecar.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">jit</span>
+
     <span class="n">Arr</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
     <span class="n">ArrLike</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+
 <span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
     <span class="n">jnp</span> <span class="o">=</span> <span class="n">np</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
         <span class="n">Arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
         <span class="n">ArrLike</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+        <span class="n">jit</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -273,6 +277,7 @@
 
 <div class="viewcode-block" id="homography_line">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.homography_line">[docs]</a>
+<span class="nd">@jit</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">homography_line</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">Arr</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Line</span><span class="p">:</span>
     <span class="c1"># &lt;prev, line&gt; == 0</span>
     <span class="c1"># &lt;=&gt;</span>
@@ -347,6 +352,7 @@
 
 <div class="viewcode-block" id="matrix_rot">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.matrix_rot">[docs]</a>
+<span class="nd">@jit</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">matrix_rot</span><span class="p">(</span><span class="n">ang_rad</span><span class="p">:</span> <span class="n">ArrLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
     <span class="n">sin</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">ang_rad</span><span class="p">)</span>
     <span class="n">cos</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">ang_rad</span><span class="p">)</span>
@@ -363,6 +369,7 @@
 
 <div class="viewcode-block" id="matrix_trans">
 <a class="viewcode-back" href="../../homography.html#final_challenge.homography.matrix_trans">[docs]</a>
+<span class="nd">@jit</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">matrix_trans</span><span class="p">(</span><span class="n">dx</span><span class="p">:</span> <span class="n">ArrLike</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">dy</span><span class="p">:</span> <span class="n">ArrLike</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Arr</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
         <span class="p">[</span>
@@ -695,6 +702,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">Point</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Point</span><span class="p">:</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">ck_point</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">p</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="line_to_tuple">
+<a class="viewcode-back" href="../../homography.html#final_challenge.homography.line_to_tuple">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">line_to_tuple</span><span class="p">(</span><span class="n">l</span><span class="p">:</span> <span class="n">Line</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">l</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span></div>
 
 </pre></div>
 
