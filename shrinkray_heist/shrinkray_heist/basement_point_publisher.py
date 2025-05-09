@@ -30,8 +30,9 @@ class BasementPointPublisher(Node):
     
     def goal_pose_callback(self, pose_msg: PoseStamped):
         x,y = pose_msg.pose.position.x, pose_msg.pose.position.y
+
         self.get_logger().info(f"Received goal pose point: {x}, {y}")
-        self.array.append(Pose(position=Point(x=x, y=y, z=0.0)))
+        self.array.append(Pose(position=Point(x=x, y=y, z=0.0), orientation=pose_msg.pose.orientation))
         
         if len(self.array) == 2:
             self.publish()

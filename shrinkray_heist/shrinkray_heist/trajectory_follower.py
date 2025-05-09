@@ -1,7 +1,7 @@
 import numpy as np
 import rclpy
 from ackermann_msgs.msg import AckermannDriveStamped
-from geometry_msgs.msg import Point, PoseArray, PoseWithCovarianceStamped
+from geometry_msgs.msg import Point, PoseArray, PoseWithCovarianceStamped, PoseStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from std_msgs.msg import Float32, String, Int32
@@ -72,8 +72,15 @@ class PurePursuit(Node):
         self.purepursuit_on = True # default is on
         # self.stop = False # default is going to drive
         self.goal_reached = False
+        self.dist_to_last_point = 0.0
 
         self.alert_sub = self.create_subscription(String, "/alert", self.stopalert_cb, 10)
+
+        # TODO add topic
+        # for orientation of goal pose (listen from states)
+        self.goal_sub = self.create_subscription(PoseStamped, "/curr_goal_pose", self.curr_goal_pose_cb, 10)
+        self.curr_goal_pose = np.array([0.0, 0.0, 0.0])  # x, y, theta
+        
         self.get_logger().info("Pure Pursuit Initialized")
 
 
@@ -90,7 +97,18 @@ class PurePursuit(Node):
                 self.get_logger().info("Follower: Pure Pursuit Deactivated")
         else:
             self.get_logger().info("Follower: NOT Target.follower")
-                
+
+    def curr_goal_pose_cb(self, msg):
+        z_rotation = euler_from_quaternion(
+            [
+                msg.pose.orientation.x,
+                msg.pose.orientation.y,
+                msg.pose.orientation.z,
+                msg.pose.orientation.w,
+            ]
+        )[2]
+        self.curr_goal_pose = np.array([msg.pose.position.x, msg.pose.position.y, z_rotation])
+        self.get_logger().info('Current goal pose "%s"' % self.curr_goal_pose)    
     def stopalert_cb(self, msg):
         if self.purepursuit_on and msg.data == "STOP":
             # back up 
@@ -246,6 +264,10 @@ class PurePursuit(Node):
 
         # Get the angle to the lookahead point
         angle_to_lookahead = np.arctan2(lookahead_point[1] - current_pose[1], lookahead_point[0] - current_pose[0])
+        if self.dist_to_last_point < 0.75: # less than 0.75 m to last point, want to orient with goal pose
+            # try to orient to goal 
+            angle_to_lookahead = angle_to_lookahead-self.curr_goal_pose[2] # fake angle to lookahead, actualy 
+            
         # self.get_logger().info('angle_to_lookahead "%s"' % angle_to_lookahead)
 
         # Calculate the curvature, (the curve the car follows to get to the lookahead point)
@@ -331,8 +353,12 @@ class PurePursuit(Node):
 
             # check if reached last point
             last_point = np.array(trajectory[-1][:2])
-            
-            if np.linalg.norm(current_point - last_point) < 0.75: # larger tolerance?
+            self.dist_to_last_point = np.linalg.norm(current_point - last_point)
+            if self.dist_to_last_point < 0.75: # larger tolerance?
+                # # try to orient to goal 
+                # self.curr_heading = z_rotation # rotation, not quat
+                # self.goal_heading = self.curr_goal_pose[2] # rotation, not quat
+
                 if self.purepursuit_on and not self.goal_reached:
                     self.get_logger().info("Goal reached")
 
