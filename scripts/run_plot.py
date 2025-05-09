@@ -5,8 +5,8 @@ import jax
 import numpy as np
 import rclpy
 
-from final_challenge.alan.tracker_node import TrackerConfig, TrackerNode
 from final_challenge.alan.plot_node import PlotConfig, PlotNode
+from final_challenge.alan.tracker_node import TrackerConfig
 
 jax.config.update("jax_default_device", jax.devices("cpu")[0])
 # jax.config.update("jax_platform_name", "cpu")

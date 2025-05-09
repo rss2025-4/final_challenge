@@ -1,15 +1,11 @@
-import json
 import math
 import time
-from itertools import islice
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import cv2
 import jax
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 from jax import Array, numpy as jnp
 from numpy.typing import ArrayLike
 from PIL import Image
@@ -17,7 +13,7 @@ from scipy.ndimage import uniform_filter
 
 from final_challenge.alan import FrameData
 from final_challenge.alan.image import color_image, xy_line_to_xyplot_image
-from final_challenge.alan.rosbag import get_images, get_messages
+from final_challenge.alan.rosbag import get_messages
 from final_challenge.alan.utils import cache, cast_unchecked_
 from final_challenge.homography import (
     ArrowPlot,
@@ -25,34 +21,24 @@ from final_challenge.homography import (
     Line,
     LinePlot,
     Point,
-    angle_bisector,
     ck_line,
     ck_point,
     dual_l,
-    dual_p,
-    get_foot,
     homography_image_rev,
     homography_line,
     homography_point,
-    line_direction,
     line_from_slope_intersect,
-    line_inf,
-    line_intersect,
-    line_through_points,
     line_to_slope_intersect,
     line_x_equals,
-    line_y_equals,
     matrix_rot,
     matrix_trans,
     matrix_uv_to_xy,
     normalize,
-    parellel_line,
     point_coord,
     shift_line,
-    xy_to_uv_line,
 )
-from libracecar.batched import batched, batched_zip
-from libracecar.utils import debug_print, jit
+from libracecar.batched import batched
+from libracecar.utils import jit
 
 np.set_printoptions(precision=5, suppress=True)
 # jax.config.update("jax_enable_x64", True)

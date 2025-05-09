@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Iterable
 
-import numpy as np
 import tqdm
 from PIL import Image
-from rosbags.highlevel import AnyReader
 from rosbags.rosbag2 import Reader
 from rosbags.typesys import Stores, get_typestore
 from rosbags.typesys.stores.ros2_humble_rss import (

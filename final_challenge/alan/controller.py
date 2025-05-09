@@ -10,23 +10,16 @@ import equinox as eqx
 import jax
 import numpy as np
 import optax
-from beartype import beartype as typechecker
-from jax import Array, lax, numpy as jnp, random, tree_util as jtu
-from jaxtyping import jaxtyped
+from jax import Array, lax, numpy as jnp
 from optax.losses import huber_loss
 
 from libracecar.batched import batched, batched_zip
-from libracecar.cone_inference import compute_posterior, cone_dist, cone_location
-from libracecar.plot import plot_ctx, plot_style
-from libracecar.specs import path, path_segment, position, turn_angle_limit
+from libracecar.specs import path, path_segment, position
 from libracecar.utils import (
-    debug_print,
     flike,
     fval,
     jit,
-    pformat_dataclass,
     time_function,
-    timer,
     tree_at_,
 )
 

@@ -5,10 +5,7 @@ from dataclasses import dataclass
 import jsonpickle
 import matplotlib.pyplot as plt
 import numpy as np
-from geometry_msgs.msg import Vector3
-from jax import Array, numpy as jnp, vmap
-from jax.typing import ArrayLike
-from nav_msgs.msg import Odometry
+from jax import numpy as jnp
 from PIL import Image
 from rclpy import Context
 from rclpy.node import Node
@@ -25,29 +22,23 @@ from tf2_ros import (
     Node,
 )
 
-from libracecar.batched import batched
 from libracecar.ros_utils import time_msg_to_float
-from libracecar.utils import jit, time_function, tree_select
+from libracecar.utils import time_function
 
 from ..homography import (
     ImagPlot,
-    Line,
     LinePlot,
     LinePlotXY,
     homography_image_rev,
-    homography_line,
-    homography_mask,
-    matrix_xy_to_xy_img,
     setup_xy_plot,
     shift_line,
     xy_plot_top_to_uv_line,
-    xy_to_uv_line,
 )
 from .colors import load_color_filter
-from .image import color_image, draw_lines, xy_line_to_xyplot_image
+from .image import color_image, xy_line_to_xyplot_image
 from .ros import ImageMsg
 from .tracker import process_image
-from .utils import cast, cast_unchecked
+from .utils import cast_unchecked
 
 
 @dataclass

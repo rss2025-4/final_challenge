@@ -7,10 +7,9 @@ from typing import Any, ClassVar
 import jax
 import jsonpickle
 import numpy as np
-import PIL.Image
 from ackermann_msgs.msg import AckermannDrive, AckermannDriveStamped
-from geometry_msgs.msg import Twist, Vector3
-from jax import Array, numpy as jnp
+from geometry_msgs.msg import Twist
+from jax import numpy as jnp
 from nav_msgs.msg import Odometry
 from rclpy import Context
 from rclpy.node import Node
@@ -20,7 +19,6 @@ from rclpy.qos import (
     QoSProfile,
     QoSReliabilityPolicy,
 )
-from scipy.ndimage import uniform_filter
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from termcolor import colored
@@ -37,21 +35,17 @@ from ..homography import (
     Line,
     ck_line,
     get_foot,
-    homography_image,
     homography_line,
-    homography_mask,
     homography_point,
     line_direction,
     line_to_tuple,
     line_y_equals,
     matrix_rot,
     matrix_trans,
-    matrix_xy_to_xy_img,
     point_coord,
     shift_line,
 )
-from .colors import color_counter, load_color_filter
-from .detect_lines_sweep import ScoreCtx, update_line
+from .colors import load_color_filter
 from .ros import ImageMsg
 
 
@@ -61,9 +55,7 @@ class TrackerConfig:
 
     #: list of parellel lines, in meters
     shifts: list[float] = field(
-        default_factory=lambda: [
-            x * TrackerConfig.LANE_WIDTH for x in range(3, -4, -1)
-        ],
+        default_factory=lambda: [x * TrackerConfig.LANE_WIDTH for x in range(3, -4, -1)],
     )
 
     #: initial y location; currently assuming heading exactly +x
@@ -163,11 +155,7 @@ class TrackerNode(Node):
                 return
 
             if delta > 0.5:
-                print(
-                    colored(
-                        f"warning: ({warn_tag}) {delta:.2f}s with no messages", "red"
-                    )
-                )
+                print(colored(f"warning: ({warn_tag}) {delta:.2f}s with no messages", "red"))
 
             # print(f"applying twist with duration {delta}")
             self.line_xy = self.handle_twist(

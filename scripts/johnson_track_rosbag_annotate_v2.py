@@ -15,22 +15,19 @@ from sam2.sam2_video_predictor import SAM2VideoPredictor
 from sam2.utils.misc import load_video_frames_from_jpg_images
 from scipy.ndimage import uniform_filter
 
-from final_challenge.alan import FrameData
 from final_challenge.alan.colors import color_counter, load_color_filter
-from final_challenge.alan.image import color_image, xy_line_to_xyplot_image
+from final_challenge.alan.image import xy_line_to_xyplot_image
 from final_challenge.alan.rosbag import get_images
 from final_challenge.alan.sam2_video_predictor_example import (
     get_mask,
-    show_points,
 )
 from final_challenge.alan.segmentation import FrameDataV2
-from final_challenge.alan.tracker import process_image, update_with_image
+from final_challenge.alan.tracker import update_with_image
 from final_challenge.alan.utils import cast_unchecked_
 from final_challenge.homography import (
     ImagPlot,
     LinePlot,
     homography_image,
-    homography_image_rev,
     homography_point,
     line_y_equals,
     matrix_xy_to_uv,
@@ -38,9 +35,7 @@ from final_challenge.homography import (
     point_coord,
     shift_line,
     xy_to_uv_line,
-    xy_to_uv_point,
 )
-from libracecar.batched import batched
 
 
 def viz_data():

@@ -17,7 +17,6 @@ Usage:
 
 import cv2
 import numpy as np
-import argparse
 
 
 RIGHT_Y_CUTOFF = 0.9

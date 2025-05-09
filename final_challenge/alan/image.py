@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
-import equinox as eqx
-import jax
 import numpy as np
 from jax import Array, numpy as jnp
 from jax.typing import ArrayLike
@@ -11,12 +7,11 @@ from jax.typing import ArrayLike
 from final_challenge.homography import (
     Line,
     homography_line,
-    matrix_rot,
     matrix_xy_to_xy_img,
     shift_line,
 )
 from libracecar.batched import batched
-from libracecar.utils import cast, jit, pformat_repr, tree_select
+from libracecar.utils import cast, jit, tree_select
 
 
 def _get_line(

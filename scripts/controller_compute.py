@@ -1,37 +1,18 @@
 import math
-from typing import Protocol
 
-import equinox as eqx
 import jax
 import matplotlib.pyplot as plt
 import numpy as np
-import optax
-import rclpy
-from beartype import beartype as typechecker
-from jax import Array, lax, numpy as jnp, random, tree_util as jtu
-from jaxtyping import jaxtyped
-from optax.losses import huber_loss
 
 from final_challenge.alan.controller import (
     cached_controller,
     compute_path,
     compute_path_all,
-    compute_path_all_,
     compute_score,
 )
-from libracecar.batched import batched, batched_zip
-from libracecar.cone_inference import compute_posterior, cone_dist, cone_location
-from libracecar.plot import plot_ctx, plot_style
-from libracecar.specs import path, path_segment, position, turn_angle_limit
+from libracecar.specs import position
 from libracecar.utils import (
-    debug_print,
-    flike,
-    fval,
-    jit,
-    pformat_dataclass,
-    time_function,
     timer,
-    tree_at_,
 )
 
 np.set_printoptions(precision=5, suppress=True)
