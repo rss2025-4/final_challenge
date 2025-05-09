@@ -41,7 +41,7 @@ def plot():
 
 
 def testfn():
-    init = position.create((0, 0), -math.pi + 0.001)
+    init = position.create((0, -0.1), -0.1)
 
     with timer.create() as t:
         ans, loss = compute_path(compute_score(start=init, prev_a=0.1))

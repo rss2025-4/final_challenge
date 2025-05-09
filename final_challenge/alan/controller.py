@@ -32,19 +32,23 @@ class compute_score(eqx.Module):
     def calc_loss(self, p: path) -> fval:
         final_point, points = p.move(self.start)
 
-        points_mid = batched_zip(points, p.parts).tuple_map(
-            lambda point, part: (
-                #
-                path_segment(part.angle, part.length / 2).move(point)
+        points = (
+            batched.create_stack([0.0, 0.25, 0.5, 0.75])
+            .map(
+                lambda i: batched_zip(points, p.parts).tuple_map(
+                    lambda point, part: (
+                        #
+                        path_segment(part.angle, part.length * i).move(point)
+                    )
+                )
             )
+            .uf
         )
 
-        points = batched.concat([points, points_mid, batched.create(final_point).reshape(1)])
-
-        loss_points = points.map(lambda x: huber_loss(x.tran.y)).sum().unwrap()
+        loss_points = points.map(lambda x: huber_loss(x.tran.y)).sum().unwrap() / 2
         # return loss_points
 
-        loss_final = -final_point.tran.x * 4
+        loss_final = -final_point.tran.x * 10
 
         # loss_turns = (
         #     batched_zip(p.parts[:-1], p.parts[1:])
@@ -165,11 +169,14 @@ class cached_controller:
 
 @time_function
 def compute_path_all() -> cached_controller:
-    # ys = jnp.linspace(-5, 5, 401)
-    # angles = jnp.linspace(-math.pi, math.pi, 361)
+    ys = jnp.linspace(-5, 5, 401)
+    angles = jnp.linspace(-math.pi, math.pi, 361)
 
-    ys = jnp.linspace(-5, 5, 201)
-    angles = jnp.linspace(-math.pi, math.pi, 201)
+    # ys = jnp.linspace(-5, 5, 201)
+    # angles = jnp.linspace(-math.pi, math.pi, 201)
+
+    # ys = jnp.linspace(-5, 5, 101)
+    # angles = jnp.linspace(-math.pi, math.pi, 101)
 
     ans = (
         compute_path_all_(ys, angles)
