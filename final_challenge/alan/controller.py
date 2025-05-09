@@ -63,7 +63,7 @@ class compute_score(eqx.Module):
 
         # loss_turns1 = jnp.square(self.prev_a - p.parts[0].unwrap().angle) * 20
 
-        loss_turns = p.parts.map(lambda p: jnp.square(p.angle)).sum().unwrap()
+        loss_turns = p.parts.map(lambda p: jnp.square(p.angle) * 100).sum().unwrap()
 
         return loss_points + loss_final + loss_turns
 
@@ -172,8 +172,11 @@ class cached_controller:
 
 @time_function
 def compute_path_all() -> cached_controller:
-    ys = jnp.linspace(-5, 5, 401)
-    angles = jnp.linspace(-math.pi, math.pi, 361)
+    # ys = jnp.linspace(-5, 5, 401)
+    # angles = jnp.linspace(-math.pi, math.pi, 361)
+
+    ys = jnp.linspace(-5, 5, 101)
+    angles = jnp.linspace(-math.pi, math.pi, 101)
 
     ans = (
         compute_path_all_(ys, angles)
