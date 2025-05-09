@@ -245,10 +245,11 @@ class DetectionNode(Node):
 
         # Process image with CV Bridge
         image = self.bridge.imgmsg_to_cv2(img_msg, "bgr8")
-        # image = image[200:400, :]
-        # output = np.zeros_like(image)
+        ## image = image[200:400, :]
+        ## output = np.zeros_like(image)
         # output[120:330, :] = image[120:240, :]
-        # image = output
+        ## image = output
+        
         # output = image.copy()
         # height = output.shape[0]
 
@@ -307,11 +308,11 @@ class DetectionNode(Node):
                         # Get the bounding box coordinates 
                         #double bounding box since traffic light twice height than actual (due to stud)
                         
-                        if not self.trafficlight_detector_green_on: # save last red bounding box
-                            self.red_trafficlight_bbox = bbox #[bbox[0], bbox[1], bbox[2], bbox[3]] # x1, y1, x2, y2 = trafficlight_bbox
-                        elif self.trafficlight_detector_green_on: # if detecting green light, use the last red light bbox
-                            bbox = self.red_trafficlight_bbox
-                            self.get_logger().info(f"Using last red light bbox: {self.red_trafficlight_bbox}")
+                        # if not self.trafficlight_detector_green_on: # save last red bounding box
+                        #     self.red_trafficlight_bbox = bbox #[bbox[0], bbox[1], bbox[2], bbox[3]] # x1, y1, x2, y2 = trafficlight_bbox
+                        # elif self.trafficlight_detector_green_on: # if detecting green light, use the last red light bbox
+                        #     bbox = self.red_trafficlight_bbox
+                        #     self.get_logger().info(f"Using last red light bbox: {self.red_trafficlight_bbox}")
                             
                         bottom = bbox[3]+(bbox[3]-bbox[1]) #y2 + (y2-y1)
                         trafficlight_bbox = [bbox[0], bbox[1], bbox[2], bottom] # double the height since traffic light has stud underneath

@@ -262,6 +262,16 @@ class PurePursuit(Node):
             self.goal_point = trajectory[last_index][:2]
 
         return self.goal_point
+    def send_drive_command(self, speed, steering_angle):
+        drive_msg = AckermannDriveStamped()
+        curr_time = self.get_clock().now()
+        drive_msg.header.stamp = curr_time.to_msg()
+        drive_msg.header.frame_id = "base_link"
+        
+        drive_msg.drive.speed = speed
+        drive_msg.drive.steering_angle = steering_angle
+        self.drive_pub.publish(drive_msg)
+    
     def drivetoorientation(self, current_pose):
         
         heading = current_pose[2] 
@@ -420,15 +430,15 @@ class PurePursuit(Node):
                 # self.goal_heading = self.curr_goal_pose[2] # rotation, not quat
 
                 if self.purepursuit_on and not self.goal_reached:
-                    self.initiate_back_up = True
-                    # self.get_logger().info("Goal reached")
+                    # self.initiate_back_up = True
+                    self.get_logger().info("Goal reached")
 
-                    # # Tell state node that goal is reached
-                    # msg = Int32()
-                    # msg.data = Drive.GOAL_REACHED.value
-                    # self.purepursuit_state_pub.publish(msg)
+                    # Tell state node that goal is reached
+                    msg = Int32()
+                    msg.data = Drive.GOAL_REACHED.value
+                    self.purepursuit_state_pub.publish(msg)
                     
-                    # self.goal_reached = True
+                    self.goal_reached = True
                     ## self.stop = True
 
             # self.get_logger().info('np trajectory "%s"' % trajectory)
@@ -444,15 +454,15 @@ class PurePursuit(Node):
             )
 
             self.visualize_lookahead(lookahead_point)
-            # self.drive(current_pose, lookahead_point) # ORIGINAL
+            self.drive(current_pose, lookahead_point) # ORIGINAL
 
             # FOR ALIGNING WITH GOAL
-            if self.initiate_back_up:
-                if self.backup_start_time is None:
-                    self.backup_start_time = self.get_clock().now().nanoseconds / 1e9
-                self.drivetoorientation(current_pose)
-            else:
-                self.drive(current_pose, lookahead_point)
+            # if self.initiate_back_up:
+            #     if self.backup_start_time is None:
+            #         self.backup_start_time = self.get_clock().now().nanoseconds / 1e9
+            #     self.drivetoorientation(current_pose)
+            # else:
+            #     self.drive(current_pose, lookahead_point)
             # self.get_logger().info('Pose callback')
             # raise NotImplementedError
 

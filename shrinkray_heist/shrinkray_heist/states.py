@@ -161,7 +161,7 @@ class StatesNode(Node):
             self.control_node(target=Target.FOLLOWER) # start the pure pursuit again
             self.traffic_state = TrafficSimulation.HANDLED_TRAFFIC
             self.state = State.FOLLOWING
-            # self.control_node(target=Target.DETECTOR_TRAFFIC_LIGHT) # turn off the detector 
+            self.control_node(target=Target.DETECTOR_TRAFFIC_LIGHT_GREEN) # turn off the detector 
             self.at_stopping_point = False
         elif msg.data == ObjectDetected.TRAFFIC_LIGHT_GREEN.value and self.state == State.FOLLOWING:
             self.get_logger().info("StatesNode: Detected green traffic light : continue")
