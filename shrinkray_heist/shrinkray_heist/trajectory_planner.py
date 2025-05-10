@@ -402,12 +402,15 @@ class PathPlan(Node):
         profiler = cProfile.Profile()
         profiler.enable()
         a_star = AStar(map, self.get_logger(), debug=self.debug)
-        if AStar.count == 1:
-            self.dist_table = a_star._precompute_nearest_wall()
-        self.get_logger().info(f"there is the size of dist tabble {self.dist_table}, AStar.count {AStar.count} {a_star.count}")
-        a_star.set_dist_table(self.dist_table)
-        self.get_logger().info(f"there is the size of dist tabble {self.dist_table}, AStar.c")
-        
+
+        ### COMMENTING OUT FOR TESTING
+        # if AStar.count == 1:
+        #     self.dist_table = a_star._precompute_nearest_wall()
+        # self.get_logger().info(f"there is the size of dist tabble {self.dist_table}, AStar.count {AStar.count} {a_star.count}")
+        # a_star.set_dist_table(self.dist_table)
+        # self.get_logger().info(f"there is the size of dist tabble {self.dist_table}, AStar.c")
+        ###
+
         # Assuming you have:
         # astar_solver = AStar(occupancy_grid, logger, debug=True, ...)
         # start_node = (sx, sy)

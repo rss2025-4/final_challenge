@@ -14,7 +14,7 @@ class AStar:
         self.R = occupancy_grid.shape[0]
         self.C = occupancy_grid.shape[1]
         self.logger = logger
-        self.debug = True
+        self.debug = False # made false
         self.wall_penalty_weight = wall_penalty_weight
         self.wall_heuristic_search_radius = wall_heuristic_search_radius
         AStar.count += 1
@@ -83,20 +83,24 @@ class AStar:
         dy_goal = abs(a[1] - b[1])
         h_goal_dist = math.sqrt(dx_goal**2 + dy_goal**2)
 
-        # Wall avoidance penalty calculation
-        dist_to_wall = self.wall_dist_table[a[1], a[0]]  # Access distance field with [row_idx, col_idx] which is [y, x]
+        ### COMMENT OUT FOR TESTING
+        # # Wall avoidance penalty calculation
+        # dist_to_wall = self.wall_dist_table[a[1], a[0]]  # Access distance field with [row_idx, col_idx] which is [y, x]
         
-        wall_penalty = 0.0
-        # Apply penalty only if a wall is found within the effective search radius
-        # (dist_to_wall will be < self.wall_heuristic_search_radius or == self.wall_heuristic_search_radius if found exactly at radius)
-        if dist_to_wall > 0 and dist_to_wall < float('inf'): # Effectively dist_to_wall <= self.wall_heuristic_search_radius
-            # Inverse distance penalty: closer to wall -> higher penalty
-            wall_penalty = self.wall_penalty_weight * (1.0 / dist_to_wall)
-        
-        
-            # self.logger.info(f"Heuristic for node {a} to goal {b}: GoalDist={h_goal_dist:.2f}, DistToWall={dist_to_wall}, WallPenalty={wall_penalty:.2f}, TotalH={(h_goal_dist + wall_penalty):.2f}")
+        # wall_penalty = 0.0
+        # # Apply penalty only if a wall is found within the effective search radius
+        # # (dist_to_wall will be < self.wall_heuristic_search_radius or == self.wall_heuristic_search_radius if found exactly at radius)
+        # if dist_to_wall > 0 and dist_to_wall < float('inf'): # Effectively dist_to_wall <= self.wall_heuristic_search_radius
+        #     # Inverse distance penalty: closer to wall -> higher penalty
+        #     if dist_to_wall < self.wall_heuristic_search_radius:
+        #         wall_penalty = self.wall_penalty_weight * (1.0 / dist_to_wall)
             
-        return h_goal_dist + wall_penalty
+        
+        #     # self.logger.info(f"Heuristic for node {a} to goal {b}: GoalDist={h_goal_dist:.2f}, DistToWall={dist_to_wall}, WallPenalty={wall_penalty:.2f}, TotalH={(h_goal_dist + wall_penalty):.2f}")
+            
+        # return h_goal_dist + wall_penalty
+        ###
+        return h_goal_dist
 
     def get_movement_cost(self, current_pos, next_pos):
         x, y = next_pos
@@ -127,7 +131,7 @@ class AStar:
     # h(x,y) must never overestimate the cost to get to the goal
     def a_star(self, start, goal):
         q = PriorityQueue()
-        q.put((0, start))
+        
 
         backtrack = {}
         costs = defaultdict(lambda: float("inf"))
@@ -135,7 +139,10 @@ class AStar:
         # dummy = (float("inf"), float("inf"))
         # backtrack[dummy] = None
         # backtrack[start] = dummy
+        
         costs[start] = 0.0
+        initial_f_cost = costs[start] + self.heuristic(start, goal)
+        q.put((initial_f_cost, start)) # Use the correct initial f-cost
         # prev = dummy
         visited = set()
         
