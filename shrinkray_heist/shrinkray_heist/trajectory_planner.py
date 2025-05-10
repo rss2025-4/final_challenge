@@ -20,7 +20,9 @@ from .a_star import AStar
 from .eval_utils import InjectedConfig
 from .helper import grid_to_world, world_to_grid
 from .utils import LineTrajectory
-
+import cProfile
+import pstats
+import io # For capturing stats output if needed
 
 
 class PathPlan(Node):
@@ -78,16 +80,16 @@ class PathPlan(Node):
             ),
         )
 
-         # TODO: if needed, implement dilation specifically for obstacles
-        self.obstacle_buffer = 0.1
-
+       
         # NOTE toggle this to True to enable debug mode (i.e. add additional logging)
         self.debug = False
         self.external_map = True
         
         self.map = None
         self.dilated_map = None
-
+        self.dist_table = None
+        
+        
         self.trajectory = LineTrajectory(node=self, viz_namespace="/planned_trajectory")
         
     
@@ -96,7 +98,8 @@ class PathPlan(Node):
         if self.external_map:
             
             # image = cv2.imread("flipped_occupany_map_conservative.png", cv2.IMREAD_GRAYSCALE)
-            image = cv2.imread("flipped_final_map.png", cv2.IMREAD_GRAYSCALE)
+            # image = cv2.imread("flipped_final_map.png", cv2.IMREAD_GRAYSCALE)
+            image = cv2.imread("there_map.png", cv2.IMREAD_GRAYSCALE)
             self.get_logger().info("flipped_final_map")
             newmap = np.array(image).astype(np.uint8)
             newmap = np.flipud(newmap)
@@ -274,38 +277,6 @@ class PathPlan(Node):
             
     
     '''
-    obstacles: list of tuples (x, y) representing the world coordinates of obstacles
-    This function should be called when the robot detects an obstacle in its path.
-    It will update the map and replan the path to avoid the obstacles.
-    NOTE: not implemented yet
-    '''
-    def obstacle_handler(self, obstacles):
-        # Convert world coordinates to grid coordinates
-        obstacle_coords = [
-            world_to_grid(obstacle[0], obstacle[1], self.map_info, self.get_logger(), debug=self.debug)
-            for obstacle in obstacles
-        ]
-        # Mark the obstacles on the map
-        for x,y in obstacle_coords:
-            if 0 <= x < self.map_info.width and 0 <= y < self.map_info.height:
-                self.map[y,x] = 100
-                if self.debug:
-                    self.get_logger().info(f"PathPlan: Obstacle at grid coordinates: ({x}, {y}, map coordinates, )")
-        # Dilate the map to account for the safety buffer
-        self.dilated_map = self.dilate_occupancy_map(
-            occupancy_data=self.map.flatten().tolist(),
-            width=self.map_info.width,
-            height=self.map_info.height,
-            resolution=self.map_info.resolution,
-            dilation_radius_meters= self.obstacle_buffer ,
-            occupancy_threshold=50
-        )
-        
-            
-        # Replan the path
-        self.plan_trip()
-    
-    '''
     Args: 
         msg: PoseArray message containing the start and end pose of a trip 
     
@@ -325,7 +296,44 @@ class PathPlan(Node):
         self.get_logger().info(f"PathPlan: path_cb: Planning path... (in grid) start coords: {coords[0]} to end coords: {coords[1]}")
         self.plan_path(coords[0],coords[1], self.dilated_map)
      
+    def _smooth_path(self, path):
+        """
+        Simplify a path by removing unnecessary waypoints while ensuring collision-free movements.
+        """
+        if not path:
+            raise Exception("no path generated")
+        if len(path) <= 2:
+            return path  # Nothing to smooth for very short paths
+
+        # Start with the first point
+        smoothed = [path[0]]
+        current = 0
         
+        # Keep going until we reach the end
+        while current < len(path) - 1:
+            # Try to find furthest point we can connect to directly
+            skip_to = current
+            
+            # Check each point after the current one
+            for j in range(current + 1, len(path) - 1):
+                if self.is_collision_free(
+                    smoothed[-1][0], smoothed[-1][1], 
+                    path[j][0], path[j][1]
+                ):
+                    skip_to = j
+                else:
+                    break
+            
+            if skip_to > current:
+                # We found a valid skip - add that point and move to it
+                smoothed.append(path[skip_to])
+                current = skip_to
+            else:
+                # Cannot skip, need to add the very next point
+                current += 1
+                smoothed.append(path[current])
+    
+        return smoothed  
     # TODO: implement smooth path        
     def smooth_path(self, path):
         """
@@ -358,17 +366,68 @@ class PathPlan(Node):
         return smoothed
 
     
-
     def plan_path(self, start_point, end_point, map):
         try:
-            return self.plan_path_(start_point, end_point, map)
+            pose_array = self.plan_path_(start_point, end_point, map)
+            return self.traj_publish(pose_array)
         except Exception as e:
             self.get_logger().info(f"PathPlan: plan_path: failed \n {e}")
             print(e)
+    
+    def check_path_length(self, start_point, end_point, map):
+        try:
+            pose_array = self.plan_path_(start_point, end_point, map)
+            
+            trajectory = np.asarray(self.trajectory)
+            x = trajectory.T[0]
+            y = trajectory.T[1]
+            
+            x = np.array(x)
+            y = np.array(y)
+            
+            dx = np.diff(x)
+            dy = np.diff(y)
+
+            # Calculate the Euclidean distance for each segment of the path
+            segment_lengths = np.sqrt(dx**2 + dy**2)
+
+            # Return the sum of the segment lengths
+            return np.sum(segment_lengths)
+        except Exception as e:
+            self.get_logger().info(f"PathPlan: check_path_length: failed \n {e}")
+            print(e)
+            
 
     def plan_path_(self, start_point, end_point, map):
+        profiler = cProfile.Profile()
+        profiler.enable()
         a_star = AStar(map, self.get_logger(), debug=self.debug)
+        if AStar.count == 1:
+            self.dist_table = a_star._precompute_nearest_wall()
+        self.get_logger().info(f"there is the size of dist tabble {self.dist_table}, AStar.count {AStar.count} {a_star.count}")
+        a_star.set_dist_table(self.dist_table)
+        self.get_logger().info(f"there is the size of dist tabble {self.dist_table}, AStar.c")
+        
+        # Assuming you have:
+        # astar_solver = AStar(occupancy_grid, logger, debug=True, ...)
+        # start_node = (sx, sy)
+        # goal_node = (gx, gy)
+
+        
+
+        # Call the method you want to profile
         path = a_star.a_star(start=start_point, goal=end_point)
+        profiler.disable()
+
+        # Print the stats
+        # Sort by cumulative time spent in functions
+        s = io.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(profiler, stream=s).sort_stats(sortby)
+        ps.print_stats(20) # Print the top 20 time-consuming functions/methods
+        self.get_logger().info(f"time stats: {s.getvalue()}")
+        
+        # path = self._smooth_path(path)
         if path is None:
             self.get_logger().error("PathPlan: plan_path: No path found")
             return
@@ -410,13 +469,23 @@ class PathPlan(Node):
             pose_array.poses.append(pose)
             # Add to trajectory using position only
             self.trajectory.addPoint([pose.position.x, pose.position.y])
-
+        return pose_array
+    
+    # for use to preload the trajectory planner with a past trajectory 
+    # so pure pursuit can follow 
+    def traj_publish(self, pose_array, trajectory = None):
         # Publish results
         self.get_logger().info("PathPlan: Publishing trajectory...")
         self.traj_pub.publish(pose_array)
+        if trajectory != None:
+            # we have a pre loaded path 
+            self.trajectory.clear()
+            self.trajectory = trajectory
         self.trajectory.publish_viz()
         self.get_logger().info("PathPlan: Path published successfully")
 
+       
+   
        
    
     def visualize_pose(self, pose, publisher, color, id):

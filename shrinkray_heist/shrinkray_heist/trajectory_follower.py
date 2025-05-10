@@ -35,7 +35,7 @@ class PurePursuit(Node):
         # print(f"odom_topic: {self.odom_topic}")
         # print(f"drive_topic: {self.drive_topic}")
 
-        self.speed = 0.4  # ADJUST SPEED m/s#
+        self.speed = 0.6  # ADJUST SPEED m/s#
         self.lookahead = 0.8 # ADJUST LOOKAHEAD m -- NEEDS TO BE TUNED IN REAL LIFE 
         self.steering_angle = 0.0
         # FOR VARIABLE LOOKAHEAD (MAYBE NOT NEEDED FOR FINAL RACE THOUGH)
@@ -46,7 +46,7 @@ class PurePursuit(Node):
         # self.lookahead = self.min_lookahead
 
         self.wheelbase_length = 0.33
-        self.max_steer = np.pi / 4
+        self.max_steer = np.pi / 6
 
         self.initialized_traj = False
         self.trajectory = LineTrajectory("/followed_trajectory")
@@ -289,11 +289,11 @@ class PurePursuit(Node):
         heading_error = normalize_angle(angle_to_lookahead - heading)
         backup_steering = 0.4 if heading_error > 0 else -0.4
         
-        if abs(heading_error) <0.15:
-            self.send_drive_command(-0.3, 0.0)
-            time.sleep(1.0)
+        if abs(heading_error) <0.25:
+            # self.send_drive_command(0.3, 0.0)
+            # time.sleep(2.0)
             self.get_logger().info("Goal reached")
-            self.get_logger().info("Goal reached")
+            self.initialized_traj = False # no more pure pursuit until new traj
 
             # Tell state node that goal is reached
             msg = Int32()
@@ -376,7 +376,7 @@ class PurePursuit(Node):
         # self.get_logger().info('steering angle "%s"' % steering_angle)
 
         # Restrict steering_angle (see if needed?)
-        # steering_angle = np.clip(steering_angle, -self.max_steer, self.max_steer)
+        self.steering_angle = np.clip(self.steering_angle, -self.max_steer, self.max_steer)
         # self.get_logger().info('steering angle "%s"' % np.rad2deg(steering_angle))
 
         speed = self.speed
@@ -425,23 +425,23 @@ class PurePursuit(Node):
             # check if reached last point
             last_point = np.array(trajectory[-1][:2])
             self.dist_to_last_point = np.linalg.norm(current_point - last_point)
-            if self.dist_to_last_point < 0.25: # larger tolerance?
-                # # try to orient to goal 
+            if self.dist_to_last_point < 0.4: # larger tolerance?
+                # # try to orient to goal  - nevermind 5/9, do it detector node
                 # self.curr_heading = z_rotation # rotation, not quat
                 # self.goal_heading = self.curr_goal_pose[2] # rotation, not quat
 
                 if self.purepursuit_on and not self.goal_reached:
-                    self.initiate_back_up = True
+                #     self.initiate_back_up = True
                     
-                    # # NO BACK AND FORTH
-                    # self.get_logger().info("Goal reached")
+                    # NO BACK AND FORTH
+                    self.get_logger().info("Goal reached")
 
-                    # # Tell state node that goal is reached
-                    # msg = Int32()
-                    # msg.data = Drive.GOAL_REACHED.value
-                    # self.purepursuit_state_pub.publish(msg)
+                    # Tell state node that goal is reached
+                    msg = Int32()
+                    msg.data = Drive.GOAL_REACHED.value
+                    self.purepursuit_state_pub.publish(msg)
                     
-                    # self.goal_reached = True
+                    self.goal_reached = True
 
             # self.get_logger().info('np trajectory "%s"' % trajectory)
             nearest_point, [p1_nearest, p2_nearest], index_p1, index_p2 = self.nearest_point(current_point, trajectory)
@@ -458,15 +458,15 @@ class PurePursuit(Node):
             self.visualize_lookahead(lookahead_point)
             
             # NO ALIGNING
-            # self.drive(current_pose, lookahead_point) # ORIGINAL
+            self.drive(current_pose, lookahead_point) # ORIGINAL
 
-            # FOR ALIGNING WITH GOAL
-            if self.initiate_back_up:
-                if self.backup_start_time is None:
-                    self.backup_start_time = self.get_clock().now().nanoseconds / 1e9
-                self.drivetoorientation(current_pose)
-            else:
-                self.drive(current_pose, lookahead_point)
+            ## FOR ALIGNING WITH GOAL
+            # if self.initiate_back_up:
+            #     if self.backup_start_time is None:
+            #         self.backup_start_time = self.get_clock().now().nanoseconds / 1e9
+            #     self.drivetoorientation(current_pose)
+            # else:
+            #     self.drive(current_pose, lookahead_point)
 
             # self.get_logger().info('Pose callback')
 

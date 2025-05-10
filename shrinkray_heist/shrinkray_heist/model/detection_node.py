@@ -9,6 +9,9 @@ import numpy as np
 from std_msgs.msg import Int32, Float32
 from sensor_msgs.msg import Image
 from ackermann_msgs.msg import AckermannDriveStamped
+from geometry_msgs.msg import Point, PoseArray, PoseWithCovarianceStamped, PoseStamped, Pose
+from nav_msgs.msg import Odometry
+from tf_transformations import euler_from_quaternion
 
 from .detector import Detector #model.
 from shrinkray_heist.definitions import  Target, TripSegment, ObjectDetected, State
@@ -22,12 +25,12 @@ class DetectionNode(Node):
         super().__init__("detector_node")
         # self.detector = Detector() # ON REAL RACECAR
         curr_datetime = datetime.now().strftime('%Y-%m-%d %H-%M-%S') 
-        self.get_logger().info(f"curr date t{curr_datetime}")
+        self.get_logger().info(f"curr date time {curr_datetime}")
         self.detector = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
         self.detector.set_threshold(0.3)
 
         self.banana_detector = Detector(yolo_dir='/home/racecar/models', from_tensor_rt=False)
-        self.banana_detector.set_threshold(0.55)
+        self.banana_detector.set_threshold(0.5)
 
         self.yolo_pub = self.create_publisher(Image, "/yolo_img", 10)
         self.image_sub = self.create_subscription(Image, "/zed/zed_node/rgb/image_rect_color", self.img_cb, 1)
@@ -62,7 +65,19 @@ class DetectionNode(Node):
         self.scan_speed = 0.3
         self.scan_angle = 0.5
 
+        # for back up and aligning with goal (instead of in traj follower)
+        self.initiate_back_up = False
+        self.backup_start_time = None
+        self.backup_state = 0
+        self.current_pose = np.array([0.0, 0.0, 0.0])
+
+        # for orientation of goal pose (listen from states)
+        self.odom_sub = self.create_subscription(Odometry, "/pf/pose/odom", self.pose_callback, 10)
+        self.goal_sub = self.create_subscription(Pose, "/curr_goal_pose", self.curr_goal_pose_cb, 10)
+        self.curr_goal_pose = np.array([0.0, 0.0, 0.0])  # x, y, theta
+
         self.debug = True
+    
     def state_cb(self, msg):
         pass # for testing
 
@@ -87,13 +102,53 @@ class DetectionNode(Node):
             if self.shrinkray_detector_on:
                 self.get_logger().info("Detector: Shrink Ray Detector Activated")
                 
+                # get active time
                 self.shrinkray_active_start_time = self.get_clock().now().nanoseconds / 1e9
+                
+                # for initiating orienting (if after 5 seconds and nothing detected)
+                self.initiate_back_up = False
+                self.backup_start_time = None
+                self.backup_state = 0
+
+                # for initiating hard code scan (if after 30 seconds and nothing detected)
                 self.scan_step = 0
                 self.scan_sequence_started = False
+
+                # for only saving photo once per activated shrink ray
+                self.saved_photo = False
+                
+                
             else:
                 self.get_logger().info("Detector: Shrink Ray Detector Deactivated")
+    
+    def curr_goal_pose_cb(self, msg):
+        z_rotation = euler_from_quaternion(
+            [
+                msg.orientation.x,
+                msg.orientation.y,
+                msg.orientation.z,
+                msg.orientation.w,
+            ]
+        )[2]
+        self.curr_goal_pose = np.array([msg.position.x, msg.position.y, z_rotation])
+        self.get_logger().info('Current goal pose "%s"' % self.curr_goal_pose) 
+    
+    def pose_callback(self, odometry_msg):
         
-        
+        # self.get_logger().info('Pose callback')
+        # Get the current pose of the vehicle
+        # self.get_logger().info('Current point "%s"' % current_point)
+
+        z_rotation = euler_from_quaternion(
+            [
+                odometry_msg.pose.pose.orientation.x,
+                odometry_msg.pose.pose.orientation.y,
+                odometry_msg.pose.pose.orientation.z,
+                odometry_msg.pose.pose.orientation.w,
+            ]
+        )[2]
+        self.current_pose = np.array([odometry_msg.pose.pose.position.x, odometry_msg.pose.pose.position.y, z_rotation])
+
     def get_relative_position(self, bbox):
         """
         u and v are pixel coordinates.
@@ -115,7 +170,7 @@ class DetectionNode(Node):
         L1 = np.sqrt(x**2 + y**2) # in meters
         self.get_logger().info(f"Distance to shrink ray: {L1}")
 
-        if L1 < 1.0: # in meters
+        if L1 < 0.50: # in meters
             drive_msg = AckermannDriveStamped()
             drive_msg.drive.steering_angle = 0.0
             drive_msg.drive.speed = 0.0
@@ -143,44 +198,69 @@ class DetectionNode(Node):
         self.get_logger().info("Published steering angle")
         return L1
     
-    def scan_sequence(self):
-        if not self.scan_sequence_started:
-            return
+    def send_drive_command(self, speed, steering_angle):
+        drive_msg = AckermannDriveStamped()
+        curr_time = self.get_clock().now()
+        drive_msg.header.stamp = curr_time.to_msg()
+        drive_msg.header.frame_id = "base_link"
+        
+        drive_msg.drive.speed = speed
+        drive_msg.drive.steering_angle = steering_angle
+        self.drive_pub.publish(drive_msg)
 
-        # self.scan_sequence_started = True
+    def drivetoorientation(self, current_pose):
+        
+        heading = current_pose[2] 
+        # if self.dist_to_last_point < 0.75: # less than 0.75 m to last point, want to orient with goal pose
+        angle_to_lookahead = self.curr_goal_pose[2] 
+        self.get_logger().info("initiate back up")
+        
+        # Step 1: Back up at an angle (steer left while reversing)
+        # back up at an angle that will 
+        def normalize_angle(angle):
+            return (angle + np.pi) % (2 * np.pi) - np.pi
+        
+        now = self.get_clock().now().nanoseconds / 1e9
+        elapsed = now - self.backup_start_time
+        heading_error = normalize_angle(angle_to_lookahead - heading)
+        backup_steering = 0.4 if heading_error > 0 else -0.4
+        
+        if abs(heading_error) < 0.5:
+            # self.send_drive_command(0.3, 0.0)
+            # time.sleep(2.0)
+            self.get_logger().info("Orientation reached")
 
-        def send_drive(speed, angle, duration):
-            drive_msg = AckermannDriveStamped()
-            drive_msg.drive.steering_angle = speed
-            drive_msg.drive.speed = angle
-
-            end_time = self.get_clock().now().nanoseconds + int(duration * 1e9)
+            # # Tell state node that goal is reached
+            # msg = Int32()
+            # msg.data = Drive.GOAL_REACHED.value
+            # self.purepursuit_state_pub.publish(msg)
             
-            while self.get_clock().now().nanoseconds < end_time:
-                self.drive_pub.publish(drive_msg)
-                self.get_logger().info(f"Scan Sequence: Driving with speed: {speed}, angle: {angle}")
-                time.sleep(0.1)
+            # self.goal_reached = True
             
-            # Stop the robot briefly
-            msg.drive.speed = 0.0
-            msg.drive.steering_angle = 0.0
-            self.drive_pub.publish(msg)
-            self.get_logger().info(f"Scan Sequence: Driving with speed: {speed}, angle: {angle}")
-            time.sleep(0.2)
-
-        # Repeat the pattern N times
-        repetitions = 3
-        for _ in range(repetitions):
-            # Step 1: Small backup
-            send_drive(-0.2, 0.0, 0.5)
-
-            # Step 2: Move forward
-            send_drive(0.2, 0.0, 0.5)
-
-            # Step 3: Turn slightly while moving forward
-            send_drive(0.2, 0.25, 0.6)
-
-        self.get_logger().info("Repeated scan maneuver completed.")
+            # reset variables - nvm do not, otherwise keeps going
+            # self.initiate_back_up = False
+            # self.backup_state = 0
+            # self.backup_start_time = None
+        
+        if self.backup_state == 0:
+            self.send_drive_command(-0.3, backup_steering)  # Reverse at an angle
+            if elapsed > 0.75:
+                self.backup_state = 1
+                self.backup_start_time = now
+        elif self.backup_state == 1:
+            self.send_drive_command(-0.3, -backup_steering)
+            if elapsed > 0.75:
+                self.backup_state = 2
+                self.backup_start_time = now
+        elif self.backup_state == 2:    
+            self.send_drive_command(0.3, backup_steering)
+            if elapsed > 1.5:
+                self.backup_state = 3
+                self.backup_start_time = now
+        elif self.backup_state == 3:
+            self.send_drive_command(0.0, 0.0)
+            if elapsed > 1.0:
+                self.backup_state = 0
 
     def execute_sequence(self):
         
@@ -277,11 +357,28 @@ class DetectionNode(Node):
         # cv2.imwrite(save_path, rgb_image)
         # self.get_logger().info(f"CV BRIDGE Image: {image.shape}")
 
-        # Record how long shrink ray has been on for 
+        # Record how long shrink ray has activated on on for 
         now = self.get_clock().now().nanoseconds / 1e9
         shrinkray_active_duration = now - self.shrinkray_active_start_time
-        if self.shrinkray_detector_on and not self.trafficlight_detector_on and (shrinkray_active_duration > 10) and (shrinkray_active_duration < 30 ): # if no banana detected for 5 seconds, start scan sequence
-            self.get_logger().info("No banana detected for 5 seconds, in scan sequence")
+
+        # if nothing detected for 5 seconds (try to align with given goal orientation)
+        if self.shrinkray_detector_on and not self.trafficlight_detector_on and (shrinkray_active_duration > 5) and (shrinkray_active_duration < 30 ): # if no banana detected for 5 seconds, start scan sequence
+            self.get_logger().info("No banana detected for 5 seconds, in orienting sequence")
+
+            if not self.initiate_back_up: # set start time once
+                self.backup_start_time = self.get_clock().now().nanoseconds / 1e9
+                self.initiate_back_up = True 
+                self.get_logger().info("Initiated orient sequence")
+
+            if self.initiate_back_up: # this is turned off when we get to the heading
+                # if self.backup_start_time is None:
+                #     self.backup_start_time = self.get_clock().now().nanoseconds / 1e9
+                self.drivetoorientation(self.current_pose)
+
+        # if nothing still detected for 30 seconds (hard coded turn and sweep one way and another)
+        elif self.shrinkray_detector_on and not self.trafficlight_detector_on and (shrinkray_active_duration > 30) and (shrinkray_active_duration < 60 ): # if no banana detected for 5 seconds, start scan sequence
+            
+            self.get_logger().info("No banana detected for 5 seconds, in hard code sweep sequence")
             
             if not self.scan_sequence_started: # so that start time set once
                 self.sequence_start_time = self.get_clock().now().nanoseconds / 1e9
@@ -294,13 +391,15 @@ class DetectionNode(Node):
                 self.get_logger().info("Scan sequence complete, no banana detected")
         
         # Time out, if no banana detected for 60 seconds, move onto next goal
-        if self.shrinkray_detector_on and not self.trafficlight_detector_on and (shrinkray_active_duration > 30):
+        elif self.shrinkray_detector_on and not self.trafficlight_detector_on and (shrinkray_active_duration > 60):
             # for states, pretend we found the shrink ray in order to move on
             obj_detected_msg = Int32()
             obj_detected_msg.data = ObjectDetected.SHRINK_RAY.value
             self.obj_detected_pub.publish(obj_detected_msg) 
             self.get_logger().info(f"No shrink ray object, move on. Published at /detected_obj")
 
+
+        # ACTUAL DETECTION
         try:
             # use different detectors for different bananas
             if self.shrinkray_detector_on and not self.trafficlight_detector_on:
@@ -377,17 +476,21 @@ class DetectionNode(Node):
                         dist_to_shrinkray = self.controller(rel_x,rel_y)
                         self.get_logger().info(f"Distance to shrinkray: {dist_to_shrinkray}")
                         
-                        if dist_to_shrinkray < 1.0: # in meters
+                        if dist_to_shrinkray < 1.5: # in meters
                             self.get_logger().info("Arrived at shrink ray location, stopping")
                             # Save the image with the bounding box to directory
-                            #get time
-                            curr_datetime = datetime.now().strftime('%Y-%m-%d %H-%M-%S') 
+                            
+                            
+                            if not self.saved_photo:
+                                #get time
+                                curr_datetime = datetime.now().strftime('%Y-%m-%d %H-%M-%S') 
 
-                            save_path = f"{os.path.dirname(__file__)}/shrinkray_detected_{self.shrinkray_count}_{curr_datetime}.png"
-                            self.shrinkray_count += 1
+                                save_path = f"{os.path.dirname(__file__)}/shrinkray_detected_{self.shrinkray_count}_{curr_datetime}.png"
+                                self.shrinkray_count += 1
 
-                            out.save(save_path)
-                            self.get_logger().info(f"Saved shrinkray image to {save_path}!")
+                                out.save(save_path)
+                                self.get_logger().info(f"Saved shrinkray image to {save_path}!")
+                                self.saved_photo = True # so that only saves once
                             
                             obj_detected_msg = Int32()
                             obj_detected_msg.data = ObjectDetected.SHRINK_RAY.value

@@ -57,12 +57,15 @@ class StatesNode(Node):
         self.goal_pose_array = []
         
         
+        self.ray_points = np.array([[-5.5, 25.8],[-20.3, 25.8],[-20.4, 32.8]])
+            
         # Publishers 
         self.state_pub = self.create_publisher(Int32, '/toggle_state', 5)
         self.points_pub = self.create_publisher(PoseArray, '/planned_pts', 1) # publish the points to plan a path 
         self.start_pub = self.create_publisher(Marker, '/start_pose', 1)
         self.get_logger().info('State Node Initialized with State: "%s"' % self.trip_segment)
         self.curr_goal_pose_pub = self.create_publisher(Pose, "/curr_goal_pose",1)
+        
         # self.traffic_stop_drive_pub = self.create_publisher(AckermannDriveStamped, "/vesc/high_level/input/nav_0", 10)
 
         self.trajectory = LineTrajectory(node=self, viz_namespace="/planned_trajectory")
@@ -86,9 +89,30 @@ class StatesNode(Node):
     def trajectory_cb(self, msg: PoseArray):
         self.get_logger().info("StatesNode: Received trajectory, turning on traffic light detector")
         self.state = State.FOLLOWING
-        self.control_node(target=Target.DETECTOR_TRAFFIC_LIGHT) # turn on traffic light detection since we are following
+        self.control_node(target=Target.DETECTOR_TRAFFIC_LIGHT) # turn on traffic light detection since we are following 
+    
+    # def check_path_length(self, trajectory):
+    #     try:
+            
+    #         trajectory = np.asarray(trajectory)
+    #         x = trajectory.T[0]
+    #         y = trajectory.T[1]
+            
+    #         x = np.array(x)
+    #         y = np.array(y)
+            
+    #         dx = np.diff(x)
+    #         dy = np.diff(y)
 
-        
+    #         # Calculate the Euclidean distance for each segment of the path
+    #         segment_lengths = np.sqrt(dx**2 + dy**2)
+    #         dist = np.sum(segment_lengths)
+    #         self.get_logger().info(f"StatesNode: check_path_length: path for {self.check_segment} is {np.sum(segment_lengths)} m long \n {e}")
+    #         # Return the sum of the segment lengths
+    #         return dist
+    #     except Exception as e:
+    #         self.get_logger().info(f"StatesNode: check_path_length: failed \n {e}")
+    #         print(e)
         
        
     '''
@@ -98,7 +122,7 @@ class StatesNode(Node):
     def reached_goal_cb(self, msg: Int32):
         self.get_logger().info("StatesNode: We have arrived at current goal point")
         self.control_node(target=Target.DETECTOR_TRAFFIC_LIGHT) # turn off traffic light detection 
-        if not self.trip_segment == TripSegment.END:
+        if not self.trip_segment == TripSegment.START:
             self.control_node(target=Target.FOLLOWER) # turn OFF PURE PURSUIT
             self.control_node(target=Target.DETECTOR_SHRINK_RAY) # start detecting
             self.state = State.DETECTING
@@ -110,10 +134,10 @@ class StatesNode(Node):
             self.get_logger().info("StatesNode: Reached RAY_LOC2")
             
             
-        elif self.trip_segment == TripSegment.END and self.direction == Direction.WAY_THERE:
-            self.direction = Direction.WAY_BACK
-            self.control_node(target=Target.FOLLOWER) # turn OFF PURE PURSUIT
-            self.get_logger().info("StatesNode: Reached END")
+        # elif self.trip_segment == TripSegment.END and self.direction == Direction.WAY_THERE:
+        #     self.direction = Direction.WAY_BACK
+        #     self.control_node(target=Target.FOLLOWER) # turn OFF PURE PURSUIT
+        #     self.get_logger().info("StatesNode: Reached END")
             
     def resume_planning_cb(self):
         self.get_logger().info("StatesNode: 5-second wait over. Resuming path planning.")
@@ -126,7 +150,10 @@ class StatesNode(Node):
         if self.trip_segment == TripSegment.RAY_LOC1:
             self.trip_segment = TripSegment.RAY_LOC2
         elif self.trip_segment == TripSegment.RAY_LOC2:
-            self.trip_segment = TripSegment.END
+            self.get_logger().info("StatesNode: Reached END, going back to start")
+            
+            self.trip_segment = TripSegment.START
+            self.direction = Direction.WAY_BACK
         
         self.timer.cancel()     # It's good practice to cancel the timer once its task is done
         self.timer = None       # Optionally set self.timer to None to avoid dangling references
@@ -184,18 +211,31 @@ class StatesNode(Node):
         
     def points_cb(self, msg: PoseArray):
         self.get_logger().info("StatesNode: Received basement points")
-        
-        #adelene adds goal pose array for traj foll
+        self.state = State.PLANNING
        
         # iterate through the poses in the PoseArray
+        
+        
+        last_idx = float("-inf")
         for pose in msg.poses:
-            self.goal_pose_array.append(Pose(position=pose.position, orientation=pose.orientation))
-
+            idx = self.identify_ray(pose)
             x, y = pose.position.x, pose.position.y
-            self.get_logger().info(f"StatesNode: Received point: {x}, {y}")
-            self.goal_points.append((x,y))
-        if self.debug: 
-            self.get_logger().info(f"StatesNode: Received points: {self.goal_points}")
+            self.get_logger().info(f"StatesNode: points_cb: Received point: {x}, {y}")
+            # we want to put this point first in the list before what we have 
+            if idx < last_idx: 
+                self.get_logger().info("StatesNode: points_cb: Inserting this point at the front")
+                self.goal_pose_array.insert(0, Pose(position=pose.position, orientation=pose.orientation))
+                
+                self.goal_points.insert(0,(x,y))
+            else:
+                self.get_logger().info("StatesNode: points_cb: This point comes after the other point")
+                self.goal_pose_array.append(Pose(position=pose.position, orientation=pose.orientation))
+                self.goal_points.append((x,y))
+                last_idx = idx
+            
+        
+        self.get_logger().info(f"StatesNode: Received points: {self.goal_points}, sort based on closest")
+            
         
         # !! not sure if this is the right place to do this
         self.trajectory.clear()
@@ -208,6 +248,13 @@ class StatesNode(Node):
             self.get_logger().warn("StatesNode: Start pose not received yet, cannot start trip")
             return
     
+    def identify_ray(self, pose):
+        basement_point = [[pose.position.x, pose.position.y]]
+        differences_np = self.ray_points - basement_point
+        squared_distances = np.sum(differences_np**2, axis=1)
+        
+        min_distance_idx = np.argmin(squared_distances) 
+        return min_distance_idx
     def start_trip(self):
         start_point = (self.start.position.x, self.start.position.y)
         
@@ -220,6 +267,7 @@ class StatesNode(Node):
         
         
         self.control_node(target=Target.PLANNER)
+        
         
         self.request_path()
         
@@ -261,7 +309,7 @@ class StatesNode(Node):
         # Publish the points we want to plan a path
         self.points_pub.publish(pose_array)
 
-        self.state = State.PLANNING
+        
         self.curr_goal_pose_pub.publish(goal_pose)
     
     
