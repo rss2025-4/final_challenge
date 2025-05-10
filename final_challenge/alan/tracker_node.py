@@ -328,7 +328,7 @@ class TrackerNode(Node):
         print()
         print()
 
-    # @time_function
+    @time_function
     def _handle_image(self, msg: ImageMsg):
 
         self.line_xy, res = update_with_image(

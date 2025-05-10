@@ -81,9 +81,10 @@ class ScoreCtx(eqx.Module):
 def update_line_one(ctx: ScoreCtx, xy_line: Line) -> tuple[Line, score_line_res]:
     xy_line = xy_line / jnp.linalg.norm(xy_line)
 
-    n_try = 21
-    try_rotations = batched.create(jnp.linspace(-0.2, 0.2, num=n_try), (n_try,))
-    try_shifts = batched.create(jnp.linspace(-0.2, 0.2, num=n_try), (n_try,))
+    n_try_rot = 41
+    n_try_shift = 21
+    try_rotations = batched.create_array(jnp.linspace(-0.2, 0.2, num=n_try_rot))
+    try_shifts = batched.create_array(jnp.linspace(-0.2, 0.2, num=n_try_shift))
 
     def try_one_rot(a_rad: Array):
         line_rot = homography_line(matrix_rot(a_rad), xy_line)

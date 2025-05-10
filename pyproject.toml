@@ -48,9 +48,11 @@ equinox = { version = "^0.12.1", optional = true }
 
 [tool.poetry.dependencies.libracecar]
 git = "https://github.com/rss2025-4/libracecar.git"
+
 # path = "/home/alan/6.4200/libracecar/"
-extras = ["jax"]
 # develop = true
+
+extras = ["jax"]
 optional = true
 
 
